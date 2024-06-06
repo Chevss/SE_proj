@@ -6,34 +6,39 @@ from pathlib import Path
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, messagebox
+from tkinter import Tk, Canvas, Entry, Label, Button, PhotoImage, messagebox
 
 import secrets
 import hashlib
 import sqlite3
 
+
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"D:\Program Files\Pos_System\assets\Login")
 
-# Connect to SQLite database
 conn = sqlite3.connect('accounts.db')
 cursor = conn.cursor()
-# Create table if not exists
-try:
-    # Create the table if it doesn't exist
-    cursor.execute('''CREATE TABLE IF NOT EXISTS accounts (
-                        username TEXT PRIMARY KEY,
-                        salt TEXT,
-                        hashed_password TEXT,
-                        Loa TEXT)''')
-    conn.commit()
-except sqlite3.Error as e:
-    print("Error occurred while creating the table:", e)
-
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def generate_salt():
+    salt = secrets.token_hex(16)
+    return salt
+
+def hash_password(password, salt):
+    salted_password = password + salt
+    return hashlib.sha256(salted_password.encode()).hexdigest()
+
+def hash_username(username):
+    return hashlib.sha256(username.encode()).hexdigest()
+
+def check_loa(get_loa):
+    window.destroy()
+    if get_loa == "admin":
+        import menu_ad
+    else:
+        import menu_em
 
 def get_LOA(username):
     hashed_username = hash_username(username)
@@ -45,28 +50,6 @@ def get_LOA(username):
     else:
         return None
 
-
-def check_loa(get_loa):
-    if get_loa == "Admin":
-        import menu_ad
-    else:
-        import menu_em
-
-
-def generate_salt():
-    salt = secrets.token_hex(16)
-    return salt
-
-
-def hash_password(password, salt):
-    salted_password = password + salt
-    return hashlib.sha256(salted_password.encode()).hexdigest()
-
-
-def hash_username(username):
-    return hashlib.sha256(username.encode()).hexdigest()
-
-
 def get_stored_hashed_password(username):
     hashed_username = hash_username(username)
     cursor.execute("SELECT salt, hashed_password FROM accounts WHERE username =?", (hashed_username,))
@@ -76,6 +59,14 @@ def get_stored_hashed_password(username):
     else:
         return None, None
 
+def save_password(username, password, loa):
+    salt = generate_salt()
+    hashed_password = hash_password(password, salt)
+    hashed_username = hash_username(username)
+
+    cursor.execute("INSERT INTO accounts (username, salt, hashed_password, Loa) VALUES (?,?,?,?)",
+        (hashed_username, salt, hashed_password, loa))
+    conn.commit()
 
 def check_credentials():
     username = user_entry.get()
@@ -88,55 +79,32 @@ def check_credentials():
         # Compare the hashed passwords
         if hashed_password == stored_hashed_password:
             messagebox.showinfo("Success", "Login successful!")
+            check_loa(get_LOA(username))
         else:
             messagebox.showerror("Error", "Incorrect password.")
+            user_entry.delete(0, 'end')
+            pass_entry.delete(0, 'end')
     else:
         messagebox.showerror("Error", "Username not found.")
+        user_entry.delete(0, 'end')
+        pass_entry.delete(0, 'end')
 
+def on_text_click(event):
+    # This function will be called when the text is clicked
+    canvas.itemconfig(forgot_pass, fill="red")
 
-def check_username(username):
-    hashed_username = hash_username(username)
-    count = cursor.execute("SELECT COUNT(*) FROM accounts WHERE username = ?",
-                           (hashed_username,))
-    count = cursor.fetchone()[0]
-    return count > 0
+def on_text_hover(event):
+    # This function will be called when the mouse hovers over the text
+    canvas.itemconfig(forgot_pass, fill="green")
 
-
-def get_salt(username):
-    hashed_username = hash_username(username)
-    cursor.execute("SELECT salt FROM accounts WHERE username = ?",
-                   (hashed_username,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
-    else:
-        return None
-
-
-def open_menu():
-    get_pass = pass_entry.get()
-    get_user = pass_entry.get()
-    window.destroy()
-    check_loa(get_LOA(get_user))
-
+def on_text_leave(event):
+    # This function will be called when the mouse leaves the text
+    canvas.itemconfig(forgot_pass, fill="blue")
 
 def exit():
+    conn.close()
     window.destroy()
 
-
-def save_password(username, password, Loa):
-    salt = generate_salt()
-    hashed_password = hash_password(password, salt)
-    hashed_username = hash_username(username)
-    cursor.execute('''CREATE TABLE IF NOT EXISTS accounts (
-                    username TEXT PRIMARY KEY,
-                    salt TEXT,
-                    hashed_password TEXT,
-                    Loa TEXT)''')
-    conn.commit()
-
-
-save_password("chevy", "chevy", "admin")
 
 window = Tk()
 
@@ -215,6 +183,7 @@ canvas.create_text(
     font=("Hanuman Regular", 16 * -1)
 )
 
+
 canvas.create_text(
     119.0,
     241.0,
@@ -223,6 +192,19 @@ canvas.create_text(
     fill="#000000",
     font=("Hanuman Regular", 16 * -1)
 )
+
+forgot_pass = canvas.create_text(
+    380.0,
+    305.0,
+    anchor="nw",
+    text="Forgot Password?",
+    fill="blue",
+    font=("Hanuman Regular", 12 * -1)
+)
+# Bind the functions to the text
+canvas.tag_bind(forgot_pass, "<Button-1>", on_text_click)
+canvas.tag_bind(forgot_pass, "<Enter>", on_text_hover)
+canvas.tag_bind(forgot_pass, "<Leave>", on_text_leave)
 
 exit_image = PhotoImage(
     file=relative_to_assets("button_1.png"))
@@ -246,7 +228,7 @@ login_ = Button(
     image=login_image,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: open_menu(),
+    command=lambda: check_credentials(),
     relief="flat"
 )
 login_.place(
