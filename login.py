@@ -6,12 +6,6 @@ import sqlite3
 
 conn = sqlite3.connect('accounts.db')
 cursor = conn.cursor()
-window = Tk()
-
-
-def generate_salt():
-    salt = secrets.token_hex(16)
-    return salt
 
 def hash_password(password, salt):
     salted_password = password + salt
@@ -21,11 +15,12 @@ def hash_username(username):
     return hashlib.sha256(username.encode()).hexdigest()
 
 def check_loa(get_loa):
-    window.destroy()
     if get_loa == "admin":
         import menu_ad
+        menu_ad.create_menu_ad_window()
     else:
         import menu_em
+        menu_em.create_menu_em_window()
 
 def get_LOA(username):
     hashed_username = hash_username(username)
@@ -46,23 +41,13 @@ def get_stored_hashed_password(username):
     else:
         return None, None
 
-def save_password(username, password, loa, email):
-    salt = generate_salt()
-    hashed_password = hash_password(password, salt)
-    hashed_username = hash_username(username)
-
-    cursor.execute("INSERT INTO accounts (username, salt, hashed_password, Loa, email) VALUES (?,?,?,?,?)",
-        (hashed_username, salt, hashed_password, loa, email))
-    conn.commit()
-
-def check_credentials(username, password, user_entry, pass_entry):
+def check_credentials(username, password, user_entry, pass_entry, window):
     salt, stored_hashed_password = get_stored_hashed_password(username)
     if salt and stored_hashed_password:
-        # Hash the password entered during the login attempt with the retrieve salt
         hashed_password = hash_password(password, salt)
-        # Compare the hashed passwords
         if hashed_password == stored_hashed_password:
             messagebox.showinfo("Success", "Login successful!")
+            window.destroy()
             return check_loa(get_LOA(username))
         else:
             messagebox.showerror("Error", "Incorrect password.")
@@ -74,6 +59,11 @@ def check_credentials(username, password, user_entry, pass_entry):
         pass_entry.delete(0, 'end')
 
 def create_login_window():
+    conn = sqlite3.connect('accounts.db')
+    cursor = conn.cursor()
+    
+    window = Tk()
+    
     OUTPUT_PATH = Path(__file__).parent
     ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Downloads/SE_proj-main/assets/Login")
 
@@ -81,15 +71,12 @@ def create_login_window():
         return ASSETS_PATH / Path(path)
 
     def on_text_click(event):
-        # This function will be called when the text is clicked
         canvas.itemconfig(forgot_pass, fill="red")
 
     def on_text_hover(event):
-        # This function will be called when the mouse hovers over the text
         canvas.itemconfig(forgot_pass, fill="green")
 
     def on_text_leave(event):
-        # This function will be called when the mouse leaves the text
         canvas.itemconfig(forgot_pass, fill="blue")
 
     def exit():
@@ -189,7 +176,6 @@ def create_login_window():
         fill="blue",
         font=("Hanuman Regular", 12 * -1)
     )
-    # Bind the functions to the text
     canvas.tag_bind(forgot_pass, "<Button-1>", on_text_click)
     canvas.tag_bind(forgot_pass, "<Enter>", on_text_hover)
     canvas.tag_bind(forgot_pass, "<Leave>", on_text_leave)
@@ -200,7 +186,7 @@ def create_login_window():
         image=exit_image,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: exit(),
+        command=exit,
         relief="flat"
     )
     exit_.place(
@@ -216,7 +202,7 @@ def create_login_window():
         image=login_image,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: check_credentials(user_entry.get(), pass_entry.get(), user_entry, pass_entry),
+        command=lambda: check_credentials(user_entry.get(), pass_entry.get(), user_entry, pass_entry, window),
         relief="flat"
     )
     login_.place(
@@ -225,9 +211,9 @@ def create_login_window():
         width=133.0,
         height=37.0
     )
+    
     window.resizable(False, False)
     window.mainloop()
 
 if __name__ == "__main__":
     create_login_window()
-
