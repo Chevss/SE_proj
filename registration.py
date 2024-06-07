@@ -1,5 +1,5 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, Entry, Button, PhotoImage, Radiobutton, StringVar
 
 import secrets
 import hashlib
@@ -29,7 +29,7 @@ def save_password(username, password, loa, email):
         (hashed_username, salt, hashed_password, loa, email))
     conn.commit()
 
-def  create_registration_window():
+def create_registration_window():
     OUTPUT_PATH = Path(__file__).parent
     ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Downloads/SE_proj-main/assets/Registration")
 
@@ -38,53 +38,56 @@ def  create_registration_window():
 
     window.title("Registration")
     window.geometry("600x550")
-    window.configure(bg = "#FFE1C6")
+    window.configure(bg="#FFE1C6")
 
     canvas = Canvas(
         window,
-        bg = "#FFE1C6",
-        height = 550,
-        width = 600,
-        bd = 0,
-        highlightthickness = 0,
-        relief = "ridge"
+        bg="#FFE1C6",
+        height=550,
+        width=600,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
     )
 
-    canvas.place(x = 0, y = 0)
-    entry_image_1 = PhotoImage(
+    canvas.place(x=0, y=0)
+    pass_entry_image = PhotoImage(
         file=relative_to_assets("entry_1.png"))
-    entry_bg_1 = canvas.create_image(
+    pass_entry_bg = canvas.create_image(
         300.5,
         247.0,
-        image=entry_image_1
+        image=pass_entry_image
     )
-    entry_1 = Text(
+    pass_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        font=("Hanuman Regular", 24 * -1),
+        show="*"
     )
-    entry_1.place(
+    pass_entry.place(
         x=119.0,
         y=228.0,
         width=363.0,
         height=36.0
     )
 
-    entry_image_2 = PhotoImage(
+    user_entry_image = PhotoImage(
         file=relative_to_assets("entry_2.png"))
-    entry_bg_2 = canvas.create_image(
+    user_entry_bg = canvas.create_image(
         300.5,
         182.0,
-        image=entry_image_2
+        image=user_entry_image
     )
-    entry_2 = Text(
+    user_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        font=("Hanuman Regular", 24 * -1)
     )
-    entry_2.place(
+    user_entry.place(
         x=119.0,
         y=163.0,
         width=363.0,
@@ -109,20 +112,22 @@ def  create_registration_window():
         font=("Hanuman Regular", 16 * -1)
     )
 
-    entry_image_3 = PhotoImage(
+    confirm_pass_entry_image = PhotoImage(
         file=relative_to_assets("entry_3.png"))
-    entry_bg_3 = canvas.create_image(
+    confirm_pass_entry_bg = canvas.create_image(
         300.5,
         312.0,
-        image=entry_image_3
+        image=confirm_pass_entry_image
     )
-    entry_3 = Text(
+    confirm_pass_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        font=("Hanuman Regular", 24 * -1),
+        show="*"
     )
-    entry_3.place(
+    confirm_pass_entry.place(
         x=119.0,
         y=293.0,
         width=363.0,
@@ -196,6 +201,34 @@ def  create_registration_window():
         font=("Hanuman Regular", 16 * -1)
     )
 
+    loa_var = StringVar(value="employee")
+
+    radio_admin = Radiobutton(
+        window,
+        text="Admin",
+        variable=loa_var,
+        value="admin",
+        bg="#FFE1C6",
+        font=("Hanuman Regular", 15 * -1)
+    )
+    radio_admin.place(
+        x=119.0,
+        y=366.0
+    )
+
+    radio_employee = Radiobutton(
+        window,
+        text="Employee/Staff",
+        variable=loa_var,
+        value="employee",
+        bg="#FFE1C6",
+        font=("Hanuman Regular", 15 * -1)
+    )
+    radio_employee.place(
+        x=119.0,
+        y=397.0
+    )
+
     canvas.create_text(
         145.0,
         366.0,
@@ -213,6 +246,7 @@ def  create_registration_window():
         fill="#000000",
         font=("Hanuman Regular", 15 * -1)
     )
+
     window.resizable(False, False)
     window.mainloop()
 
