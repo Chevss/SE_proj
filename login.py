@@ -1,4 +1,4 @@
-from tkinter import Tk, Canvas, Entry, Label, Button, PhotoImage, messagebox
+from tkinter import Tk, Canvas, Entry, Button, PhotoImage, messagebox
 from pathlib import Path
 import secrets
 import hashlib
