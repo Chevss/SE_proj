@@ -87,6 +87,15 @@ def create_login_window():
     window.geometry("600x400")
     window.configure(bg="#FFE1C6")
 
+    window_width, window_height = 600, 400
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+
+    # Set the window geometry and position
+    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
     canvas = Canvas(
         window,
         bg="#FFE1C6",
@@ -157,7 +166,6 @@ def create_login_window():
         fill="#000000",
         font=("Hanuman Regular", 16 * -1)
     )
-
 
     canvas.create_text(
         119.0,
