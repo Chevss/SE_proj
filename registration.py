@@ -7,7 +7,12 @@ import sqlite3
 
 conn = sqlite3.connect('accounts.db')
 cursor = conn.cursor()
-window = Tk()
+
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Downloads/SE_proj-main/assets/Registration")
+
+def relative_to_assets(path: str) -> Path:
+        return ASSETS_PATH / Path(path)
 
 def generate_salt():
     salt = secrets.token_hex(16)
@@ -30,15 +35,22 @@ def save_password(username, password, loa, email):
     conn.commit()
 
 def create_registration_window():
-    OUTPUT_PATH = Path(__file__).parent
-    ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Downloads/SE_proj-main/assets/Registration")
-
-    def relative_to_assets(path: str) -> Path:
-        return ASSETS_PATH / Path(path)
-
+    window = Tk()
     window.title("Registration")
     window.geometry("600x550")
     window.configure(bg="#FFE1C6")
+
+    window.title("Registration")
+
+     # Calculate the position for the window to be centered
+    window_width, window_height = 600, 550
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+
+    # Set the window geometry and position
+    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
     canvas = Canvas(
         window,
@@ -149,7 +161,7 @@ def create_registration_window():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: back_to_menu_ad(window),
         relief="flat"
     )
     button_1.place(
@@ -249,6 +261,11 @@ def create_registration_window():
 
     window.resizable(False, False)
     window.mainloop()
+
+def back_to_menu_ad(window):
+    window.destroy()
+    from menu_ad import create_menu_ad_window
+    create_menu_ad_window()
 
 if __name__ == "__main__":
     create_registration_window()
