@@ -11,6 +11,16 @@ def create_menu_ad_window():
     window = Tk()
     window.geometry("859x673")
     window.configure(bg = "#FFE1C6")
+    window.title("Admin Menu")
+
+    window_width, window_height = 859, 673
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+
+    # Set the window geometry and position
+    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
     canvas = Canvas(
         window,
@@ -125,7 +135,7 @@ def create_menu_ad_window():
         image=button_image_7,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_7 clicked"),
+        command=lambda: registration(window),
         relief="flat"
     )
     button_7.place(
@@ -185,6 +195,11 @@ def create_menu_ad_window():
 
     window.resizable(False, False)
     window.mainloop()
+
+def registration(window):
+    window.destroy()
+    from registration import create_registration_window
+    create_registration_window()
 
 def logout(window):
     window.destroy()
