@@ -13,14 +13,18 @@ try:
                         username TEXT PRIMARY KEY,
                         salt TEXT,
                         hashed_password TEXT,
-                        Loa TEXT)''')
+                        Loa TEXT,
+                        email TEXT)''')
     conn.commit()
 except sqlite3.Error as e:
     print("Error occurred while creating the table:", e)
-"""cursor.execute("SELECT * FROM accounts")
 
+
+cursor.execute("SELECT * FROM accounts")
 rows = cursor.fetchall()
 
 for row in rows:
-    print(row)"""
+    print(row)
+
+conn.close()
 

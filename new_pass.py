@@ -3,7 +3,8 @@ from tkinter import Tk, Canvas, Entry, Button, PhotoImage
 
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\SE_proj-main\assets\New_pass")
+# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\SE_proj-main\assets\New_pass")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/New_pass")
 
 
 def relative_to_assets(path: str) -> Path:
