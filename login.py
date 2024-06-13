@@ -16,11 +16,11 @@ def hash_username(username):
 
 def check_loa(get_loa):
     if get_loa == "admin":
-        import menu_ad
-        menu_ad.create_menu_ad_window()
+        import pos_admin
+        pos_admin.create_pos_admin_window()
     else:
-        import menu_em
-        menu_em.create_menu_em_window()
+        import pos_employee
+        pos_employee.create_pos_admin_window()
 
 def get_LOA(username):
     # hashed_username = hash_username(username)
