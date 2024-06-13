@@ -92,6 +92,9 @@ user_logs_database()
 invetory_database()
 purchase_history_database()
 
+"""insert_inventory("012044045893", "Old spice Canyon", 2, 399.00, "na", 0)"""
+insert_inventory('123456789', 'Product A', 100, 19.99, 'Description of Product A', 0)
+
 """cursor.execute(
     '''CREATE TRIGGER calculate_total_price
         BEFORE INSERT ON purchase_history
