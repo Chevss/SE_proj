@@ -4,7 +4,7 @@ from tkinter import ttk, Canvas, Entry, Text, Button, PhotoImage, Label, message
 import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"D:\Program Files\Pos_System\build\assets\frame6")
+ASSETS_PATH = OUTPUT_PATH / Path(r"D:\Program Files\Pos_System\build\assets\Pos Admin")
 
 purchase_list = []
 
