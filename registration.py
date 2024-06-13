@@ -102,82 +102,241 @@ def register_user(username, password, confirm_password, loa, email):
     messagebox.showinfo("Success", "Registration successful")
 
 def create_registration_window():
-    window = Tk()
+     window = Tk()
     window.title("Registration")
-    window.geometry("600x550")
+    window.geometry("600x650")
     window.configure(bg="#FFE1C6")
 
+    # Calculate the position for the window to be centered
     window_width, window_height = 600, 650
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width // 2) - (window_width // 2)
     y = (screen_height // 2) - (window_height // 2)
+
+    # Set the window geometry and position
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
     canvas = Canvas(
         window,
         bg="#FFE1C6",
-        height=550,
+        height=650,
         width=600,
         bd=0,
         highlightthickness=0,
         relief="ridge"
     )
-    canvas.place(x=0, y=0)
 
-    user_entry_image = PhotoImage(file=relative_to_assets("entry_2.png"))
-    user_entry_bg = canvas.create_image(300.5, 182.0, image=user_entry_image)
-    user_entry = Entry(
+    canvas.place(x=0, y=0)
+    entry_image_1 = PhotoImage(
+        file=relative_to_assets("entry_1.png"))
+    entry_bg_1 = canvas.create_image(
+        272.5,
+        209.0,
+        image=entry_image_1
+    )
+    last_name_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
         highlightthickness=0,
-        font=("Hanuman Regular", 24 * -1)
+        font=("Hanuman Regular", 20 * -1)
     )
-    user_entry.place(x=119.0, y=163.0, width=363.0, height=36.0)
+    last_name_entry.place(
+        x=119.0,
+        y=190.0,
+        width=307.0,
+        height=36.0
+    )
 
-    canvas.create_text(119.0, 139.0, anchor="nw", text="Username", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    entry_image_2 = PhotoImage(
+        file=relative_to_assets("entry_2.png"))
+    entry_bg_2 = canvas.create_image(
+        461.5,
+        144.0,
+        image=entry_image_2
+    )
+    MI_entry = Entry(
+        bd=0,
+        bg="#FFFFFF",
+        fg="#000716",
+        highlightthickness=0,
+        font=("Hanuman Regular", 20 * -1)
+    )
+    MI_entry.place(
+        x=441.0,
+        y=125.0,
+        width=41.0,
+        height=36.0
+    )
 
-    email_entry_image = PhotoImage(file=relative_to_assets("entry_4.png"))
-    email_entry_bg = canvas.create_image(300.5, 247.0, image=email_entry_image)
+    entry_image_3 = PhotoImage(
+        file=relative_to_assets("entry_3.png"))
+    entry_bg_3 = canvas.create_image(
+        272.5,
+        144.0,
+        image=entry_image_3
+    )
+    first_name_entry = Entry(
+        bd=0,
+        bg="#FFFFFF",
+        fg="#000716",
+        highlightthickness=0,
+        font=("Hanuman Regular", 20 * -1)
+    )
+    first_name_entry.place(
+        x=119.0,
+        y=125.0,
+        width=307.0,
+        height=36.0
+    )
+
+    canvas.create_text(
+        119.0,
+        98.0,
+        anchor="nw",
+        text="First Name",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    canvas.create_text(
+        447.0,
+        98.0,
+        anchor="nw",
+        text="M.I.",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    entry_image_4 = PhotoImage(
+        file=relative_to_assets("entry_4.png"))
+    entry_bg_4 = canvas.create_image(
+        461.5,
+        209.0,
+        image=entry_image_4
+    )
+    suffix_entry = Entry(
+        bd=0,
+        bg="#FFFFFF",
+        fg="#000716",
+        highlightthickness=0,
+        font=("Hanuman Regular", 20 * -1)
+    )
+    suffix_entry.place(
+        x=441.0,
+        y=190.0,
+        width=41.0,
+        height=36.0
+    )
+
+    canvas.create_text(
+        439.0,
+        166.0,
+        anchor="nw",
+        text="Suffix",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    canvas.create_text(
+        119.0,
+        166.0,
+        anchor="nw",
+        text="Last Name",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    entry_image_5 = PhotoImage(
+        file=relative_to_assets("entry_5.png"))
+    entry_bg_5 = canvas.create_image(
+        300.5,
+        275.0,
+        image=entry_image_5
+    )
+    contact_no_entry = Entry(
+        bd=0,
+        bg="#FFFFFF",
+        fg="#000716",
+        highlightthickness=0,
+        font=("Hanuman Regular", 20 * -1)
+    )
+    contact_no_entry.place(
+        x=119.0,
+        y=256.0,
+        width=363.0,
+        height=36.0
+    )
+
+    canvas.create_text(
+        119.0,
+        232.0,
+        anchor="nw",
+        text="Contact Number",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    entry_image_6 = PhotoImage(
+        file=relative_to_assets("entry_6.png"))
+    entry_bg_6 = canvas.create_image(
+        300.5,
+        341.0,
+        image=entry_image_6
+    )
+    address_entry = Entry(
+        bd=0,
+        bg="#FFFFFF",
+        fg="#000716",
+        highlightthickness=0,
+        font=("Hanuman Regular", 20 * -1)
+    )
+    address_entry.place(
+        x=119.0,
+        y=322.0,
+        width=363.0,
+        height=36.0
+    )
+
+    canvas.create_text(
+        119.0,
+        298.0,
+        anchor="nw",
+        text="Home Address",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
+    )
+
+    entry_image_7 = PhotoImage(
+        file=relative_to_assets("entry_7.png"))
+    entry_bg_7 = canvas.create_image(
+        300.5,
+        403.0,
+        image=entry_image_7
+    )
     email_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
         highlightthickness=0,
-        font=("Hanuman Regular", 24 * -1)
+        font=("Hanuman Regular", 20 * -1)
     )
-    email_entry.place(x=119.0, y=228.0, width=363.0, height=36.0)
-
-    canvas.create_text(119.0, 204.0, anchor="nw", text="Email", fill="#000000", font=("Hanuman Regular", 16 * -1))
-
-    pass_entry_image = PhotoImage(file=relative_to_assets("entry_1.png"))
-    pass_entry_bg = canvas.create_image(300.5, 312.0, image=pass_entry_image)
-    pass_entry = Entry(
-        bd=0,
-        bg="#FFFFFF",
-        fg="#000716",
-        highlightthickness=0,
-        font=("Hanuman Regular", 24 * -1),
-        show="*"
+    email_entry.place(
+        x=119.0,
+        y=384.0,
+        width=363.0,
+        height=36.0
     )
-    pass_entry.place(x=119.0, y=293.0, width=363.0, height=36.0)
 
-    canvas.create_text(119.0, 269.0, anchor="nw", text="Password", fill="#000000", font=("Hanuman Regular", 16 * -1))
-
-    confirm_pass_entry_image = PhotoImage(file=relative_to_assets("entry_3.png"))
-    confirm_pass_entry_bg = canvas.create_image(300.5, 377.0, image=confirm_pass_entry_image)
-    confirm_pass_entry = Entry(
-        bd=0,
-        bg="#FFFFFF",
-        fg="#000716",
-        highlightthickness=0,
-        font=("Hanuman Regular", 24 * -1),
-        show="*"
+    canvas.create_text(
+        119.0,
+        360.0,
+        anchor="nw",
+        text="Email Address",
+        fill="#000000",
+        font=("Hanuman Regular", 16 * -1)
     )
-    confirm_pass_entry.place(x=119.0, y=358.0, width=363.0, height=36.0)
-
-    canvas.create_text(119.0, 334.0, anchor="nw", text="Confirm Password", fill="#000000", font=("Hanuman Regular", 16 * -1))
 
     show_password_var = BooleanVar()
 
@@ -199,7 +358,7 @@ def create_registration_window():
     )
     show_password_checkbox.place(x=359.0, y=398.0)
 
-    canvas.create_text(119.0, 423.0, anchor="nw", text="Level of Access", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(119.0,437.0, anchor="nw", text="Level of Access", fill="#000000", font=("Hanuman Regular", 16 * -1))
 
     loa_var = StringVar(value="employee")
 
@@ -211,7 +370,7 @@ def create_registration_window():
         bg="#FFE1C6",
         font=("Hanuman Regular", 14 * -1)
     )
-    radio_admin.place(x=119.0, y=443.0)
+    radio_admin.place(x=145.0, y=464.0)
 
     radio_employee = Radiobutton(
         window,
@@ -221,30 +380,30 @@ def create_registration_window():
         bg="#FFE1C6",
         font=("Hanuman Regular", 14 * -1)
     )
-    radio_employee.place(x=119.0, y=463.0)
+    radio_employee.place(x=145.0, y=495.0)
 
     button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    button_1 = Button(
+    back_button = Button(
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: back_to_menu_ad(window),
         relief="flat"
     )
-    button_1.place(x=349.0, y=520.0, width=133.0, height=37.0)
+    back_button.place(x=349.0,y=559.0,width=133.0,height=37.0)
 
     button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
-    button_2 = Button(
+    register_button = Button(
         image=button_image_2,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: register_user(user_entry.get(), pass_entry.get(), confirm_pass_entry.get(), loa_var.get(), email_entry.get()),
         relief="flat"
     )
-    button_2.place(x=119.0, y=520.0, width=133.0, height=37.0)
+    register_button.place(x=119.0,y=559.0,width=133.0,height=37.0)
 
-    canvas.create_rectangle(161.0, 44.0, 439.0, 108.0, fill="#FB7373", outline="")
-    canvas.create_text(207.0, 52.0, anchor="nw", text="Registration", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
+    canvas.create_rectangle(162.0,21.0,440.0,85.0, fill="#FB7373", outline="")
+    canvas.create_text(209.0, 29.0, anchor="nw", text="Registration", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
 
     window.resizable(False, False)
     window.mainloop()
