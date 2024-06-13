@@ -23,9 +23,9 @@ def check_loa(get_loa):
         menu_em.create_menu_em_window()
 
 def get_LOA(username):
-    hashed_username = hash_username(username)
+    # hashed_username = hash_username(username)
 
-    cursor.execute("SELECT Loa FROM accounts WHERE username =?", (hashed_username,))
+    cursor.execute("SELECT Loa FROM accounts WHERE username =?", (username,))
     row = cursor.fetchone()
     if row:
         return row[0]
@@ -34,7 +34,7 @@ def get_LOA(username):
 
 def get_stored_hashed_password(username):
     hashed_username = hash_username(username)
-    cursor.execute("SELECT salt, hashed_password FROM accounts WHERE username =?", (hashed_username,))
+    cursor.execute("SELECT salt, password FROM accounts WHERE username =?", (username,))
     row = cursor.fetchone()
     if row:
         return row[0], row[1]
