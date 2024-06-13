@@ -65,8 +65,8 @@ def create_login_window():
     window = Tk()
     
     OUTPUT_PATH = Path(__file__).parent
-    # ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Downloads/SE_proj-main/assets/Login")
-    ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\proj\SE_proj\assets\Login")
+    # ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\proj\SE_proj\assets\Login")
+    ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/Login")
 
     def relative_to_assets(path: str) -> Path:
         return ASSETS_PATH / Path(path)
