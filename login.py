@@ -120,7 +120,7 @@ def create_login_window():
         file=relative_to_assets("entry_1.png"))
     pass_bg_1 = canvas.create_image(
         300.5,
-        284.0,
+        279.0,
         image=pass_image_1
     )
     pass_entry = Entry(
@@ -129,11 +129,11 @@ def create_login_window():
         fg="#000716",
         highlightthickness=0,
         font=("Hanuman Regular", 24 * -1),
-        show="*"
+        show="•"
     )
     pass_entry.place(
         x=119.0,
-        y=265.0,
+        y=258.0,
         width=363.0,
         height=36.0,
     )
@@ -142,7 +142,7 @@ def create_login_window():
         file=relative_to_assets("entry_2.png"))
     user_bg_2 = canvas.create_image(
         300.5,
-        219.0,
+        214.0,
         image=user_image_2
     )
     user_entry = Entry(
@@ -161,7 +161,7 @@ def create_login_window():
 
     canvas.create_text(
         119.0,
-        176.0,
+        170.0,
         anchor="nw",
         text="Username",
         fill="#000000",
@@ -170,7 +170,7 @@ def create_login_window():
 
     canvas.create_text(
         119.0,
-        241.0,
+        236.0,
         anchor="nw",
         text="Password",
         fill="#000000",
@@ -220,6 +220,24 @@ def create_login_window():
         width=133.0,
         height=37.0
     )
+
+    show_password_var = BooleanVar()
+
+    def toggle_password_visibility():
+        if show_password_var.get():
+            pass_entry.config(show="")
+        else:
+            pass_entry.config(show="•")
+
+    show_password_checkbox = Checkbutton(
+        window,
+        text="Show Password",
+        variable=show_password_var,
+        bg="#FFE1C6",
+        font=("Hanuman Regular", 10),
+        command=toggle_password_visibility
+    )
+    show_password_checkbox.place(x=119.0, y=299)
     
     window.resizable(False, False)
     window.mainloop()
