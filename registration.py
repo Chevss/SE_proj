@@ -102,7 +102,7 @@ def register_user(username, password, confirm_password, loa, email):
     messagebox.showinfo("Success", "Registration successful")
 
 def create_registration_window():
-     window = Tk()
+    window = Tk()
     window.title("Registration")
     window.geometry("600x650")
     window.configure(bg="#FFE1C6")
