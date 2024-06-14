@@ -89,7 +89,17 @@ def get_column_names(table_name):
     column_names = [col[1] for col in columns]
     return column_names
 
+def go_to_window(windows):
+    window.destroy()
+    if windows == "logout":
+        import login
+        login.create_login_window()
+    elif windows == "inventory":
+        import inventory
+        inventory.create_inventory_window()
+
 def create_pos_admin_window():
+    global window
     window = tk.Tk()
     window.geometry("1280x800")
     window.configure(bg="#FFE1C6")
@@ -163,7 +173,7 @@ def create_pos_admin_window():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: go_to_window("logout"),
         relief="flat"
     )
     logout_button.place(x=1071.0, y=691.0, width=168.86373901367188, height=44.19459533691406)
@@ -173,7 +183,7 @@ def create_pos_admin_window():
         image=button_image_2,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
+        command=lambda: print("Help Button"),
         relief="flat"
     )
     help_button.place(x=1071.0, y=623.0, width=168.86373901367188, height=44.19459533691406)
@@ -183,7 +193,7 @@ def create_pos_admin_window():
         image=button_image_3,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_3 clicked"),
+        command=lambda: print("Purchase Button"),
         relief="flat"
     )
     purchase_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
@@ -193,7 +203,7 @@ def create_pos_admin_window():
         image=button_image_4,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_4 clicked"),
+        command=lambda: go_to_window("inventory"),
         relief="flat"
     )
     inventory_button.place(x=699.0, y=479.0, width=170.28277587890625, height=112.0)
@@ -203,7 +213,7 @@ def create_pos_admin_window():
         image=button_image_5,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_5 clicked"),
+        command=lambda: print("Reports Button"),
         relief="flat"
     )
     reports_button.place(x=884.0, y=478.0, width=170.28277587890625, height=112.0)
@@ -213,7 +223,7 @@ def create_pos_admin_window():
         image=button_image_6,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_6 clicked"),
+        command=lambda: print("Maintenance Button"),
         relief="flat"
     )
     maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
@@ -223,7 +233,7 @@ def create_pos_admin_window():
         image=button_image_7,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_7 clicked"),
+        command=lambda: print("Edit Button"),
         relief="flat"
     )
     edit_button.place(x=884.0, y=623.0, width=166.0, height=112.0)
