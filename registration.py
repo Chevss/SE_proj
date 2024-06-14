@@ -1,19 +1,18 @@
+# Standard Libraries and Tkinter GUI Toolkit Components
+from email.mime.text import MIMEText
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Button, PhotoImage, Radiobutton, StringVar, messagebox, OptionMenu
-import secrets
-import hashlib
-import sqlite3
-import re
-import smtplib
-from email.mime.text import MIMEText
+import hashlib, re, secrets, smtplib, sqlite3
+from database import insert_account
 
 # Database connection
-conn = sqlite3.connect('Trimark_construction_supply.db')
+conn = sqlite3.connect('accounts.db')
 cursor = conn.cursor()
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Registration")
+# ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/Registration")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Desktop/SE_proj-main/assets/Registration")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -38,19 +37,6 @@ def send_email(email, username, password):
         server.starttls()
         server.login('trimarkcstest@outlook.com', '1ZipJM2DsVnRoBkmVVKRCm0e8c6NniwhjW1FEWEC8n5Y')
         server.sendmail('trimarkcstest@outlook.com', email, msg.as_string())
-
-def save_user(loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, password):
-    salt = generate_salt()
-    hashed_password = hash_password(password, salt)
-    # hashed_username = hash_username(username)
-
-    cursor.execute('''
-    INSERT INTO accounts (LOA, First_Name, Last_Name, MI, Suffix, Contact_No, Address, Email, Username, Password, Salt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, hashed_password, salt))
-
-    conn.commit()
-
 
 def generate_username(first_name, mi, last_name, suffix, loa):
     prefix = 'a' if loa == 'admin' else 'e'
@@ -98,9 +84,13 @@ def register_user(first_name, mi, last_name, suffix, contact_number, home_addres
 
     password = secrets.token_urlsafe(10)  # Generate a random password
 
-    save_user(loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, password)
+    salt = generate_salt()
+    hashed_password = hash_password(password, salt)
+
+    insert_account(loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, hashed_password, salt, 0)
     send_email(email, username, password)
     messagebox.showinfo("Success", "Registration successful. Your username and temporary password have been sent to your email.")
+
 
 def create_registration_window():
     window = Tk()
@@ -294,7 +284,7 @@ def create_registration_window():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: back_to_pos_ad(window),
+        command=lambda: back_to_menu_ad(window),
         relief="flat"
     )
     back_button.place(x=349.0, y=559.0, width=133.0, height=37.0)
@@ -324,10 +314,10 @@ def create_registration_window():
     window.resizable(False, False)
     window.mainloop()
 
-def back_to_pos_ad(window):
+def back_to_menu_ad(window):
     window.destroy()
-    from pos_admin import create_pos_admin_window
-    create_pos_admin_window()
+    from pos_admin import create_menu_ad_window
+    create_menu_ad_window()
 
 def is_valid_name(name):
     return bool(re.match(r'^[a-zA-Z]+$', name))

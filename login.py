@@ -4,7 +4,7 @@ import secrets
 import hashlib
 import sqlite3
 
-conn = sqlite3.connect('Trimark_construction_supply.db')
+conn = sqlite3.connect('accounts.db')
 cursor = conn.cursor()
 
 def hash_password(password, salt):
@@ -20,7 +20,7 @@ def check_loa(get_loa):
         pos_admin.create_pos_admin_window()
     else:
         import pos_employee
-        pos_employee.create_pos_employee_window()
+        pos_employee.create_pos_admin_window()
 
 def get_LOA(username):
     # hashed_username = hash_username(username)
@@ -42,38 +42,51 @@ def get_stored_hashed_password(username):
         return None, None
 
 def check_credentials(username, password, user_entry, pass_entry, window):
-    salt, stored_hashed_password = get_stored_hashed_password(username)
-    if salt and stored_hashed_password:
-        hashed_password = hash_password(password, salt)
-        if hashed_password == stored_hashed_password:
-            messagebox.showinfo("Success", "Login successful!")
-            window.destroy()
-            return check_loa(get_LOA(username))
+    if not username and not password:
+        messagebox.showerror("Error", "Please enter your username and password.")
+        return
+    
+    if username and not password:
+        messagebox.showerror("Error", "Please enter your password.")
+        return
+    
+    if password and not username:
+        messagebox.showerror("Error", "Please enter your username.")
+        return
+
+    else:
+        salt, stored_hashed_password = get_stored_hashed_password(username)
+        if salt and stored_hashed_password:
+            hashed_password = hash_password(password, salt)
+            if hashed_password == stored_hashed_password:
+                messagebox.showinfo("Success", "Login successful!")
+                window.destroy()
+                return check_loa(get_LOA(username))
+            else:
+                messagebox.showerror("Error", "Incorrect password.")
+                user_entry.delete(0, 'end')
+                pass_entry.delete(0, 'end')
         else:
-            messagebox.showerror("Error", "Incorrect password.")
+            messagebox.showerror("Error", "Username not found.")
             user_entry.delete(0, 'end')
             pass_entry.delete(0, 'end')
-    else:
-        messagebox.showerror("Error", "Username not found.")
-        user_entry.delete(0, 'end')
-        pass_entry.delete(0, 'end')
 
 def create_login_window():
+    conn = sqlite3.connect('accounts.db')
+    cursor = conn.cursor()
     
     window = Tk()
     
     OUTPUT_PATH = Path(__file__).parent
     # ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\proj\SE_proj\assets\Login")
-    ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Login")
+    # ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/Login")
+    ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Desktop/SE_proj-main/assets/Login")
 
     def relative_to_assets(path: str) -> Path:
         return ASSETS_PATH / Path(path)
 
     def on_text_click(event):
         canvas.itemconfig(forgot_pass, fill="red")
-        window.destroy()
-        from forgot_pass import create_forgot_pass_window
-        create_forgot_pass_window()
 
     def on_text_hover(event):
         canvas.itemconfig(forgot_pass, fill="green")
@@ -85,10 +98,10 @@ def create_login_window():
         conn.close()
         window.destroy()
 
-    
+    window.title("Login")
     window.geometry("600x400")
     window.configure(bg="#FFE1C6")
-    window.title("Login")
+
     window_width, window_height = 600, 400
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
