@@ -131,7 +131,40 @@ def insert_product(Barcode, Product_Name, Product_Quantity, Product_Price, Produ
 insert_product("012044045893", "Old spice Canyonasdasdasdasdasdasdadsdsaasdsadas", 2, 399.00, "na", 0)
 insert_product('123456789', 'Product A', 100, 19.99, 'Description of Product A', 0)
 
+def print_table_schema(table_name):
+    conn = sqlite3.connect('Trimark_construction_supply.db')
+    cursor = conn.cursor()
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = cursor.fetchall()
+    
+    print(f"Table: {table_name}")
+    print("Column Name\t\tType")
+    print("-" * 30)
+    for column in columns:
+        print(f"{column[1]}\t\t{column[2]}")
+    print()
 
+def print_table_data(table_name):
+    conn = sqlite3.connect('Trimark_construction_supply.db')
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM {table_name} LIMIT 5")  # Limiting to 5 rows for brevity
+    rows = cursor.fetchall()
+    
+    print(f"Table: {table_name}")
+    for row in rows:
+        print(row)
+    print()
+
+if __name__ == "__main__":
+    tables = ['accounts', 'user_logs', 'inventory', 'purchase_history']
+    
+    # Print schema for each table
+    for table in tables:
+        print_table_schema(table)
+    
+    # Print sample data for each table
+    for table in tables:
+        print_table_data(table)
 """insert_account( 'admin', "Chevy Joel", 'Gaiti', 'B', "", '09655431219', 'blk 7, lot 17 UBB', 'chevy023.gaiti@gmail.com', username, password, salt, is_void)"""
 
 
