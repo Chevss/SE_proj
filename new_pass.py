@@ -1,12 +1,12 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Button, PhotoImage, messagebox
+from tkinter import Tk, Canvas, Entry, Button, PhotoImage, messagebox, Checkbutton, BooleanVar
 import re
 import hashlib
 import secrets
 import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Desktop/SE_proj-main/assets/New_pass")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\New_pass")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -41,7 +41,7 @@ def update_password(email, new_password):
     salt = generate_salt()
     hashed_password = hash_password(new_password, salt)
     try:
-        conn = sqlite3.connect('accounts.db')
+        conn = sqlite3.connect('Trimark_construction_supply.db')
         cursor = conn.cursor()
         cursor.execute('UPDATE accounts SET Password = ?, Salt = ? WHERE Email = ?', (hashed_password, salt, email))
         conn.commit()
@@ -168,6 +168,8 @@ def create_new_pass_window(email):
 
         update_password(email, new_password)
         window.destroy()
+        import login
+        login.create_login_window()
 
     button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
     confirm_button = Button(
@@ -201,6 +203,26 @@ def create_new_pass_window(email):
         fill="#FFFFFF",
         font=("Hanuman Regular", 24 * -1)
     )
+    
+    show_password_var = BooleanVar()
+
+    def toggle_password_visibility():
+        if show_password_var.get():
+            new_pass_entry.config(show="")
+            confirm_pass_entry.config(show="")
+        else:
+            new_pass_entry.config(show="•")
+            confirm_pass_entry.config(show="•")
+
+    show_password_checkbox = Checkbutton(
+        window,
+        text="Show Password",
+        variable=show_password_var,
+        bg="#FFE1C6",
+        font=("Hanuman Regular", 10),
+        command=toggle_password_visibility
+    )
+    show_password_checkbox.place(x=119.0, y=299)
 
     window.resizable(False, False)
     window.mainloop()
