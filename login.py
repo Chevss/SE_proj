@@ -4,7 +4,7 @@ import secrets
 import hashlib
 import sqlite3
 
-conn = sqlite3.connect('accounts.db')
+conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
 
 def hash_password(password, salt):
