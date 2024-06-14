@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 import new_pass  # Import the new_pass module where create_new_pass_window is defined
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Desktop/SE_proj-main/assets/Forgot_pass")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Forgot_pass")
 
 
 def relative_to_assets(path: str) -> Path:
