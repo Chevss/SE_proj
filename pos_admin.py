@@ -4,7 +4,7 @@ from tkinter import ttk, Canvas, Entry, Text, Button, PhotoImage, Label, message
 import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"D:\Program Files\Pos_System\build\assets\Pos Admin")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Pos admin")
 
 purchase_list = []
 
@@ -12,7 +12,7 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def connect_db():
-    conn = sqlite3.connect('inventory.db')
+    conn = sqlite3.connect('Trimark_construction_supply.db')
     return conn
 
 def search_barcode(barcode):
@@ -95,8 +95,8 @@ def go_to_window(windows):
         import login
         login.create_login_window()
     elif windows == "inventory":
-        import inventory
-        inventory.create_inventory_window()
+        import inventory_admin
+        inventory_admin.create_inventory_window()
 
 def create_pos_admin_window():
     global window
