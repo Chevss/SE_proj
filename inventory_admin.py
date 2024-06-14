@@ -139,7 +139,7 @@ def create_inventory_window():
     window.geometry("1280x800")
     window.configure(bg="#FFE1C6")
     
-    window.title("Registration")
+    window.title("Inventory")
     window.configure(bg="#FFE1C6")
 
     # Calculate the position for the window to be centered
@@ -278,11 +278,12 @@ def create_inventory_window():
     frame = Frame(window)
     frame.place(x=41, y=176, width=1199, height=482)
     
-    # Create the treeview
+    # Adjust the treeview style
     style = ttk.Style()
     style.configure("Treeview", font=("Hanuman Regular", 16), rowheight=30)
     style.configure("Treeview.Heading", font=("Hanuman Regular", 18, "bold"))
 
+    # Create the treeview
     tree = ttk.Treeview(frame, columns=("Barcode", "Product_Name", "Product_Quantity", "Product_Price", "Product_Description", "Is_Void"), show="headings")
     tree.heading("Barcode", text="Barcode")
     tree.heading("Product_Name", text="Product Name")
@@ -291,17 +292,29 @@ def create_inventory_window():
     tree.heading("Product_Description", text="Description")
     tree.heading("Is_Void", text="Is Void")
 
+    # Set column alignment
+    tree.column("Barcode", anchor="center")
+    tree.column("Product_Name", anchor="center")
+    tree.column("Product_Quantity", anchor="center")
+    tree.column("Product_Price", anchor="center")
+    tree.column("Product_Description", anchor="center")
+    tree.column("Is_Void", anchor="center")
+
+    # Create a scrollbar
+    scrollbar = Scrollbar(frame, orient="vertical", command=tree.yview)
+    tree.configure(yscroll=scrollbar.set)
+    scrollbar.pack(side="right", fill="y")
+
     tree.pack(side="left", fill="both", expand=True)
 
-
-    # Create a vertical scrollbar
-    vsb = Scrollbar(frame, orient="vertical", command=tree.yview)
-    vsb.pack(side="right", fill="y")
-    tree.configure(yscrollcommand=vsb.set)
-
-    # Fetch and insert the inventory data into the treeview
-    for row in fetch_inventory_data():
-        tree.insert('', 'end', values=row)
+    # Fetch data and insert into treeview
+    cursor.execute("SELECT Barcode, Product_Name, Product_Quantity, Product_Price, Product_Description, Is_Void FROM inventory")
+    rows = cursor.fetchall()
+    for row in rows:
+        # Replace Is_Void values
+        modified_row = list(row)
+        modified_row[-1] = "Yes" if row[-1] == 1 else "No"
+        tree.insert("", "end", values=modified_row)
         
     window.resizable(False, False)
     window.mainloop()
