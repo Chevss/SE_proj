@@ -8,12 +8,12 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Database connection
-conn = sqlite3.connect('accounts.db')
+conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/Registration")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Registration")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -294,7 +294,7 @@ def create_registration_window():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: back_to_menu_ad(window),
+        command=lambda: back_to_pos_ad(window),
         relief="flat"
     )
     back_button.place(x=349.0, y=559.0, width=133.0, height=37.0)
@@ -324,10 +324,10 @@ def create_registration_window():
     window.resizable(False, False)
     window.mainloop()
 
-def back_to_menu_ad(window):
+def back_to_pos_ad(window):
     window.destroy()
-    from menu_ad import create_menu_ad_window
-    create_menu_ad_window()
+    from pos_admin import create_pos_admin_window
+    create_pos_admin_window()
 
 def is_valid_name(name):
     return bool(re.match(r'^[a-zA-Z]+$', name))
