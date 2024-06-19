@@ -3,8 +3,10 @@ from pathlib import Path
 import secrets
 import hashlib
 import sqlite3
+import forgot_pass
+from user_logs import log_actions
 
-conn = sqlite3.connect('accounts.db')
+conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
 
 def hash_password(password, salt):
@@ -55,11 +57,14 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         return
 
     else:
+        action = "Logged In"
         salt, stored_hashed_password = get_stored_hashed_password(username)
+        
         if salt and stored_hashed_password:
             hashed_password = hash_password(password, salt)
             if hashed_password == stored_hashed_password:
                 messagebox.showinfo("Success", "Login successful!")
+                log_actions(username, action)
                 window.destroy()
                 return check_loa(get_LOA(username))
             else:
@@ -80,13 +85,13 @@ def create_login_window():
     OUTPUT_PATH = Path(__file__).parent
     # ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\proj\SE_proj\assets\Login")
     # ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/katsu/Documents/GitHub/SE_proj/assets/Login")
-    ASSETS_PATH = OUTPUT_PATH / Path(r"C:/Users/TIPQC/Desktop/SE_proj-main/assets/Login")
+    ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Desktop\se\assets\Login")
 
     def relative_to_assets(path: str) -> Path:
         return ASSETS_PATH / Path(path)
 
     def on_text_click(event):
-        canvas.itemconfig(forgot_pass, fill="red")
+        canvas.itemconfig(forgot_pass, fill="red", command=lambda: ())
 
     def on_text_hover(event):
         canvas.itemconfig(forgot_pass, fill="green")

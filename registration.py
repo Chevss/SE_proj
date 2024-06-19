@@ -1,14 +1,17 @@
 # Libraries
 import hashlib
-import os
+# import os
 import re
 import secrets
 import smtplib
 import sqlite3
+from datetime import datetime
 from email.mime.text import MIMEText
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from database import create_database
+from user_logs import log_actions
+
 
 create_database()
 
@@ -18,7 +21,8 @@ cursor = conn.cursor()
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\katsu\Documents\GitHUb\SE_proj\assets\Registration")
+# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\katsu\Documents\GitHUb\SE_proj\assets\Registration")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Desktop\se\assets\Registration")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -48,12 +52,13 @@ def send_email(email, username, password):
 def save_user(loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, password):
     salt = generate_salt()
     hashed_password = hash_password(password, salt)
+    date_registered = datetime.now()
 
     try:
         cursor.execute('''
-        INSERT INTO accounts (LOA, First_Name, Last_Name, MI, Suffix, Contact_No, Address, Email, Username, Password, Salt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, hashed_password, salt))
+        INSERT INTO accounts (LOA, First_Name, Last_Name, MI, Suffix, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, hashed_password, salt, date_registered))
         conn.commit()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
@@ -110,6 +115,9 @@ def register_user(first_name, mi, last_name, suffix, contact_number, home_addres
 
     save_user(loa, first_name, last_name, mi, suffix, contact_number, home_address, email, username, password)
     send_email(email, username, password)
+
+    log_actions(username, action = "Registered a user.")
+
     messagebox.showinfo("Success", "Registration successful. Your username and temporary password have been sent to your email.")
     return True
 

@@ -2,9 +2,11 @@ from pathlib import Path
 from tkinter import Tk, ttk, Canvas, Entry, messagebox, Button, PhotoImage, Label, Toplevel, Scrollbar, Frame, RIGHT, Y, W, CENTER, NO
 from tkcalendar import DateEntry
 import sqlite3
+from user_logs import log_actions
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main (1)\SE_proj-main\assets\Inventory")
+# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main (1)\SE_proj-main\assets\Inventory")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Desktop\se\assets\Inventory")
 
 conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
@@ -117,6 +119,8 @@ def add_product_window():
     date_entry.place(x=220, y=330)
 
     def save_and_close():
+        username = "temporary"
+        action = "Added new product."
         # Call save_product function
         save_product(
             barcode_entry.get(),
@@ -126,6 +130,7 @@ def add_product_window():
             int(product_quantity_entry.get()),
             date_entry.get_date()  # Get selected date
         )
+        log_actions(username, action)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
         add_window.destroy()  # Close the add window
 

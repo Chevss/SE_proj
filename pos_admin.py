@@ -2,9 +2,11 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, Canvas, Entry, Text, Button, PhotoImage, Label, messagebox
 import sqlite3
+from user_logs import log_actions
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Pos admin")
+# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Pos admin")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Desktop\se\assets\Pos Admin")
 
 purchase_list = []
 
