@@ -6,8 +6,7 @@ import secrets
 import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\New_pass")
-
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\assets\New_pass")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -24,7 +23,6 @@ def hash_password(password, salt):
 def is_valid_password(password):
     if len(password) < 10:
         return False, "Password must be at least 10 characters long"
-
     if not re.search(r'[a-z]', password):
         return False, "Password must contain at least one lowercase letter"
     if not re.search(r'[A-Z]', password):
@@ -52,8 +50,14 @@ def update_password(email, new_password):
         cursor.close()
         conn.close()
 
+def go_to_window(windows):
+        window.destroy()
+        if windows == "Cancel":
+            import login
+            login.create_login_window()
 
 def create_new_pass_window(email):
+    global window
     window = Tk()
     window.title("New Password")
     window.geometry("600x400")
@@ -78,17 +82,11 @@ def create_new_pass_window(email):
     )
     canvas.place(x=0, y=0)
 
-    entry_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
-    entry_bg_1 = canvas.create_image(
-        300.5,
-        205.0,
-        image=entry_image_1
-    )
     confirm_pass_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0,
+        highlightthickness=1,
         font=("Hanuman Regular", 24 * -1),
         show="•"
     )
@@ -99,17 +97,11 @@ def create_new_pass_window(email):
         height=36.0
     )
 
-    entry_image_2 = PhotoImage(file=relative_to_assets("entry_2.png"))
-    entry_bg_2 = canvas.create_image(
-        300.5,
-        132.0,
-        image=entry_image_2
-    )
     new_pass_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0,
+        highlightthickness=1,
         font=("Hanuman Regular", 24 * -1),
         show="•"
     )
@@ -137,21 +129,22 @@ def create_new_pass_window(email):
         fill="#000000",
         font=("Hanuman Regular", 16 * -1)
     )
+    
 
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    back_button = Button(
-        image=button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("back_button clicked"),
-        relief="flat"
+    cancel_button = Button(
+        window,
+        text="Cancel",
+        font=("Hanuman Regular", 16),
+        bg="#FFFFFF",
+        command=lambda:go_to_window("Cancel")
     )
-    back_button.place(
+    cancel_button.place(
         x=415.0,
         y=336.0,
         width=133.0,
         height=37.0
     )
+    
 
     def handle_confirm():
         new_password = new_pass_entry.get()
@@ -171,13 +164,13 @@ def create_new_pass_window(email):
         import login
         login.create_login_window()
 
-    button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
     confirm_button = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=handle_confirm,
-        relief="flat"
+        window,
+        text="Confirm",
+        font=("Hanuman Regular", 16),
+        bg="#FC7373",
+        fg='white',
+        command=lambda:handle_confirm()
     )
     confirm_button.place(
         x=250.0,
@@ -222,7 +215,7 @@ def create_new_pass_window(email):
         font=("Hanuman Regular", 10),
         command=toggle_password_visibility
     )
-    show_password_checkbox.place(x=119.0, y=299)
+    show_password_checkbox.place(x=360.0, y=158.0)
 
     window.resizable(False, False)
     window.mainloop()
