@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 import new_pass  # Import the new_pass module where create_new_pass_window is defined
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\Lorenzo Trinidad\Downloads\SE_proj-main\assets\Forgot_pass")
+ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\assets\Forgot_pass")
 
 
 def relative_to_assets(path: str) -> Path:
@@ -44,7 +44,9 @@ def send_verification_email(to_email, code):
         return False
 
 
+
 def create_forgot_pass_window():
+    global window
     window = Tk()  # Create a new Tkinter window instance
     window.title("Forgot Password")
     window.geometry("600x400")
@@ -71,17 +73,11 @@ def create_forgot_pass_window():
 
     canvas.place(x=0, y=0)
 
-    window.entry_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
-    entry_bg_1 = canvas.create_image(
-        300.5,
-        256.0,
-        image=window.entry_image_1
-    )
     verification_code_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0,
+        highlightthickness=1,
         font=("Hanuman Regular", 24 * -1)
     )
     verification_code_entry.place(
@@ -91,17 +87,12 @@ def create_forgot_pass_window():
         height=36.0
     )
 
-    window.entry_image_2 = PhotoImage(file=relative_to_assets("entry_2.png"))
-    entry_bg_2 = canvas.create_image(
-        300.5,
-        132.0,
-        image=window.entry_image_2
-    )
+
     email_entry = Entry(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0,
+        highlightthickness=1,
         font=("Hanuman Regular", 24 * -1)
     )
     email_entry.place(
@@ -128,16 +119,20 @@ def create_forgot_pass_window():
         fill="#000000",
         font=("Hanuman Regular", 16 * -1)
     )
+    def go_to_window(windows):
+        window.destroy()
+        if windows == "Cancel":
+            import login
+            login.create_login_window()
 
-    window.button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
-    back_button = Button(
-        image=window.button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("back_button clicked"),
-        relief="flat"
+    cancel_button = Button(
+        window,
+        text="Cancel",
+        font=("Hanuman Regular", 16),
+        command=lambda: go_to_window("Cancel"),
+        bg="white"
     )
-    back_button.place(
+    cancel_button.place(
         x=415.0,
         y=336.0,
         width=133.0,
@@ -154,14 +149,15 @@ def create_forgot_pass_window():
         else:
             messagebox.showerror("Error", "Failed to send verification code.")
 
-    window.button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
     send_code_button = Button(
-        image=window.button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=handle_send_code,
-        relief="flat"
+        window,
+        text="Send Code",
+        font=("Hanuman Regular", 16),
+        bg="#FC7373",
+        fg='white',
+        command=handle_send_code
     )
+        
     send_code_button.place(
         x=233.0,
         y=163.0,
@@ -182,13 +178,14 @@ def create_forgot_pass_window():
         else:
             messagebox.showerror("Error", "Invalid verification code.")
 
-    window.button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
+
     verify_button = Button(
-        image=window.button_image_3,
-        borderwidth=0,
-        highlightthickness=0,
-        command=handle_verify_code,
-        relief="flat"
+        window,
+        text="Verify",
+        font=("Hanuman Regular", 16),
+        bg="#FC7373",
+        fg='white',
+        command=handle_verify_code
     )
     verify_button.place(
         x=250.0,
