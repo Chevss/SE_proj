@@ -8,12 +8,13 @@ def create_database():
     # Accounts
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS accounts (
-        Emp_ID INTEGER PRIMARY KEY AUTOINCREMENT, -- Unique employee identifier, auto-incremented
+        Emp_ID INTEGER PRIMARY KEY,               -- Unique employee identifier, auto-incremented
         LOA TEXT NOT NULL,                        -- Level of Access (assuming it's a string)
-        First_Name TEXT NOT NULL,                 -- First name of the employee
-        Last_Name TEXT NOT NULL,                  -- Last name of the employee
+        First_Name TEXT NOT NULL,                 -- First name of the user
+        Last_Name TEXT NOT NULL,                  -- Last name of the user
         MI TEXT,                                  -- Middle initial, optional
         Suffix TEXT,                              -- Suffix, optional
+        Birthdate TEXT NOT NULL,                  -- Birthdate of the user
         Contact_No TEXT NOT NULL,                 -- Contact number
         Address TEXT NOT NULL,                    -- Address
         Email TEXT NOT NULL UNIQUE,               -- Email address, unique to avoid duplicates
@@ -86,7 +87,6 @@ def insert_account( loa, first_name, last_name, mi, suffix, contact_no, address,
     except sqlite3.Error as e:
         print(f"Error inserting data into accounts table: {e}")
 
-
 def insert_product(Barcode, Product_Name, Product_Quantity, Product_Price, Product_Description, Date_Delivered):
     try:
         conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -123,9 +123,9 @@ def insert_product(Barcode, Product_Name, Product_Quantity, Product_Price, Produ
     except sqlite3.Error as e:
         print(f"Error inserting data into inventory table: {e}")
 
-datetm = datetime.now()
+"""datetm = datetime.now()
 insert_product("012045893", "Old spice Canyonas", 2, 399.00, "na", datetm)
-insert_product('123456789', 'Product A', 100, 19.99, 'Description of Product A', datetm)
+inse`rt_product('123456789', 'Product A', 100, 19.99, 'Description of Product A', datetm)"""
 
 def print_table_schema(table_name):
     conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -144,7 +144,7 @@ def print_table_schema(table_name):
 def print_table_data(table_name):
     conn = sqlite3.connect('Trimark_construction_supply.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table_name} LIMIT 5")  # Limiting to 5 rows for brevity
+    cursor.execute(f"SELECT * FROM {table_name}")  # Limiting to 5 rows for brevity
     rows = cursor.fetchall()
     
     print(f"Table: {table_name}")
@@ -154,6 +154,7 @@ def print_table_data(table_name):
     conn.close()
 
 if __name__ == "__main__":
+    create_database()
     tables = ['accounts', 'user_logs', 'inventory', 'purchase_history']
     
     # Print schema for each table
