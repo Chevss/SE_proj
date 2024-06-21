@@ -220,24 +220,21 @@ def add_supply_window():
             # Populate entry fields with existing product details
             product_name_entry.config(state='normal')
             product_name_entry.delete(0, 'end')
-            product_name_entry.insert(0, result[0])
+            product_name_entry.insert(0, result[0])  # Assuming result[0] is product name
             product_name_entry.config(state='disabled')
 
-            product_quantity_entry.config(state='normal')
-            product_quantity_entry.delete(0, 'end')
-            product_quantity_entry.insert(0, result[3])
-            product_quantity_entry.config(state='normal')  # Make quantity editable
-
-            date_entry.config(state='normal')
-            date_entry.delete(0, 'end')
-            date_entry.set_date(result[5])
+            # Fetch additional details from database based on barcode
+            cursor.execute('''
+                SELECT Product_Price, Product_Description
+                FROM inventory
+                WHERE Barcode = ?
+            ''', (barcode,))
+            db_result = cursor.fetchone()
         else:
             messagebox.showerror("Product Not Found", "No product found with the entered barcode.")
 
             # Reset the fields since barcode not found
             product_name_entry.delete(0, 'end')
-            product_quantity_entry.delete(0, 'end')
-            date_entry.set_date('')
 
         # Validate if barcode is unique for adding supply
         if not is_barcode_unique(barcode):
@@ -259,7 +256,7 @@ def add_supply_window():
 
     product_quantity_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
     product_quantity_entry.place(x=220, y=180, width=300)
-    product_quantity_entry.config(state='disabled')
+    product_quantity_entry.config(state='normal')
 
     date_label = Label(add_supply_window, text="Date Delivered:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     date_label.place(x=50, y=230)
@@ -271,37 +268,45 @@ def add_supply_window():
     def save_supply():
         barcode = barcode_entry.get().strip()
         product_name = product_name_entry.get().strip()
-        product_quantity_str = product_quantity_entry.get().strip()
+        product_quantity = int(product_quantity_entry.get())
         date_delivered = date_entry.get_date()
 
-        
-        # Validate and convert product quantity
         try:
-            product_quantity = int(product_quantity_str)
-        except ValueError:
-            messagebox.showerror("Invalid Quantity", "Please enter a valid numeric value for product quantity.")
-            return
+            # Check if the product already exists in products table
+            cursor.execute('SELECT Product_ID FROM products WHERE Barcode = ?', (barcode,))
+            product = cursor.fetchone()
 
-        # Ensure barcode is not empty
-        if not barcode:
-            messagebox.showerror("Missing Barcode", "Please enter a barcode.")
-            return
+            if product:
+                product_id = product[0]
+            else:
+                # Insert new product if not already registered
+                cursor.execute('''
+                    INSERT INTO products (Barcode, Product_Name, Product_Price, Product_Description)
+                    VALUES (?, ?, ?, ?)
+                ''', (barcode, product_name, None, None))  # You may want to allow adding price and description
 
-        # Ensure product name is not empty
-        if not product_name:
-            messagebox.showerror("Missing Product Name", "Please enter a product name.")
-            return
+                # Retrieve the Product_ID of the newly inserted product
+                product_id = cursor.lastrowid
 
-        try:
+            # Insert into inventory table
             cursor.execute('''
-                INSERT INTO inventory (Barcode, Product_Name, Product_Quantity, Date_Delivered)
-                VALUES (?, ?, ?, ?)
-            ''', (barcode, product_name, product_quantity, date_delivered))
+                INSERT INTO inventory (Product_ID, Product_Quantity, Date_Delivered)
+                VALUES (?, ?, ?)
+            ''', (product_id, product_quantity, date_delivered))
             conn.commit()
+
             messagebox.showinfo("Supply Added", "Supply added successfully!")
             add_supply_window.destroy()
+
+            # Reset entry fields after successful insertion
+            barcode_entry.delete(0, END)
+            product_name_entry.delete(0, END)
+            product_quantity_entry.delete(0, END)
+            date_entry.set_date('')
+
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error adding supply: {e}")
+
 
     save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
     save_button.place(x=250, y=330)
@@ -455,6 +460,19 @@ def update_products_window():
 
     update_supply_window.mainloop()
 
+def update_table():
+    # Clear the current table
+    my_tree.delete(*my_tree.get_children())
+
+    # Fetch the latest inventory data
+    data = fetch_inventory_data()
+
+    # Insert the fetched data into the treeview
+    for record in data:
+        modified_row = list(record)
+        modified_row[-1] = "No" if record[-1] == 1 else "Yes"
+        my_tree.insert("", "end", values=modified_row)
+
 def register_product(barcode, product_name, product_price, product_details, date_registered):
     try:
         cursor.execute('''
@@ -463,6 +481,10 @@ def register_product(barcode, product_name, product_price, product_details, date
         ''', (barcode, product_name, product_price, product_details, date_registered))
         conn.commit()
         print("Product added successfully!")
+        
+        # Update the Treeview with the latest data
+        update_table()  # Call the function that fetches and updates the Treeview data
+        
     except sqlite3.Error as e:
         print(f"Error inserting data into inventory table: {e}")
 
@@ -651,6 +673,7 @@ def create_products_window():
     tree_scroll = Scrollbar(tree_frame)
     tree_scroll.pack(side=RIGHT, fill=Y)
 
+    global my_tree
     my_tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set, height=20)
 
     tree_scroll.config(command=my_tree.yview)
