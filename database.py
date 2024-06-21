@@ -8,7 +8,7 @@ def create_database():
     # Accounts
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS accounts (
-        Emp_ID INTEGER PRIMARY KEY,               -- Unique employee identifier, auto-incremented
+        Employee_ID TEXT PRIMARY KEY,             -- Unique employee identifier, auto-incremented
         LOA TEXT NOT NULL,                        -- Level of Access (assuming it's a string)
         First_Name TEXT NOT NULL,                 -- First name of the user
         Last_Name TEXT NOT NULL,                  -- Last name of the user
@@ -70,7 +70,7 @@ def create_database():
     conn.commit()
     conn.close()
 
-def insert_account( loa, first_name, last_name, mi, suffix, contact_no, address, email, username, password, salt, is_void):
+def insert_account(loa, first_name, last_name, mi, suffix, contact_no, address, email, username, password, salt, is_void):
     try:
         conn = sqlite3.connect('accounts.db')
         cursor = conn.cursor()
@@ -134,10 +134,10 @@ def print_table_schema(table_name):
     columns = cursor.fetchall()
     
     print(f"Table: {table_name}")
-    print("Column Name\t\tType")
+    print("Type\t\tColumn Name")
     print("-" * 30)
     for column in columns:
-        print(f"{column[1]}\t\t{column[2]}")
+        print(f"{column[2]}\t\t{column[1]}")
     print()
     conn.close()
 

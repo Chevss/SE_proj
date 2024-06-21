@@ -1,24 +1,23 @@
-from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Button, PhotoImage, messagebox, Checkbutton, BooleanVar
-import re
 import hashlib
+import re
 import secrets
 import sqlite3
+from pathlib import Path
+from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
+from user_logs import log_actions
+
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\assets\New_pass")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\New_pass")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
 def generate_salt():
     return secrets.token_hex(16)
 
-
 def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
-
 
 def is_valid_password(password):
     if len(password) < 10:
@@ -33,7 +32,6 @@ def is_valid_password(password):
         return False, "Password must contain at least one special character"
 
     return True, ""
-
 
 def update_password(email, new_password):
     salt = generate_salt()
@@ -71,81 +69,21 @@ def create_new_pass_window(email):
 
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-    canvas = Canvas(
-        window,
-        bg="#FFE1C6",
-        height=400,
-        width=600,
-        bd=0,
-        highlightthickness=0,
-        relief="ridge"
-    )
+    canvas = Canvas(window, bg="#FFE1C6", height=400, width=600, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    confirm_pass_entry = Entry(
-        bd=0,
-        bg="#FFFFFF",
-        fg="#000716",
-        highlightthickness=1,
-        font=("Hanuman Regular", 24 * -1),
-        show="•"
-    )
-    confirm_pass_entry.place(
-        x=119.0,
-        y=186.0,
-        width=363.0,
-        height=36.0
-    )
+    confirm_pass_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 24 * -1), show="•")
+    confirm_pass_entry.place(x=119.0, y=186.0, width=363.0, height=36.0)
 
-    new_pass_entry = Entry(
-        bd=0,
-        bg="#FFFFFF",
-        fg="#000716",
-        highlightthickness=1,
-        font=("Hanuman Regular", 24 * -1),
-        show="•"
-    )
-    new_pass_entry.place(
-        x=119.0,
-        y=113.0,
-        width=363.0,
-        height=36.0
-    )
+    new_pass_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 24 * -1), show="•")
+    new_pass_entry.place(x=119.0, y=113.0, width=363.0, height=36.0)
 
-    canvas.create_text(
-        119.0,
-        89.0,
-        anchor="nw",
-        text="New Password",
-        fill="#000000",
-        font=("Hanuman Regular", 16 * -1)
-    )
+    canvas.create_text(119.0, 89.0, anchor="nw", text="New Password", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(119.0, 162.0, anchor="nw", text="Confirm New Password", fill="#000000", font=("Hanuman Regular", 16 * -1))
 
-    canvas.create_text(
-        119.0,
-        162.0,
-        anchor="nw",
-        text="Confirm New Password",
-        fill="#000000",
-        font=("Hanuman Regular", 16 * -1)
-    )
+    cancel_button = Button(window, text="Cancel", font=("Hanuman Regular", 16), bg="#FFFFFF", command=lambda:go_to_window("Cancel"))
+    cancel_button.place(x=415.0, y=336.0, width=133.0, height=37.0)
     
-
-    cancel_button = Button(
-        window,
-        text="Cancel",
-        font=("Hanuman Regular", 16),
-        bg="#FFFFFF",
-        command=lambda:go_to_window("Cancel")
-    )
-    cancel_button.place(
-        x=415.0,
-        y=336.0,
-        width=133.0,
-        height=37.0
-    )
-    
-
     def handle_confirm():
         new_password = new_pass_entry.get()
         confirm_password = confirm_pass_entry.get()
@@ -164,38 +102,11 @@ def create_new_pass_window(email):
         import login
         login.create_login_window()
 
-    confirm_button = Button(
-        window,
-        text="Confirm",
-        font=("Hanuman Regular", 16),
-        bg="#FC7373",
-        fg='white',
-        command=lambda:handle_confirm()
-    )
-    confirm_button.place(
-        x=250.0,
-        y=236.0,
-        width=100.0,
-        height=37.0
-    )
+    confirm_button = Button(window, text="Confirm", font=("Hanuman Regular", 16), bg="#FC7373", fg='white', command=lambda:handle_confirm())
+    confirm_button.place(x=250.0, y=236.0, width=100.0, height=37.0)
 
-    canvas.create_rectangle(
-        179.0,
-        20.0,
-        420.0,
-        76.0,
-        fill="#FB7373",
-        outline=""
-    )
-
-    canvas.create_text(
-        220.0,
-        35.0,
-        anchor="nw",
-        text="New Password",
-        fill="#FFFFFF",
-        font=("Hanuman Regular", 24 * -1)
-    )
+    canvas.create_rectangle(179.0, 20.0, 420.0, 76.0, fill="#FB7373", outline="")
+    canvas.create_text(220.0, 35.0, anchor="nw", text="New Password", fill="#FFFFFF", font=("Hanuman Regular", 24 * -1))
     
     show_password_var = BooleanVar()
 
@@ -219,9 +130,6 @@ def create_new_pass_window(email):
 
     window.resizable(False, False)
     window.mainloop()
-
-
-
 
 if __name__ == "__main__":
     create_new_pass_window("user@example.com")

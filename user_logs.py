@@ -1,5 +1,8 @@
 import sqlite3
 from datetime import datetime
+from database import create_database
+
+create_database()
 
 def log_actions(username, action):
     conn = sqlite3.connect('Trimark_construction_supply.db')

@@ -1,6 +1,5 @@
 # Libraries
 import hashlib
-# import os
 import re
 import secrets
 import smtplib
@@ -9,12 +8,8 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
-from database import create_database
-from user_logs import log_actions
 from tkcalendar import DateEntry
-
-
-create_database()
+from user_logs import log_actions
 
 # Database connection
 conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -22,9 +17,7 @@ cursor = conn.cursor()
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
-# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\katsu\Documents\GitHUb\SE_proj\assets\Registration")
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\assets\Registration")
-
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Registration")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -37,9 +30,9 @@ def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
 # Send email containing the generated username from registration inputs and random generated password.
-def send_email(email, username, password):
+def send_email(email, username, password, employee_id):
     try:
-        msg = MIMEText(f"Your username is: {username}\nYour temporary password is: {password}")
+        msg = MIMEText(f"Your username is: {username}\nYour temporary password is: {password}\nYour Employee ID is: {employee_id}")
         msg['Subject'] = 'Registration Details'
         msg['From'] = 'trimarkcstest@outlook.com'
         msg['To'] = email
@@ -52,29 +45,49 @@ def send_email(email, username, password):
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
 
-def get_next_id():
-    cursor.execute("SELECT last_id FROM id_tracker WHERE id_name = 'Emp_ID'")
-    last_id = cursor.fetchone()[0]
-    next_id = last_id + 1
-    cursor.execute("UPDATE id_tracker SET last_id = ? WHERE id_name = 'Emp_ID'", (next_id,))
-    conn.commit()
-    return next_id
-
 # Store the registered employee or admin to the database.
 def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password):
-    emp_id = get_next_id()  # Get the next Emp_ID
     salt = generate_salt()
     hashed_password = hash_password(password, salt)
     date_registered = datetime.now()
 
     try:
+        employee_id = generate_employee_id(loa)
+
         cursor.execute('''
-        INSERT INTO accounts (Emp_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
+        INSERT INTO accounts (Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (emp_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
+        ''', (employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
         conn.commit()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
+        conn.rollback()
+
+# Generate employee ID like how TIP does but with modification.
+def generate_employee_id(loa):
+    # Get the current year
+    current_year = datetime.now().year
+    # Get the initial character based on level of access
+    initial_char = 'A' if loa == 'admin' else 'E'
+    
+    try:
+        # Fetch the last used counter for this year and level of access
+        cursor.execute("SELECT MAX(Employee_ID) FROM accounts WHERE Employee_ID LIKE ?", (f"{current_year}{initial_char}%",))
+        last_used_id = cursor.fetchone()[0]
+        
+        if last_used_id:
+            # Extract the counter part and increment
+            counter = int(last_used_id[-2:]) + 1
+        else:
+            # If no previous IDs exist for this year and level of access, start with 01
+            counter = 1
+        
+        # Format the employee ID
+        employee_id = f"{current_year}{initial_char}{counter:02}"
+        
+        return employee_id
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to generate Employee ID: {str(e)}")
         conn.rollback()
 
 # Generate username like how TIP does but not exactly.
@@ -132,11 +145,12 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
     password = secrets.token_urlsafe(10)
 
     save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password)
-    send_email(email, username, password)
+    employee_id = generate_employee_id(loa)
+    send_email(email, username, password, employee_id)
 
     log_actions(username, action = "Registered a user.")
 
-    messagebox.showinfo("Success", "Registration successful. Your username and temporary password have been sent to your email.")
+    messagebox.showinfo("Success", "Registration successful. Your username, temporary password, and Employee ID have been sent to your email.")
     return True
 
 # Functions to check if the inputs are valid.
@@ -197,10 +211,14 @@ def create_registration_window():
     # First name
     first_name_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
     first_name_entry.place(x=119.0, y=125.0, width=307.0, height=36.0)
-    
+
     def capitalize_mi(event):
-        mi_entry.delete(0, 'end')
-        mi_entry.insert(0, event.widget.get().upper())
+        event.widget.after(0, lambda: update_entry(event.widget))
+
+    def update_entry(widget):
+        text = widget.get()
+        widget.delete(0, 'end')
+        widget.insert(0, text.upper())
 
     # Middle initial    
     mi_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
@@ -276,7 +294,7 @@ def create_registration_window():
         text="Register",
         font=("Hanuman Regular", 16),
         bg="#FC7373",
-        fg= "#FFFFFF",
+        fg="#FFFFFF",
         command=lambda: attempt_registration() 
     )
     register_button.place(x=119.0, y=609.0, width=133.0, height=37.0)
@@ -297,9 +315,6 @@ def create_registration_window():
 
     window.resizable(False, False)
     window.mainloop()
-
-
-
 
 # Run main
 if __name__ == "__main__":
