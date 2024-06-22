@@ -147,14 +147,29 @@ def register_product_window():
     create_barcode_button.place(x=315, y=118, width=120)
 
     def save_and_close():
+        # Retrieve values from entry fields
         barcode = barcode_entry.get()
         product_name = product_name_entry.get()
-        product_price = float(product_price_entry.get())
+        product_price_str = product_price_entry.get()
         product_details = product_details_entry.get()
 
+        # Check if any entry field is empty
+        if not barcode or not product_name or not product_price_str:
+            messagebox.showerror("Incomplete Information", "Please fill in Barcode, Product name, and Product price.")
+            return
+
+        # Convert product price to float (assuming it's a valid number)
+        try:
+            product_price = float(product_price_str)
+        except ValueError:
+            messagebox.showerror("Invalid Price", "Please enter a valid product price.")
+            return
+
+        # Register the product and show success message
         register_product(barcode, product_name, product_price, product_details)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
         
+        # Update table and close the window
         update_table()
         register_product_window.destroy()
 
@@ -394,7 +409,28 @@ def update_table():
 
     # Insert fetched data into Treeview with correct order
     for item in data:
-        my_tree.insert('', 'end', values=item)
+        barcode = item[0]
+        name = item[1]
+        price = item[2]
+        quantity = item[3]
+        details = item[4]
+        date_delivered = item[6]
+        supplier = item[7]
+        
+        # Determine status based on quantity
+        if quantity == 0:
+            status = "Unavailable"
+        else:
+            status = "Available"
+
+        # Insert the item into the Treeview
+        item_id = my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
+
+        # Configure text color for Status column cell based on status
+        if status == "Unavailable":
+            my_tree.item(item_id, tags=('red',))
+        else:
+            my_tree.item(item_id, tags=('green',))
 
 def sort_treeview(column, descending):
     # Fetch all items from the Treeview
@@ -462,7 +498,7 @@ def create_products_window():
     search_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24))
     search_entry.place(x=41.0, y=92.0, width=300, height=47)
 
-    def on_search():
+    def on_search(event):
         keyword = search_entry.get()
         rows = search_inventory(keyword)
         my_tree.delete(*my_tree.get_children())
@@ -471,7 +507,7 @@ def create_products_window():
 
     search_button = Button(window, text="Search", command=on_search, font=("Hanuman Regular", 16), bg="#FFE1C6")
     search_button.place(x=350, y=92, width=100, height=47)
-
+    search_entry.bind("<Return>", on_search)
     canvas.create_text(41.0, 50.0, anchor="nw", text="Search Product", fill="#000000", font=("Hanuman Regular", 28))
 
     # Create a style for the Treeview
@@ -482,8 +518,6 @@ def create_products_window():
     # Create a style for the Treeview heading
     style.configure("Treeview.Heading", font=("Hanuman Regular", 14))
 
-    # Create a style for the Treeview rows (customized with borders)
-    style.configure("Custom.Treeview", highlightthickness=1, bd=1, relief="solid")
 
     # Create Treeview widget
     global my_tree
@@ -518,7 +552,7 @@ def create_products_window():
 
     # Create vertical scrollbar
     vsb = Scrollbar(window, orient="vertical", command=my_tree.yview)
-    vsb.place(x=1240, y=176, height=482)  # Adjusted height to match the Treeview height
+    vsb.place(x=1240, y=176, height=482 + 20)  # Adjusted height to match the Treeview height
 
     # Configure Treeview to use vertical scrollbar
     my_tree.configure(yscrollcommand=vsb.set)

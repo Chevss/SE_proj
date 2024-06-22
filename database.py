@@ -39,17 +39,27 @@ def create_database():
         )
     ''')
     
+    # Products
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS product (
+        Barcode TEXT PRIMARY KEY,
+        Name VARCHAR(255) NOT NULL,
+        Price DECIMAL(10, 2) NOT NULL,
+        Details TEXT,
+        Status TEXT DEFAULT 'Unavailable' CHECK(Status IN ('Available', 'Unavailable')) NOT NULL
+    );
+    ''')
+
     # Inventory
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
-        Barcode TEXT PRIMARY KEY,                -- Unique barcode identifier for each product
-        Product_Name TEXT NOT NULL,              -- Name of the product
-        Product_Quantity INTEGER NOT NULL,       -- Quantity of the product in stock
-        Product_Price REAL NOT NULL,             -- Price of the product
-        Product_Description TEXT,                -- Description of the product
-        Date_Delivered TIMESTAMP NOT NULL,
-        Is_Void INTEGER NOT NULL DEFAULT 0       -- Is void flag, 0 for active, 1 for inactive
-        )
+        InventoryID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Barcode TEXT,
+        Quantity INT NOT NULL,
+        DateDelivered DATE NOT NULL,
+        Supplier VARCHAR(255),
+        FOREIGN KEY (Barcode) REFERENCES product(Barcode) ON DELETE CASCADE
+    );
     ''')
     
     # Purchase History
@@ -155,41 +165,13 @@ def print_table_data(table_name):
 
 if __name__ == "__main__":
     create_database()
-    tables = ['accounts', 'user_logs', 'inventory', 'purchase_history']
+    tables = ['accounts', 'user_logs', 'product', 'purchase_history', 'inventory' ]
     
-    # Print schema for each table
+    """# Print schema for each table
     for table in tables:
-        print_table_schema(table)
+        print_table_schema(table)"""
     
     # Print sample data for each table
     for table in tables:
         print_table_data(table)
-
-
-
-"""insert_account( 'admin', "Chevy Joel", 'Gaiti', 'B', "", '09655431219', 'blk 7, lot 17 UBB', 'chevy023.gaiti@gmail.com', username, password, salt, is_void)"""
-
-
-
-"""cursor.execute(
-    '''CREATE TRIGGER calculate_total_price
-        BEFORE INSERT ON purchase_history
-        FOR EACH ROW
-        BEGIN
-            SET NEW.Total_Price = NEW.Product_Price * NEW.Purchase_Quantity;
-        END'''
-)
-conn.commit()
-
-cursor.execute(
-    '''CREATE TRIGGER calculate_change
-        BEFORE INSERT ON purchase_history
-        FOR EACH ROW
-        BEGIN
-            SET NEW.Change = NEW.Amount_Given - NEW.Total_Price;
-        END'''
-)
-conn.commit()
-"""
-
 
