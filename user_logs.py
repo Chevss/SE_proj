@@ -40,7 +40,7 @@ def fetch_user_logs_data():
 
 def print_inventory(rows):
     for row in rows:
-        print(f"Log ID: {row[0]}, Username: {row[1]}, Action: {row[2]}, Timestamp: {row[3]}")
+        print(f"Log ID: {row[0]}, Employee ID: {row[1]}, Username: {row[2]}, Action: {row[3]}, Timestamp: {row[4]}")
 
 # Fetch all data from the inventory table
 inventory_data = fetch_user_logs_data()
