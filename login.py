@@ -10,6 +10,13 @@ from user_logs import log_actions
 conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
 
+OUTPUT_PATH = Path(__file__).parent
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Login")
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+
 def hash_password(password, salt):
     salted_password = password + salt
     return hashlib.sha256(salted_password.encode()).hexdigest()
@@ -76,12 +83,6 @@ def create_login_window():
     window.geometry("600x400")
     window.configure(bg="#FFE1C6")
     
-    OUTPUT_PATH = Path(__file__).parent
-    ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Login")
-
-    def relative_to_assets(path: str) -> Path:
-        return ASSETS_PATH / Path(path)
-
     def exit():
         conn.close()
         window.destroy()

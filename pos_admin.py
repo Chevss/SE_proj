@@ -1,9 +1,13 @@
+import hashlib
+import secrets
 import sqlite3
 import tkinter as tk
 from pathlib import Path
-from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, ttk
+from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
 
 import shared_state
+from new_pass import is_valid_password
+from registration import is_valid_contact_number, is_valid_email, is_valid_name
 from user_logs import log_actions
 
 # Define the path to your assets folder
@@ -16,6 +20,12 @@ purchase_list = []
 def relative_to_assets(path: str) -> Path:
     """Returns the absolute path to an asset relative to ASSETS_PATH."""
     return ASSETS_PATH / Path(path)
+
+def generate_salt():
+    return secrets.token_hex(16)
+
+def hash_password(password, salt):
+    return hashlib.sha256((password + salt).encode()).hexdigest()
 
 def connect_db():
     """Connects to the SQLite database."""
@@ -103,7 +113,7 @@ def go_to_window(window_type):
         registration.create_registration_window()
 
 def create_pos_admin_window():
-    """Creates and configures the POS admin window."""
+    # Creates and configures the POS admin window.
     global window
     window = tk.Tk()
     window.geometry("1280x800")
@@ -275,8 +285,200 @@ def create_pos_admin_window():
         font=("Hanuman Regular", 20 * -1)
     )
 
+
+
+
+    def show_hamburger_menu():
+        """Shows the hamburger menu with options."""
+        menu = tk.Menu(window, tearoff=0)
+        menu_items = [
+            ("Change First Name", "first_name"),
+            ("Change Last Name", "last_name"),
+            ("Change Password", "password"),
+            ("Change Email", "email"),
+            ("Change Phone Number", "phone_number")
+        ]
+
+        for label, command_name in menu_items:
+            menu.add_command(label=label, command=lambda cmd=command_name: perform_action(cmd))
+
+        # Calculate position for the menu
+        x_coord = hamburger_button.winfo_rootx()
+        y_coord = hamburger_button.winfo_rooty() + hamburger_button.winfo_height()
+        menu.tk_popup(x_coord, y_coord)
+
+    def perform_action(command_name):
+        """Performs the appropriate action based on the command_name."""
+        if shared_state.current_user:
+            username = shared_state.current_user  # Assuming current_user stores the username
+            employee_id = get_employee_id(username) # Fetch the Employee_ID using the username
+
+            if command_name == "first_name":
+                new_first_name = simpledialog.askstring("Change First Name", "Enter new first name:")
+                if new_first_name:
+                    if is_valid_name(new_first_name):
+                        update_first_name(employee_id, new_first_name)
+                    else:
+                        messagebox.showerror("Error", "Invalid first name format")
+
+            elif command_name == "last_name":
+                new_last_name = simpledialog.askstring("Change Last Name", "Enter new last name:")
+                if new_last_name:
+                    if is_valid_name(new_last_name):
+                        update_last_name(employee_id, new_last_name)
+                    else:
+                        messagebox.showerror("Error", "Invalid last name format")
+
+            elif command_name == "password":
+                new_password = simpledialog.askstring("Change Password", "Enter new password:")
+                if new_password:
+                    valid, message = is_valid_password(new_password)
+                    if valid:
+                        repeat_password = simpledialog.askstring("Change Password", "Repeat new password:")
+                        if new_password == repeat_password:
+                            salt = generate_salt()
+                            hashed_password = hash_password(new_password, salt)
+                            update_password(employee_id, hashed_password, salt)
+                        else:
+                            messagebox.showerror("Error", "Passwords do not match")
+                    else:
+                        messagebox.showerror("Error", message)
+
+            elif command_name == "email":
+                new_email = simpledialog.askstring("Change Email", "Enter new email:")
+                if new_email:
+                    valid, message = is_valid_email(new_email)
+                    if valid:
+                        unique, unique_message = check_email_uniqueness(new_email, current_email=username)
+                        if unique:
+                            update_email(employee_id, new_email)
+                        else:
+                            messagebox.showerror("Error", unique_message)
+                    else:
+                        messagebox.showerror("Error", message)
+
+            elif command_name == "phone_number":
+                new_phone_number = simpledialog.askstring("Change Phone Number", "Enter new phone number:")
+                if new_phone_number:
+                    valid = is_valid_contact_number(new_phone_number)
+                    if valid:
+                        update_phone_number(employee_id, new_phone_number)
+                    else:
+                        messagebox.showerror("Error", "Invalid contact number format")
+        else:
+            messagebox.showerror("Error", "No user logged in")
+
+    # Hamburger menu icon
+    hamburger_icon = PhotoImage(file=relative_to_assets("hamburger.png"))
+    hamburger_icon_resized = hamburger_icon.subsample(6, 6)
+    hamburger_button = Button(window, image=hamburger_icon_resized, borderwidth=0, highlightthickness=0, command=show_hamburger_menu, relief="flat")
+    hamburger_button.image = hamburger_icon  # Keep a reference to the image to prevent garbage collection
+    hamburger_button.place(x=110, y=15)
+
     window.resizable(False, False)
     window.mainloop()
+
+def get_employee_id(username):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+        # Execute a SELECT query to fetch Employee_ID based on the Username
+        cursor.execute("SELECT Employee_ID FROM accounts WHERE Username = ?", (username,))
+        employee_id = cursor.fetchone()  # Fetch the first row
+
+        if employee_id:
+            return employee_id[0]  # Return the Employee_ID (assuming it's the first column in the result)
+        else:
+            return None  # Return None if no employee ID found for the given username
+
+    except sqlite3.Error as e:
+        print(f"Error fetching employee ID: {e}")
+        return None
+
+    finally:
+        conn.close()
+
+def check_email_uniqueness(email, current_email=None):
+    """Check if the email is unique among existing emails in the database."""
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Fetch existing emails from the database
+    cursor.execute("SELECT Email FROM accounts")
+    existing_emails = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    if email in existing_emails and email != current_email:
+        return False, "Email already in use"
+    return True, ""
+
+def update_first_name(employee_id, new_first_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE accounts SET First_Name = ? WHERE Employee_ID = ?", (new_first_name, employee_id))
+        conn.commit()
+        messagebox.showinfo("Success", "First Name updated successfully")
+    except sqlite3.Error as e:
+        conn.rollback()
+        messagebox.showerror("Error", f"Error updating First Name: {e}")
+    finally:
+        conn.close()
+
+def update_last_name(employee_id, new_last_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE accounts SET Last_Name = ? WHERE Employee_ID = ?", (new_last_name, employee_id))
+        conn.commit()
+        messagebox.showinfo("Success", "Last Name updated successfully")
+    except sqlite3.Error as e:
+        conn.rollback()
+        messagebox.showerror("Error", f"Error updating Last Name: {e}")
+    finally:
+        conn.close()
+
+def update_password(employee_id, new_password, salt):
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE accounts SET Password = ?, Salt = ? WHERE Employee_ID = ?", (new_password, salt, employee_id))
+        conn.commit()
+        messagebox.showinfo("Success", "Password updated successfully")
+    except sqlite3.Error as e:
+        conn.rollback()
+        messagebox.showerror("Error", f"Error updating Password: {e}")
+    finally:
+        conn.close()
+
+def update_email(employee_id, new_email):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("UPDATE accounts SET Email = ? WHERE Employee_ID = ?", (new_email, employee_id))
+        conn.commit()
+        messagebox.showinfo("Success", "Email updated successfully")
+    except sqlite3.Error as e:
+        conn.rollback()
+        messagebox.showerror("Error", f"Error updating Email: {e}")
+    finally:
+        conn.close()
+
+def update_phone_number(employee_id, new_phone_number):
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE accounts SET Contact_No = ? WHERE Employee_ID = ?", (new_phone_number, employee_id))
+        conn.commit()
+        messagebox.showinfo("Success", "Phone Number updated successfully")
+    except sqlite3.Error as e:
+        conn.rollback()
+        messagebox.showerror("Error", f"Error updating Phone Number: {e}")
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     create_pos_admin_window()
