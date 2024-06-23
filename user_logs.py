@@ -8,9 +8,23 @@ def log_actions(username, action):
     conn = sqlite3.connect('Trimark_construction_supply.db')
     cursor = conn.cursor()
 
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute('INSERT INTO user_logs (username, action, timestamp) VALUES (?, ?, ?)', (username, action, timestamp))
+    # Fetch the Employee_ID based on the username
+    cursor.execute('SELECT Employee_ID FROM accounts WHERE Username = ?', (username,))
+    row = cursor.fetchone()
+    if row:
+        employee_id = row[0]
+    else:
+        # Handle the case where the username does not exist in the accounts table
+        print(f"Username {username} not found in accounts table.")
+        conn.close()
+        return
 
+
+    # Insert the log entry with Employee_ID
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute('INSERT INTO user_logs (Employee_ID, Username, action, timestamp) VALUES (?, ?, ?, ?)', 
+                   (employee_id, username, action, timestamp))
+    
     conn.commit()
     conn.close()
 

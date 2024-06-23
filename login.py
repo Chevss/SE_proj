@@ -3,12 +3,12 @@ import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 
+import shared_state
 from user_logs import log_actions
 
 # Global variables
 conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
-current_user = None
 
 def hash_password(password, salt):
     salted_password = password + salt
@@ -59,7 +59,7 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         if hashed_password == stored_hashed_password:
             messagebox.showinfo("Success", "Login successful!")
             log_actions(username, "Logged In")
-            current_user = username
+            shared_state.current_user = username
             window.destroy()
             check_loa(get_LOA(username))
         else:

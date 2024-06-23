@@ -9,6 +9,8 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from tkcalendar import DateEntry
+
+import shared_state
 from user_logs import log_actions
 
 # Database connection
@@ -30,9 +32,9 @@ def hash_password(password, salt):
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
 # Send email containing the generated username from registration inputs and random generated password.
-def send_email(email, username, password, employee_id):
+def send_email(email, employee_id, username, password):
     try:
-        msg = MIMEText(f"Your username is: {username}\nYour temporary password is: {password}\nYour Employee ID is: {employee_id}")
+        msg = MIMEText(f"Your Employee ID is: {employee_id}\nYour username is: {username}\nYour temporary password is: {password}")
         msg['Subject'] = 'Registration Details'
         msg['From'] = 'trimarkcstest@outlook.com'
         msg['To'] = email
@@ -146,9 +148,9 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
 
     save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password)
     employee_id = generate_employee_id(loa)
-    send_email(email, username, password, employee_id)
+    send_email(email, employee_id, username, password)
 
-    log_actions(username, action = "Registered a user.")
+    log_actions(shared_state.current_user, action = "Registered a user.")
 
     messagebox.showinfo("Success", "Registration successful. Your username, temporary password, and Employee ID have been sent to your email.")
     return True

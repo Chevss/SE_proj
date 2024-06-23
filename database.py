@@ -31,11 +31,11 @@ def create_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_logs (
         log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        --Employee_id INTEGER NOT NULL,
+        Employee_ID TEXT NOT NULL,
         Username TEXT NOT NULL,
         action TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
-        --FOREIGN KEY (Employee_id) REFERENCES accounts (Emp_ID)
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        FOREIGN KEY (Employee_ID) REFERENCES accounts (Employee_ID)
         )
     ''')
     
@@ -80,16 +80,56 @@ def create_database():
     conn.commit()
     conn.close()
 
-def insert_account(loa, first_name, last_name, mi, suffix, contact_no, address, email, username, password, salt, is_void):
+
+def print_table_schema(table_name):
+    conn = sqlite3.connect('Trimark_construction_supply.db')
+    cursor = conn.cursor()
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = cursor.fetchall()
+    
+    print(f"Table: {table_name}")
+    print("Type\t\tColumn Name")
+    print("-" * 30)
+    for column in columns:
+        print(f"{column[2]}\t\t{column[1]}")
+    print()
+    conn.close()
+
+def print_table_data(table_name):
+    conn = sqlite3.connect('Trimark_construction_supply.db')
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM {table_name}")  # Limiting to 5 rows for brevity
+    rows = cursor.fetchall()
+    
+    print(f"Table: {table_name}")
+    for row in rows:
+        print(row)
+    print()
+    conn.close()
+
+if __name__ == "__main__":
+    create_database()
+    tables = ['accounts', 'user_logs', 'product', 'purchase_history', 'inventory' ]
+    
+    """# Print schema for each table
+    for table in tables:
+        print_table_schema(table)"""
+    
+    # Print sample data for each table
+    for table in tables:
+        print_table_data(table)
+
+
+def insert_account(employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_no, address, email, username, password, salt, date_registered):
     try:
-        conn = sqlite3.connect('accounts.db')
+        conn = sqlite3.connect('Trimark_construction_supply.db')
         cursor = conn.cursor()
 
         # Insert data into accounts table
         cursor.execute('''
-            INSERT INTO accounts (LOA, "First_Name", "Last_Name", "MI", Suffix, "Contact_No", Address, Email, Username, Password, Salt, "is_void")
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (loa, first_name, last_name, mi, suffix, contact_no, address, email, username, password, salt, is_void))
+            INSERT INTO accounts (Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_no, address, email, username, password, salt, date_registered))
         # Commit the transaction and close the connection
         conn.commit()
         conn.close()
@@ -132,46 +172,3 @@ def insert_product(Barcode, Product_Name, Product_Quantity, Product_Price, Produ
     
     except sqlite3.Error as e:
         print(f"Error inserting data into inventory table: {e}")
-
-"""datetm = datetime.now()
-insert_product("012045893", "Old spice Canyonas", 2, 399.00, "na", datetm)
-inse`rt_product('123456789', 'Product A', 100, 19.99, 'Description of Product A', datetm)"""
-
-def print_table_schema(table_name):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute(f"PRAGMA table_info({table_name})")
-    columns = cursor.fetchall()
-    
-    print(f"Table: {table_name}")
-    print("Type\t\tColumn Name")
-    print("-" * 30)
-    for column in columns:
-        print(f"{column[2]}\t\t{column[1]}")
-    print()
-    conn.close()
-
-def print_table_data(table_name):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table_name}")  # Limiting to 5 rows for brevity
-    rows = cursor.fetchall()
-    
-    print(f"Table: {table_name}")
-    for row in rows:
-        print(row)
-    print()
-    conn.close()
-
-if __name__ == "__main__":
-    create_database()
-    tables = ['accounts', 'user_logs', 'product', 'purchase_history', 'inventory' ]
-    
-    """# Print schema for each table
-    for table in tables:
-        print_table_schema(table)"""
-    
-    # Print sample data for each table
-    for table in tables:
-        print_table_data(table)
-

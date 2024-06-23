@@ -1,7 +1,10 @@
-from pathlib import Path
-import tkinter as tk
-from tkinter import ttk, Canvas, Entry, Button, PhotoImage, Label, messagebox
 import sqlite3
+import tkinter as tk
+from pathlib import Path
+from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, ttk
+
+import shared_state
+from user_logs import log_actions
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
@@ -88,6 +91,8 @@ def go_to_window(window_type):
     """Destroys the current window and opens another window based on window_type."""
     window.destroy()
     if window_type == "logout":
+        log_actions(shared_state.current_user, "Logged Out")
+        shared_state.current_user = None
         import login
         login.create_login_window()
     elif window_type == "inventory":
