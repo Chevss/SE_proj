@@ -4,7 +4,7 @@ from tkcalendar import DateEntry
 import sqlite3
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Downloads\SE_proj-main\assets\Inventory")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
 
 conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()

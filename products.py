@@ -10,7 +10,7 @@ import io
 import random
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\Github\SE_proj\assets\Inventory")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
 
 try:
     conn = sqlite3.connect('Trimark_construction_supply.db')

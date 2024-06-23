@@ -5,7 +5,7 @@ import sqlite3
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main\assets\Pos Admin")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Pos Admin")
 
 # Initialize an empty list to store purchased items
 purchase_list = []

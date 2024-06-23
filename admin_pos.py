@@ -5,7 +5,7 @@ import sqlite3
 import datetime
 
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Downloads\SE_proj-main\assets\Pos Admin")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Pos Admin")
 
 purchase_list = []
 

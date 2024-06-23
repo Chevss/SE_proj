@@ -5,8 +5,7 @@ import sqlite3
 from user_logs import log_actions
 
 OUTPUT_PATH = Path(__file__).parent
-# ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\chevy_9ljzuod\Downloads\SE_proj-main (1)\SE_proj-main\assets\Inventory")
-ASSETS_PATH = OUTPUT_PATH / Path(r"C:\Users\TIPQC\Desktop\se\assets\Inventory")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
 
 conn = sqlite3.connect('Trimark_construction_supply.db')
 cursor = conn.cursor()
