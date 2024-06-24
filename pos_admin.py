@@ -17,7 +17,7 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Pos Admin")
 
 # Initialize an empty list to store purchased items
 purchase_list = []
-
+void_list= []
 def relative_to_assets(path: str) -> Path:
     """Returns the absolute path to an asset relative to ASSETS_PATH."""
     return ASSETS_PATH / Path(path)
@@ -256,14 +256,13 @@ def create_pos_admin_window():
     )
     maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
-    void_list = []
-
     # Void button function
     def void_items():
-        nonlocal void_list  # Access void_list from the outer scope
+        void_list  # Access void_list from the outer scope
 
         # Move items from purchase_list to void_list
         void_list.extend(purchase_list)
+        print(void_list)
         purchase_list.clear()
 
         # Update display of products being purchased and total label
