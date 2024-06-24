@@ -5,9 +5,6 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
 import win32print
-import win32api
-import os
-
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
@@ -259,10 +256,25 @@ def create_pos_admin_window():
     )
     maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
+    void_list = []
+
+    # Void button function
+    def void_items():
+        nonlocal void_list  # Access void_list from the outer scope
+
+        # Move items from purchase_list to void_list
+        void_list.extend(purchase_list)
+        purchase_list.clear()
+
+        # Update display of products being purchased and total label
+        update_purchase_display()
+        update_total_label()
+
+    # Void button
     void_button = Button(
         text="Void",
         font=("Hanuman Regular", 20),
-        command=lambda: print("Void"),
+        command=void_items,  # Call void_items function when button is clicked
         bg="#FF9E9E",
         relief="raised"
     )
@@ -629,9 +641,9 @@ def update_inventory(purchase_list):
 def create_receipt(customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-Name: Trimark Construction Supply
-Address: [Insert Shop Address]
-Contact: [Insert Shop Contact Number]
+Shop Name: Trimark Construction Supply
+Shop Address: [Insert Shop Address]
+Shop Contact: [Insert Shop Contact Number]
 Cashier: [Insert Cashier Name]
 Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 --------------------------------
