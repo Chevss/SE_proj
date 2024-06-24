@@ -9,13 +9,8 @@ from PIL import Image, ImageTk
 import io
 import random
 
-import shared_state
-from user_logs import log_actions
-
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
-
-username = shared_state.current_user
 
 try:
     conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -29,13 +24,21 @@ def relative_to_assets(path: str) -> Path:
 # Global variable to keep track of sorting order
 SORT_ORDER = {}
 
-def fetch_inventory_data():
+def fetch_inventory_data(show_individual=True):
     try:
-        cursor.execute("""
-        SELECT i.Barcode, p.Name, p.Price, i.Quantity, p.Details, p.Status, i.DateDelivered, i.Supplier 
-        FROM inventory i
-        JOIN product p ON i.Barcode = p.Barcode
-        """)
+        if show_individual:
+            cursor.execute("""
+            SELECT i.Barcode, p.Name, p.Price, i.Quantity, p.Details, p.Status, i.DateDelivered, i.Supplier 
+            FROM inventory i
+            JOIN product p ON i.Barcode = p.Barcode
+            """)
+        else:
+            cursor.execute("""
+            SELECT p.Barcode, p.Name, p.Price, SUM(i.Quantity) AS TotalQuantity, p.Details, p.Status, MIN(i.DateDelivered) AS OldestDateDelivered, i.Supplier 
+            FROM inventory i
+            JOIN product p ON i.Barcode = p.Barcode
+            GROUP BY p.Barcode
+            """)
         return cursor.fetchall()
     except sqlite3.Error as e:
         print(f"Error fetching data: {e}")
@@ -173,9 +176,6 @@ def register_product_window():
         # Register the product and show success message
         register_product(barcode, product_name, product_price, product_details)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
-        # Log action
-        action = "Registered a product: " + product_name + ", " + product_details + ", (PHP " + str(product_price_str) + ")"
-        log_actions(username, action)
         
         # Update table and close the window
         update_table()
@@ -279,10 +279,6 @@ def add_supply_window():
             conn.commit()
 
             messagebox.showinfo("Supply Added", "Supply added successfully!")
-            # Log action
-            action = "Added " + str(product_quantity) + " to the product " + barcode + " from " + supplier + "."
-            log_actions(username, action)
-
             add_supply_window.destroy()
             update_table()
 
@@ -395,10 +391,6 @@ def update_products_window():
             conn.commit()
 
             messagebox.showinfo("Supply Updated", "Supply updated successfully!")
-            # Log action
-            action = "Updated " + barcode + " to " + product_name + ", " + product_details + ". (PHP " + str(product_price) + ") Now " + product_status + "."
-            log_actions(username, action)
-
             update_supply_window.destroy()
             update_table()
 
@@ -415,9 +407,9 @@ def update_products_window():
 
     update_supply_window.mainloop()
 
-def update_table():
+def update_table(show_individual=True):
     # Fetch data from database
-    data = fetch_inventory_data()
+    data = fetch_inventory_data(show_individual)
 
     # Clear existing rows in Treeview
     for row in my_tree.get_children():
@@ -425,39 +417,42 @@ def update_table():
 
     # Insert fetched data into Treeview with correct order
     for item in data:
-        barcode = item[0]
-        name = item[1]
-        price = item[2]
-        quantity = item[3]
-        details = item[4]
-        date_delivered = item[6]
-        supplier = item[7]
-        
-        # Determine status based on quantity
-        if quantity == 0:
-            status = "Unavailable"
+        if show_individual:
+            # Extract item data (example: converting date string to datetime for sorting)
+            barcode = item[0]
+            name = item[1]
+            price = item[2]
+            quantity = item[3]
+            details = item[4]
+            status = item[5]
+            date_delivered = datetime.strptime(item[6], '%Y-%m-%d') if item[6] else None  # Example date format
+            supplier = item[7]
         else:
-            status = "Available"
+            barcode = item[0]
+            name = item[1]
+            price = item[2]
+            quantity = item[3]  # TotalQuantity
+            details = item[4]
+            status = item[5]
+            date_delivered = datetime.strptime(item[6], '%Y-%m-%d') if item[6] else None  # Example date format
+            supplier = item[7]
 
         # Insert the item into the Treeview
-        item_id = my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
+        my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
 
-        # Configure text color for Status column cell based on status
-        if status == "Unavailable":
-            my_tree.item(item_id, tags=('red',))
-        else:
-            my_tree.item(item_id, tags=('green',))
 
-def sort_treeview(column, descending):
-    # Fetch all items from the Treeview
-    items = [(my_tree.set(item, column), item) for item in my_tree.get_children('')]
-
-    # Sort items based on column value and sort order
-    items.sort(reverse=descending)
-
-    # Reorder items in Treeview
-    for index, (val, item) in enumerate(items):
-        my_tree.move(item, '', index)
+def sort_treeview(tree, col, descending):
+    # Get all the rows in the treeview
+    data = [(tree.set(child, col), child) for child in tree.get_children('')]
+    
+    # Sort the data by the column clicked
+    data.sort(reverse=descending)
+    
+    for index, (val, child) in enumerate(data):
+        tree.move(child, '', index)
+    
+    # Switch the heading so that it will sort in the opposite direction next time
+    tree.heading(col, command=lambda: sort_treeview(tree, col, not descending))
 
 def on_header_click(event):
     # Identify which column header was clicked
@@ -477,6 +472,46 @@ def on_header_click(event):
 
 def treeview_sort_column(tv, col):
     sort_treeview(col)
+    
+def combine_similar_barcodes():
+    # Fetch all inventory data
+    data = fetch_inventory_data()
+    
+    # Dictionary to store aggregated data
+    combined_data = {}
+    
+    # Aggregate data based on barcode
+    for item in data:
+        barcode = item[0]
+        quantity = item[3]
+        date_delivered = item[6]
+        supplier = item[7]
+        
+        if barcode in combined_data:
+            # Update quantity if barcode exists
+            combined_data[barcode]['Quantity'] += quantity
+            
+            # Update date_delivered if older
+            if date_delivered < combined_data[barcode]['DateDelivered']:
+                combined_data[barcode]['DateDelivered'] = date_delivered
+                combined_data[barcode]['Supplier'] = supplier
+        else:
+            # Add new entry for barcode
+            combined_data[barcode] = {
+                'Barcode': barcode,
+                'Quantity': quantity,
+                'DateDelivered': date_delivered,
+                'Supplier': supplier
+            }
+    
+    
+    # Clear existing rows in Treeview
+    for row in my_tree.get_children():
+        my_tree.delete(row)
+    
+    # Insert aggregated data into Treeview
+    for barcode, values in combined_data.items():
+        my_tree.insert('', 'end', values=(values['Barcode'], '', '', values['Quantity'], '', '', values['DateDelivered'], values['Supplier']))
 
 def create_products_window():
     global window
@@ -506,6 +541,16 @@ def create_products_window():
 
     add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
     add_supply_button.place(x=329.0, y=691.0, width=237.84408569335938, height=73.0)
+    
+    show_individual = True  # Default to show individual items
+
+    def toggle_view():
+        nonlocal show_individual
+        show_individual = not show_individual
+        update_table(show_individual)
+
+    toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
+    toggle_button.place(x=1071, y=92, width=237, height=73)
 
     canvas.create_rectangle(41.0, 176.0, 1240.0, 658.0, fill="#FFFFFF", outline="")
 
@@ -540,9 +585,9 @@ def create_products_window():
     my_tree = ttk.Treeview(window, columns=("Barcode", "Name", "Price", "Quantity", "Details", "Status", "Date Delivered", "Supplier"), selectmode="extended")
     my_tree.place(x=41.0, y=176.0, width=1199.0, height=482.0)  # Adjusted position and size to match the white rectangle
 
-    headings = ("Barcode", "Name", "Price", "Quantity", "Details", "Status", "Date Delivered", "Supplier")
-    for col in headings:
-        my_tree.heading(col, text=col)
+    for col, heading in enumerate(["Barcode", "Name", "Price", "Quantity", "Details", "Status", "DateDelivered", "Supplier"]):
+        my_tree.heading(col, text=heading, anchor='w', command=lambda c=col: sort_treeview(my_tree, c, False))
+        my_tree.column(col, anchor='center')
 
     # Define columns
     my_tree.heading("#0", text="", anchor="center")
