@@ -4,11 +4,15 @@ import sqlite3
 import tkinter as tk
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
+import win32print
+import win32api
+import os
 
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
 from user_logs import log_actions
+import datetime
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
@@ -37,7 +41,14 @@ def search_barcode(barcode):
     conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT Product_Name, Product_Quantity, Product_Price FROM inventory WHERE Barcode = ?", (barcode,))
+    # Corrected SQL query to join product and inventory tables
+    cursor.execute("""
+        SELECT p.Name, i.Quantity, p.Price, p.Barcode
+        FROM product p
+        INNER JOIN inventory i ON p.Barcode = i.Barcode
+        WHERE p.Barcode = ?
+    """, (barcode,))
+    
     result = cursor.fetchone()
 
     conn.close()
@@ -49,12 +60,20 @@ def on_barcode_entry(event):
     result = search_barcode(barcode_value)
 
     if result:
-        product_name, product_quantity, product_price = result
+        if len(result) == 3:
+            product_name, product_quantity, product_price = result
+            product_barcode = None  # Or fetch from database if available
+        elif len(result) == 4:
+            product_name, product_quantity, product_price, product_barcode = result
+        else:
+            messagebox.showerror("Search Result Error", "Invalid result returned by search function")
+            return
+        
         product_found = False
 
         # Check if the product is already in the purchase list
         for item in purchase_list:
-            if item['name'] == product_name:
+            if item.get('name') == product_name and item.get('barcode') == product_barcode:
                 # Increment quantity and update total price
                 item['quantity'] += 1
                 item['total_price'] += product_price
@@ -67,7 +86,8 @@ def on_barcode_entry(event):
                 'name': product_name,
                 'quantity': 1,
                 'price': product_price,
-                'total_price': product_price
+                'total_price': product_price,
+                'barcode': product_barcode  # Include barcode in the purchase list item
             })
 
         # Update the display of products being purchased
@@ -197,7 +217,7 @@ def create_pos_admin_window():
     purchase_button = Button(
         text="Purchase",
         font=("Hanuman Regular", 20),
-        command=lambda: print("Purchase Button"),
+        command=open_purchase_window,
         bg="#83F881",
         relief="raised"
     )
@@ -479,11 +499,13 @@ def update_phone_number(employee_id, new_phone_number):
         messagebox.showerror("Error", f"Error updating Phone Number: {e}")
     finally:
         conn.close()
-
+        
 def open_purchase_window():
     purchase_window = tk.Toplevel(window)
     purchase_window.title("Purchase")
     purchase_window.geometry("400x300")
+    
+    print(purchase_list)
 
     tk.Label(purchase_window, text="Customer Name (optional):").pack(pady=5)
     customer_name_entry = tk.Entry(purchase_window)
@@ -506,20 +528,51 @@ def process_purchase(customer_name, customer_contact, customer_money, purchase_w
         messagebox.showerror("Invalid Input", "Please enter a valid amount for customer money.")
         return
 
-    total_amount = sum(item['total_price'] for item in purchase_list)
+    total_amount = sum(item.get('total_price', 0) for item in purchase_list)
 
     if customer_money < total_amount:
         messagebox.showerror("Insufficient Funds", "Customer money is less than the total amount.")
         return
 
+    if not check_product_availability(purchase_list):
+        messagebox.showerror("Unavailable Product", "One or more products in the purchase list are unavailable.")
+        return
+
+    if not update_inventory(purchase_list):
+        messagebox.showerror("Inventory Error", "An error occurred while updating the inventory.")
+        return
+
     change = customer_money - total_amount
-    update_inventory(purchase_list)
-    create_receipt(customer_name, customer_contact, customer_money, change)
+    create_receipt(customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
     purchase_list.clear()
     update_purchase_display()
     update_total_label()
     purchase_window.destroy()
+
+def check_product_availability(purchase_list):
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    try:
+        for item in purchase_list:
+            if 'barcode' not in item:
+                print(f"Error: 'barcode' key missing in item: {item}")
+                continue  # Skip items without barcode
+
+            cursor.execute("SELECT Status FROM product WHERE Barcode = ?", (item['barcode'],))
+            status = cursor.fetchone()
+
+            if not status or status[0] != 'Available':
+                return False
+        return True
+
+    except sqlite3.Error as e:
+        print(f"Error checking product availability: {e}")
+        return False
+
+    finally:
+        conn.close()
 
 def update_inventory(purchase_list):
     conn = connect_db()
@@ -532,51 +585,53 @@ def update_inventory(purchase_list):
         for item in purchase_list:
             if 'barcode' not in item:
                 print(f"Error: 'barcode' key missing in item: {item}")
-                continue
-            
+                continue  # Skip items without barcode
+
             barcode = item['barcode']
+            remaining_quantity = item['quantity']
+
             # Retrieve the current available quantities for the product in inventory
             cursor.execute("""
-                SELECT Quantity, Barcode
+                SELECT InventoryID, Quantity
                 FROM inventory
-                WHERE Barcode = ? AND Status = 'Available'
+                WHERE Barcode = ? AND Quantity > 0
                 ORDER BY DateDelivered ASC
             """, (barcode,))
             quantities = cursor.fetchall()
 
-            remaining_quantity = item['quantity']
-
-            for quantity, barcode in quantities:
+            for inventory_id, quantity in quantities:
                 if remaining_quantity <= 0:
                     break
 
                 if quantity >= remaining_quantity:
                     new_quantity = quantity - remaining_quantity
-                    cursor.execute("UPDATE inventory SET Quantity = ? WHERE Barcode = ?", (new_quantity, barcode))
+                    cursor.execute("UPDATE inventory SET Quantity = ? WHERE InventoryID = ?", (new_quantity, inventory_id))
                     remaining_quantity = 0
                 else:
                     remaining_quantity -= quantity
-                    cursor.execute("UPDATE inventory SET Quantity = 0 WHERE Barcode = ?", (barcode,))
+                    cursor.execute("UPDATE inventory SET Quantity = 0 WHERE InventoryID = ?", (inventory_id,))
 
         # Commit the transaction
         conn.commit()
         print("Inventory updated successfully.")
+        return True
 
     except sqlite3.Error as e:
         # Rollback the transaction in case of an error
         conn.rollback()
         print(f"Error updating inventory: {e}")
+        return False
 
     finally:
         # Close the database connection
         conn.close()
-
+        
 def create_receipt(customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-Shop Name: Trimark Construction Supply
-Shop Address: [Insert Shop Address]
-Shop Contact: [Insert Shop Contact Number]
+Name: Trimark Construction Supply
+Address: [Insert Shop Address]
+Contact: [Insert Shop Contact Number]
 Cashier: [Insert Cashier Name]
 Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 --------------------------------
