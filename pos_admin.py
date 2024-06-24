@@ -480,5 +480,141 @@ def update_phone_number(employee_id, new_phone_number):
     finally:
         conn.close()
 
+def open_purchase_window():
+    purchase_window = tk.Toplevel(window)
+    purchase_window.title("Purchase")
+    purchase_window.geometry("400x300")
+
+    tk.Label(purchase_window, text="Customer Name (optional):").pack(pady=5)
+    customer_name_entry = tk.Entry(purchase_window)
+    customer_name_entry.pack(pady=5)
+
+    tk.Label(purchase_window, text="Customer Contact Number (optional):").pack(pady=5)
+    customer_contact_entry = tk.Entry(purchase_window)
+    customer_contact_entry.pack(pady=5)
+
+    tk.Label(purchase_window, text="Customer Money:").pack(pady=5)
+    customer_money_entry = tk.Entry(purchase_window)
+    customer_money_entry.pack(pady=5)
+
+    tk.Button(purchase_window, text="Process Purchase", command=lambda: process_purchase(customer_name_entry.get(), customer_contact_entry.get(), customer_money_entry.get(), purchase_window)).pack(pady=20)
+
+def process_purchase(customer_name, customer_contact, customer_money, purchase_window):
+    try:
+        customer_money = float(customer_money)
+    except ValueError:
+        messagebox.showerror("Invalid Input", "Please enter a valid amount for customer money.")
+        return
+
+    total_amount = sum(item['total_price'] for item in purchase_list)
+
+    if customer_money < total_amount:
+        messagebox.showerror("Insufficient Funds", "Customer money is less than the total amount.")
+        return
+
+    change = customer_money - total_amount
+    update_inventory(purchase_list)
+    create_receipt(customer_name, customer_contact, customer_money, change)
+    messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
+    purchase_list.clear()
+    update_purchase_display()
+    update_total_label()
+    purchase_window.destroy()
+
+def update_inventory(purchase_list):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+        # Start a transaction
+        conn.execute("BEGIN TRANSACTION;")
+
+        for item in purchase_list:
+            if 'barcode' not in item:
+                print(f"Error: 'barcode' key missing in item: {item}")
+                continue
+            
+            barcode = item['barcode']
+            # Retrieve the current available quantities for the product in inventory
+            cursor.execute("""
+                SELECT Quantity, Barcode
+                FROM inventory
+                WHERE Barcode = ? AND Status = 'Available'
+                ORDER BY DateDelivered ASC
+            """, (barcode,))
+            quantities = cursor.fetchall()
+
+            remaining_quantity = item['quantity']
+
+            for quantity, barcode in quantities:
+                if remaining_quantity <= 0:
+                    break
+
+                if quantity >= remaining_quantity:
+                    new_quantity = quantity - remaining_quantity
+                    cursor.execute("UPDATE inventory SET Quantity = ? WHERE Barcode = ?", (new_quantity, barcode))
+                    remaining_quantity = 0
+                else:
+                    remaining_quantity -= quantity
+                    cursor.execute("UPDATE inventory SET Quantity = 0 WHERE Barcode = ?", (barcode,))
+
+        # Commit the transaction
+        conn.commit()
+        print("Inventory updated successfully.")
+
+    except sqlite3.Error as e:
+        # Rollback the transaction in case of an error
+        conn.rollback()
+        print(f"Error updating inventory: {e}")
+
+    finally:
+        # Close the database connection
+        conn.close()
+
+def create_receipt(customer_name, customer_contact, customer_money, change):
+    receipt_text = f"""
+    Shop Name: Trimark Construction Supply
+    Shop Address: [Insert Shop Address]
+    Shop Contact Number: [Insert Shop Contact Number]
+    Cashier: [Insert Cashier Name]
+    Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    ---------------------------------------
+    Customer Name: {customer_name}
+    Customer Contact Number: {customer_contact}
+    ---------------------------------------
+    Items:
+    """
+    for item in purchase_list:
+        receipt_text += f"{item['name']} x {item['quantity']} - Php {item['total_price']:.2f}\n"
+
+    receipt_text += f"""
+    ---------------------------------------
+    Total: Php {sum(item['total_price'] for item in purchase_list):.2f}
+    Bill Given: Php {customer_money:.2f}
+    Change: Php {change:.2f}
+    ---------------------------------------
+    Thank you for your purchase!
+    """
+    
+    print_receipt(receipt_text)
+
+def print_receipt(receipt_text):
+    # Get the default printer
+    printer_name = win32print.GetDefaultPrinter()
+    hPrinter = win32print.OpenPrinter(printer_name)
+    try:
+        # Start a print job
+        hJob = win32print.StartDocPrinter(hPrinter, 1, ("Receipt", None, "RAW"))
+        win32print.StartPagePrinter(hPrinter)
+        
+        # Send the receipt text to the printer
+        win32print.WritePrinter(hPrinter, receipt_text.encode('utf-8'))
+        
+        # End the print job
+        win32print.EndPagePrinter(hPrinter)
+        win32print.EndDocPrinter(hPrinter)
+    finally:
+        win32print.ClosePrinter(hPrinter)
+
 if __name__ == "__main__":
     create_pos_admin_window()
