@@ -106,8 +106,8 @@ def go_to_window(window_type):
         import login
         login.create_login_window()
     elif window_type == "inventory":
-        import inventory_admin
-        inventory_admin.create_inventory_window()
+        import products
+        products.create_products_window()
     elif window_type == "register":
         import registration
         registration.create_registration_window()
