@@ -1,16 +1,43 @@
-import tkinter as tk
+import win32print
+import os
 
-root = tk.Tk()
+def create_receipt():
+    receipt_text = """
+    ---------------------------------
+           Receipt Example
+    ---------------------------------
+    Date: 2024-06-24
+    Time: 10:00 AM
+    Amount: $50.00
+    Payment Method: Cash
+    Thank you for your purchase!
+    ---------------------------------
+    """
 
-# Create a Text widget
-text_widget = tk.Text(root, height=5, width=40)
-text_widget.pack(side=tk.LEFT)
+    return receipt_text
 
-# Create a Scrollbar and associate it with the Text widget
-scroll_bar = tk.Scrollbar(root, command=text_widget.yview)
-scroll_bar.pack(side=tk.RIGHT, fill=tk.Y)
+def print_receipt(printer_name):
+    receipt = create_receipt()
 
-# Link the movement of the Scrollbar with the Text widget
-text_widget.config(yscrollcommand=scroll_bar.set)
+    # Get the default printer handle
+    printer_handle = win32print.OpenPrinter(printer_name)
 
-root.mainloop()
+    # Start a print job
+    job = win32print.StartDocPrinter(printer_handle, 1, (os.path.basename("receipt.txt"), None, "RAW"))
+
+    # Write the receipt text to the printer
+    win32print.StartPagePrinter(printer_handle)
+    win32print.WritePrinter(printer_handle, receipt.encode())
+
+    # End the print job
+    win32print.EndPagePrinter(printer_handle)
+    win32print.EndDocPrinter(printer_handle)
+
+    print(f"Receipt printed to {printer_name}.")
+
+if __name__ == "__main__":
+    # Specify the printer name here (you may retrieve it from the user or a configuration)
+    printer_name = "XP-58C"
+
+    # Print the receipt
+    print_receipt(printer_name)
