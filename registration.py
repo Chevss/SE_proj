@@ -103,7 +103,7 @@ def generate_username(first_name, mi, last_name, suffix, loa):
     # Get the suffix, if provided
     suffix_part = suffix.lower() if suffix else ''
     # Generate the username
-    return f"{prefix}{first_name_initials}{mi_part}{last_name.lower()}{suffix_part}.tmcs"
+    return f"{prefix}{first_name_initials}{mi_part}{last_name.lower()}{suffix_part}_tmcs"
 
 # Register user
 def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, home_address, email, loa):
