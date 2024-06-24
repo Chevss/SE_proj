@@ -571,34 +571,45 @@ def update_inventory(purchase_list):
         # Close the database connection
         conn.close()
 
-def create_receipt(customer_name, customer_contact, customer_money, change):
+def create_receipt(customer_name, customer_contact, customer_money, change, purchase_list):
+    # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-    Shop Name: Trimark Construction Supply
-    Shop Address: [Insert Shop Address]
-    Shop Contact Number: [Insert Shop Contact Number]
-    Cashier: [Insert Cashier Name]
-    Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    ---------------------------------------
-    Customer Name: {customer_name}
-    Customer Contact Number: {customer_contact}
-    ---------------------------------------
-    Items:
-    """
+Shop Name: Trimark Construction Supply
+Shop Address: [Insert Shop Address]
+Shop Contact: [Insert Shop Contact Number]
+Cashier: [Insert Cashier Name]
+Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+--------------------------------
+Customer Name: {customer_name}
+Customer Contact: {customer_contact}
+--------------------------------
+Items:
+"""
     for item in purchase_list:
-        receipt_text += f"{item['name']} x {item['quantity']} - Php {item['total_price']:.2f}\n"
+        receipt_text += f"{item['name'][:20]:<20} x {item['quantity']} - Php {item['total_price']:.2f}\n"
 
     receipt_text += f"""
-    ---------------------------------------
-    Total: Php {sum(item['total_price'] for item in purchase_list):.2f}
-    Bill Given: Php {customer_money:.2f}
-    Change: Php {change:.2f}
-    ---------------------------------------
-    Thank you for your purchase!
-    """
+--------------------------------
+Total: Php {sum(item['total_price'] for item in purchase_list):.2f}
+Bill Given: Php {customer_money:.2f}
+Change: Php {change:.2f}
+--------------------------------
+Thank you for your purchase!
+"""
     
     print_receipt(receipt_text)
 
 def print_receipt(receipt_text):
+    # ESC/POS commands
+    ESC = chr(27)
+    GS = chr(29)
+    initialize_printer = ESC + "@"
+    select_small_font = ESC + "!" + chr(1)  # Select smaller font
+    cut_paper = GS + "V" + chr(1)
+
+    # Combine commands with the receipt text
+    full_text = initialize_printer + select_small_font + receipt_text + cut_paper
+
     # Get the default printer
     printer_name = win32print.GetDefaultPrinter()
     hPrinter = win32print.OpenPrinter(printer_name)
@@ -608,7 +619,7 @@ def print_receipt(receipt_text):
         win32print.StartPagePrinter(hPrinter)
         
         # Send the receipt text to the printer
-        win32print.WritePrinter(hPrinter, receipt_text.encode('utf-8'))
+        win32print.WritePrinter(hPrinter, full_text.encode('utf-8'))
         
         # End the print job
         win32print.EndPagePrinter(hPrinter)
