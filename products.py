@@ -9,8 +9,13 @@ from PIL import Image, ImageTk
 import io
 import random
 
+import shared_state
+from user_logs import log_actions
+
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
+
+username = shared_state.current_user
 
 try:
     conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -168,6 +173,9 @@ def register_product_window():
         # Register the product and show success message
         register_product(barcode, product_name, product_price, product_details)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
+        # Log action
+        action = "Registered a product: " + product_name + ", " + product_details + ", (PHP " + str(product_price_str) + ")"
+        log_actions(username, action)
         
         # Update table and close the window
         update_table()
@@ -271,6 +279,10 @@ def add_supply_window():
             conn.commit()
 
             messagebox.showinfo("Supply Added", "Supply added successfully!")
+            # Log action
+            action = "Added " + str(product_quantity) + " to the product " + barcode + " from " + supplier + "."
+            log_actions(username, action)
+
             add_supply_window.destroy()
             update_table()
 
@@ -383,6 +395,10 @@ def update_products_window():
             conn.commit()
 
             messagebox.showinfo("Supply Updated", "Supply updated successfully!")
+            # Log action
+            action = "Updated " + barcode + " to " + product_name + ", " + product_details + ". (PHP " + str(product_price) + ") Now " + product_status + "."
+            log_actions(username, action)
+
             update_supply_window.destroy()
             update_table()
 
