@@ -4,6 +4,8 @@ import secrets
 import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
+
+from forgot_pass import username
 from user_logs import log_actions
 
 

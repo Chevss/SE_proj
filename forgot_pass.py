@@ -1,32 +1,32 @@
 import random
 import smtplib
+import sqlite3
 import string
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, messagebox, PhotoImage, Tk
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
 import new_pass
 from user_logs import log_actions
 
+username = None
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Forgot_pass")
 
-
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
 def generate_verification_code(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
 
 def send_verification_email(to_email, code):
     from_email = 'trimarkcstest@outlook.com'
     from_password = '1ZipJM2DsVnRoBkmVVKRCm0e8c6NniwhjW1FEWEC8n5Y'
 
     msg = MIMEMultipart()
-    msg['From'] = 'trimarkcstest@outlook.com'
+    msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = 'Your Verification Code'
 
@@ -81,6 +81,18 @@ def create_forgot_pass_window():
     cancel_button = Button(window, text="Cancel", font=("Hanuman Regular", 16), command=lambda: go_to_window("Cancel"), bg="white")
     cancel_button.place(x=415.0, y=336.0, width=133.0, height=37.0)
 
+    # Get username of the input email address, because no user is not logged in (current_user = None)
+    def get_username_by_email(email):
+        conn = sqlite3.connect('Trimark_construction_supply.db')  # Replace with your database file
+        cursor = conn.cursor()
+        cursor.execute("SELECT Username FROM accounts WHERE Email = ?", (email,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            return result[0]
+        else:
+            return None
+        
     # Generate and send the verification code
     def handle_send_code():
         email = email_entry.get()
@@ -88,6 +100,10 @@ def create_forgot_pass_window():
         verification_code = generate_verification_code()
         if send_verification_email(email, verification_code):
             messagebox.showinfo("Success", "Verification code sent to your email.")
+            action = "Forgot password and requested a code for password change."
+            username = get_username_by_email(email)
+            log_actions(username, action)
+
         else:
             messagebox.showerror("Error", "Failed to send verification code.")
 
@@ -100,6 +116,8 @@ def create_forgot_pass_window():
         entered_email = email_entry.get()  # Retrieve email before destroying window
         if entered_code == verification_code:
             messagebox.showinfo("Success", "Verification successful!")
+            action = "Code verified."
+            log_actions(username, action)
             window.destroy()  # Destroy window before calling new_pass.create_new_pass_window
 
             # Call create_new_pass_window from new_pass.py with email argument
