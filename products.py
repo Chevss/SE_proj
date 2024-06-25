@@ -73,8 +73,8 @@ def search_barcode(barcode):
 def go_to_window(windows):
     window.destroy()
     if windows == "back":
-        import inventory_admin
-        inventory_admin.create_inventory_window()
+        import pos_admin
+        pos_admin.create_pos_admin_window()
 
 def is_barcode_unique(barcode):
     try:

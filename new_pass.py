@@ -5,9 +5,8 @@ import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 
-from forgot_pass import username
+import shared_state
 from user_logs import log_actions
-
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\New_pass")
@@ -100,6 +99,9 @@ def create_new_pass_window(email):
             return
 
         update_password(email, new_password)
+        action = "Changed password."
+        log_actions(shared_state.current_user, action)
+
         window.destroy()
         import login
         login.create_login_window()
