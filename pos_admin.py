@@ -6,7 +6,6 @@ import tkinter as tk
 import win32print
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
-
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
@@ -135,6 +134,9 @@ def go_to_window(window_type):
     elif window_type == "maintenance":  
         import maintenance
         maintenance.create_maintenance_window()
+    elif window_type == "report":  
+        import reports
+        reports.create_reports_window()
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -234,23 +236,39 @@ def create_pos_admin_window():
     )
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
+    # Determine if the logged-in user is admin
+    is_admin = shared_state.current_user == "admin"  # Modify with your actual admin check condition
+
+    # Accounts (Register) button
     register_button = Button(
         text="Accounts",
         font=("Hanuman Regular", 20),
         command=lambda: go_to_window("register"),
         bg="#81CDF8",
-        relief="ridge"
+        relief="ridge",
+        state=tk.NORMAL if is_admin else tk.DISABLED
     )
     register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
 
     reports_button = Button(
         text="Reports",
         font=("Hanuman Regular", 20),
-        command=lambda: print("Reports Button"),
+        command=lambda: go_to_window("reports"),
         bg="#81CDF8",
-        relief="ridge"
+        relief="ridge",
+        state=tk.NORMAL if is_admin else tk.DISABLED
     )
     reports_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
+
+    maintenance_button = Button(
+        text="Maintenance",
+        font=("Hanuman Regular", 20),
+        command=lambda: go_to_window("maintenance"),
+        bg="#81CDF8",
+        relief="ridge",
+        state=tk.NORMAL if is_admin else tk.DISABLED
+    )
+    maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
     barcodes_button = Button(
         text="Barcode",
@@ -260,15 +278,6 @@ def create_pos_admin_window():
         relief="ridge"
     )
     barcodes_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
-
-    maintenance_button = Button(
-        text="Maintenance",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("maintenance"),
-        bg="#81CDF8",
-        relief="ridge"
-    )
-    maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
     # Void button function
     def void_items():
@@ -286,11 +295,10 @@ def create_pos_admin_window():
         action = "Voided transaction."
         log_actions(shared_state.current_user, action)
 
-    # Void button
     void_button = Button(
         text="Void",
         font=("Hanuman Regular", 20),
-        command=void_items,  # Call void_items function when button is clicked
+        command=void_items,
         bg="#FF9E9E",
         relief="raised"
     )
@@ -381,9 +389,7 @@ def create_pos_admin_window():
                     if valid:
                         repeat_password = simpledialog.askstring("Change Password", "Repeat new password:")
                         if new_password == repeat_password:
-                            salt = generate_salt()
-                            hashed_password = hash_password(new_password, salt)
-                            update_password(employee_id, hashed_password, salt)
+                            update_password(employee_id, new_password)
                         else:
                             messagebox.showerror("Error", "Passwords do not match")
                     else:
@@ -392,26 +398,18 @@ def create_pos_admin_window():
             elif command_name == "email":
                 new_email = simpledialog.askstring("Change Email", "Enter new email:")
                 if new_email:
-                    valid, message = is_valid_email(new_email)
-                    if valid:
-                        unique, unique_message = check_email_uniqueness(new_email, current_email=username)
-                        if unique:
-                            update_email(employee_id, new_email)
-                        else:
-                            messagebox.showerror("Error", unique_message)
+                    if is_valid_email(new_email):
+                        update_email(employee_id, new_email)
                     else:
-                        messagebox.showerror("Error", message)
+                        messagebox.showerror("Error", "Invalid email format")
 
             elif command_name == "phone_number":
                 new_phone_number = simpledialog.askstring("Change Phone Number", "Enter new phone number:")
                 if new_phone_number:
-                    valid = is_valid_contact_number(new_phone_number)
-                    if valid:
+                    if is_valid_contact_number(new_phone_number):
                         update_phone_number(employee_id, new_phone_number)
                     else:
-                        messagebox.showerror("Error", "Invalid contact number format")
-        else:
-            messagebox.showerror("Error", "No user logged in")
+                        messagebox.showerror("Error", "Invalid phone number format")
 
     # Hamburger menu icon
     hamburger_icon = PhotoImage(file=relative_to_assets("hamburger.png"))
@@ -420,7 +418,10 @@ def create_pos_admin_window():
     hamburger_button.image = hamburger_icon  # Keep a reference to the image to prevent garbage collection
     hamburger_button.place(x=110, y=15)
 
-    window.resizable(False, False)
+    # Update display of products being purchased and total label
+    update_purchase_display()
+    update_total_label()
+
     window.mainloop()
 
 def get_employee_id(username):
@@ -536,6 +537,8 @@ def update_phone_number(employee_id, new_phone_number):
         conn.close()
         
 def open_purchase_window():
+    conn = connect_db()
+    cursor = conn.cursor()
     purchase_window = tk.Toplevel(window)
     purchase_window.title("Purchase")
     purchase_window.geometry("400x300")
@@ -554,9 +557,19 @@ def open_purchase_window():
     customer_money_entry = tk.Entry(purchase_window)
     customer_money_entry.pack(pady=5)
 
-    tk.Button(purchase_window, text="Process Purchase", command=lambda: process_purchase(customer_name_entry.get(), customer_contact_entry.get(), customer_money_entry.get(), purchase_window)).pack(pady=20)
+    cursor.execute("""
+        SELECT First_Name, Last_Name
+        FROM accounts
+        WHERE Username = ?
+    """, (shared_state.current_user,))
+    
+    cashier_name = cursor.fetchone()
+    
+    conn.close()
+    cashier_name = f"{cashier_name[0]} {cashier_name[1]}" if cashier_name and len(cashier_name) >= 2 else "Unknown Cashier"
+    tk.Button(purchase_window, text="Process Purchase", command=lambda: process_purchase(cashier_name, customer_name_entry.get(), customer_contact_entry.get(), customer_money_entry.get(), purchase_window)).pack(pady=20)
 
-def process_purchase(customer_name, customer_contact, customer_money, purchase_window):
+def process_purchase(cashier_name, customer_name, customer_contact, customer_money, purchase_window):
     try:
         customer_money = float(customer_money)
     except ValueError:
@@ -578,7 +591,7 @@ def process_purchase(customer_name, customer_contact, customer_money, purchase_w
         return
 
     change = customer_money - total_amount
-    create_receipt(customer_name, customer_contact, customer_money, change, purchase_list)
+    create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
 
     action = "Checked out and generated PDF file for the receipt."
@@ -665,38 +678,66 @@ def update_inventory(purchase_list):
         # Close the database connection
         conn.close()
         
-def create_receipt(customer_name, customer_contact, customer_money, change, purchase_list):
+def create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-Shop Name: Trimark Construction Supply
-Shop Address: [Insert Shop Address]
-Shop Contact: [Insert Shop Contact Number]
-Cashier: [Insert Cashier Name]
+********************************
+  Trimark Construction Supply
+********************************
+No. 39 Scout Ybardolaza St. 
+Sacred Heart, Quezon City
+Tel. No. (02) 926-2329 
+********************************
+Cashier: {cashier_name}
 Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
---------------------------------
+********************************
 Customer Name: {customer_name}
 Customer Contact: {customer_contact}
---------------------------------
+********************************
 Items:
 """
+
+    max_item_name_length = 30  # Adjust this as needed for your receipt layout
+
+    subtotal = 0.0
     for item in purchase_list:
-        receipt_text += f"{item['name'][:20]:<20} x {item['quantity']} - Php {item['total_price']:.2f}\n"
+        # Determine how much space is left for the item name after accommodating the quantity and other text
+        available_name_space = max_item_name_length - len(f" x {item['quantity']:2} - Php {item['total_price']:.2f}")
+
+        # Truncate or pad the item name accordingly
+        truncated_name = item['name'][:available_name_space].ljust(available_name_space)
+
+        # Format the item line with adjusted spacing
+        item_line = f"{truncated_name} x {item['quantity']:2} - Php {item['total_price']:.2f}\n"
+        receipt_text += item_line
+
+        # Accumulate subtotal
+        subtotal += item['total_price']
+
+    tax = subtotal * 0.12
+    subtotal = subtotal - tax
+    total = subtotal + tax
 
     receipt_text += f"""
---------------------------------
-Total: Php {sum(item['total_price'] for item in purchase_list):.2f}
+********************************
+Subtotal: Php {subtotal:.2f}
+Tax (12%): Php {tax:.2f}
+Total: Php {total:.2f}
+********************************
 Bill Given: Php {customer_money:.2f}
 Change: Php {change:.2f}
---------------------------------
+********************************
 Thank you for your purchase!
+********************************
+
 """
     
     print_receipt(receipt_text)
 
 def print_receipt(receipt_text):
     # ESC/POS commands
-    ESC = chr(27)
-    GS = chr(29)
+    ESC = chr(23)
+    GS = chr(25)
     initialize_printer = ESC + "@"
     select_small_font = ESC + "!" + chr(1)  # Select smaller font
     cut_paper = GS + "V" + chr(1)

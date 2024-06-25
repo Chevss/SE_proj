@@ -2,8 +2,8 @@ from barcode import Code39
 from barcode.writer import ImageWriter
 from datetime import datetime
 from pathlib import Path
-from PIL import Image, ImageTk
-from tkinter import Tk, ttk, Canvas, Entry, messagebox, Button, Label, Toplevel, Scrollbar, Frame, RIGHT, Y, W, CENTER, NO, END, BooleanVar, Checkbutton
+import tkinter as tk
+from tkinter import  ttk, Canvas, Entry, messagebox, Button, Label, Toplevel, Scrollbar, Frame, RIGHT, Y, W, CENTER, NO, END, BooleanVar, Checkbutton
 from tkcalendar import DateEntry
 import io
 import random
@@ -426,7 +426,7 @@ def update_products_window():
 
     update_supply_window.mainloop()
 
-def update_table(show_individual=True):
+def update_table(show_individual=False):
     # Fetch data from database
     data = fetch_inventory_data(show_individual)
 
@@ -444,7 +444,7 @@ def update_table(show_individual=True):
             quantity = item[3]
             details = item[4]
             status = item[5]
-            date_delivered = datetime.strptime(item[6], '%Y-%m-%d') if item[6] else None  # Example date format
+            date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None  # Example date format
             supplier = item[7]
         else:
             barcode = item[0]
@@ -453,7 +453,7 @@ def update_table(show_individual=True):
             quantity = item[3]  # TotalQuantity
             details = item[4]
             status = item[5]
-            date_delivered = datetime.strptime(item[6], '%Y-%m-%d') if item[6] else None  # Example date format
+            date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None  # Example date format
             supplier = item[7]
 
         # Insert the item into the Treeview
@@ -534,7 +534,7 @@ def combine_similar_barcodes():
 
 def create_products_window():
     global window
-    window = Tk()
+    window = tk.Tk()
     window.geometry("1280x800")
     window.configure(bg="#FFE1C6")
     window.title("Products")
@@ -549,31 +549,42 @@ def create_products_window():
     canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
+    # Determine if the logged-in user is admin
+    cursor.execute("""
+        SELECT LOA
+        FROM accounts
+        WHERE Username = ?
+    """, (username,))
+    loa=cursor.fetchone()
+    loa = "admin"
+    is_admin = loa == "admin"
+
     back_button = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     back_button.place(x=1071.0, y=696.0, width=169.0, height=64.0)
 
-    register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
+    register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
     register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
 
-    update_product_button = Button(window, text="Update Products", command=lambda: update_products_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
+    update_product_button = Button(window, text="Update Products", command=lambda: update_products_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
     update_product_button.place(x=617.0, y=691.0, width=237.84408569335938, height=73.0)
 
-    add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
+    add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
     add_supply_button.place(x=329.0, y=691.0, width=237.84408569335938, height=73.0)
     
-    show_individual = True  # Default to show individual items
+    show_individual = False  # Default to show individual items
 
     def toggle_view():
         nonlocal show_individual
         show_individual = not show_individual
         update_table(show_individual)
 
-    toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
+    toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
     toggle_button.place(x=1000, y=92, width=237, height=73)
 
     canvas.create_rectangle(41.0, 176.0, 1240.0, 658.0, fill="#FFFFFF", outline="")
 
-    canvas.create_text(41.0, 20.0, anchor="nw", text="Admin", fill="#000000", font=("Hanuman Regular", 20))
+
+    canvas.create_text(41.0, 20.0, anchor="nw", text= f"{loa}", fill="#000000", font=("Hanuman Regular", 20))
 
     search_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24))
     search_entry.place(x=41.0, y=92.0, width=300, height=47)
