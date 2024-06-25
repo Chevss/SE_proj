@@ -400,10 +400,15 @@ def create_pos_admin_window():
             elif command_name == "email":
                 new_email = simpledialog.askstring("Change Email", "Enter new email:")
                 if new_email:
-                    if is_valid_email(new_email):
-                        update_email(employee_id, new_email)
+                    valid, message = is_valid_email(new_email)
+                    if valid:
+                        unique, unique_message = check_email_uniqueness(new_email, current_email=username)
+                        if unique:
+                            update_email(employee_id, new_email)
+                        else:
+                            messagebox.showerror("Error", unique_message)
                     else:
-                        messagebox.showerror("Error", "Invalid email format")
+                        messagebox.showerror("Error", message)
 
             elif command_name == "phone_number":
                 new_phone_number = simpledialog.askstring("Change Phone Number", "Enter new phone number:")
