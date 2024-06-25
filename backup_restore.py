@@ -2,9 +2,12 @@ import os
 import shutil
 import time
 import tkinter as tk
+from cryptography.fernet import Fernet
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from cryptography.fernet import Fernet
+
+import shared_state
+from user_logs import log_actions
 
 OUTPUT_PATH = Path(__file__).parent
 DATABASE_PATH = OUTPUT_PATH / Path(r"Trimark_construction_supply.db")
@@ -63,6 +66,8 @@ def backup_database(local=True):
     os.remove(backup_file)  # Remove the unencrypted file
 
     messagebox.showinfo("Success", f"Backup created at {encrypted_file}")
+    action = f"Made a backup of the database stored at: {backup_dir}"
+    log_actions(shared_state.current_user, action)
 
 # Restore the database
 def restore_database(local=True):
@@ -78,3 +83,5 @@ def restore_database(local=True):
     os.remove(decrypted_file)  # Remove the decrypted file after restoration
 
     messagebox.showinfo("Success", "Database restored successfully")
+    action = f"Restored a backup of the database found at: {backup_file}"
+    log_actions(shared_state.current_user, action)
