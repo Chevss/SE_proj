@@ -569,7 +569,7 @@ def create_products_window():
         update_table(show_individual)
 
     toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    toggle_button.place(x=1071, y=92, width=237, height=73)
+    toggle_button.place(x=1000, y=92, width=237, height=73)
 
     canvas.create_rectangle(41.0, 176.0, 1240.0, 658.0, fill="#FFFFFF", outline="")
 
