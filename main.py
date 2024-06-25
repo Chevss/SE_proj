@@ -1,6 +1,9 @@
 import win32print
 import os
 
+import shared_state
+from user_logs import log_actions
+
 def create_receipt():
     receipt_text = """
     ---------------------------------
@@ -34,6 +37,8 @@ def print_receipt(printer_name):
     win32print.EndDocPrinter(printer_handle)
 
     print(f"Receipt printed to {printer_name}.")
+    action = "Printed a receipt."
+    log_actions(shared_state.current_user, action)
 
 if __name__ == "__main__":
     # Specify the printer name here (you may retrieve it from the user or a configuration)

@@ -1,15 +1,16 @@
+import datetime
 import hashlib
 import secrets
 import sqlite3
 import tkinter as tk
+import win32print
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
-import win32print
+
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
 from user_logs import log_actions
-import datetime
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
@@ -282,6 +283,9 @@ def create_pos_admin_window():
         update_purchase_display()
         update_total_label()
 
+        action = "Voided transaction."
+        log_actions(shared_state.current_user, action)
+
     # Void button
     void_button = Button(
         text="Void",
@@ -462,6 +466,8 @@ def update_first_name(employee_id, new_first_name):
         cursor.execute("UPDATE accounts SET First_Name = ? WHERE Employee_ID = ?", (new_first_name, employee_id))
         conn.commit()
         messagebox.showinfo("Success", "First Name updated successfully")
+        action = "Updated first name to " + new_first_name + "."
+        log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
         conn.rollback()
         messagebox.showerror("Error", f"Error updating First Name: {e}")
@@ -475,6 +481,8 @@ def update_last_name(employee_id, new_last_name):
         cursor.execute("UPDATE accounts SET Last_Name = ? WHERE Employee_ID = ?", (new_last_name, employee_id))
         conn.commit()
         messagebox.showinfo("Success", "Last Name updated successfully")
+        action = "Updated last name to " + new_last_name + "."
+        log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
         conn.rollback()
         messagebox.showerror("Error", f"Error updating Last Name: {e}")
@@ -488,6 +496,8 @@ def update_password(employee_id, new_password, salt):
         cursor.execute("UPDATE accounts SET Password = ?, Salt = ? WHERE Employee_ID = ?", (new_password, salt, employee_id))
         conn.commit()
         messagebox.showinfo("Success", "Password updated successfully")
+        action = "Changed password."
+        log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
         conn.rollback()
         messagebox.showerror("Error", f"Error updating Password: {e}")
@@ -502,6 +512,8 @@ def update_email(employee_id, new_email):
         cursor.execute("UPDATE accounts SET Email = ? WHERE Employee_ID = ?", (new_email, employee_id))
         conn.commit()
         messagebox.showinfo("Success", "Email updated successfully")
+        action = "Updated email to " + new_email + "."
+        log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
         conn.rollback()
         messagebox.showerror("Error", f"Error updating Email: {e}")
@@ -515,6 +527,8 @@ def update_phone_number(employee_id, new_phone_number):
         cursor.execute("UPDATE accounts SET Contact_No = ? WHERE Employee_ID = ?", (new_phone_number, employee_id))
         conn.commit()
         messagebox.showinfo("Success", "Phone Number updated successfully")
+        action = "Updated phone number to " + new_phone_number + "."
+        log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
         conn.rollback()
         messagebox.showerror("Error", f"Error updating Phone Number: {e}")
@@ -566,6 +580,10 @@ def process_purchase(customer_name, customer_contact, customer_money, purchase_w
     change = customer_money - total_amount
     create_receipt(customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
+
+    action = "Checked out and generated PDF file for the receipt."
+    log_actions(shared_state.current_user, action)
+
     purchase_list.clear()
     update_purchase_display()
     update_total_label()

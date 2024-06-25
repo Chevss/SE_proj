@@ -19,7 +19,6 @@ def log_actions(username, action):
         conn.close()
         return
 
-
     # Insert the log entry with Employee_ID
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute('INSERT INTO user_logs (Employee_ID, Username, action, timestamp) VALUES (?, ?, ?, ?)', 
@@ -28,6 +27,7 @@ def log_actions(username, action):
     conn.commit()
     conn.close()
 
+'''
 def fetch_user_logs_data():
     conn = sqlite3.connect('Trimark_construction_supply.db')
     cursor = conn.cursor()
@@ -47,3 +47,4 @@ inventory_data = fetch_user_logs_data()
 
 # Print all data
 print_inventory(inventory_data)
+'''

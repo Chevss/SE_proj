@@ -12,11 +12,6 @@ def relative_to_assets(path: str) -> Path:
 
 def go_to_window(window_type):
     window.destroy()
-    '''if window_type == "back":
-        log_actions(shared_state.current_user, "Logged Out")
-        shared_state.current_user = None
-        import login
-        login.create_login_window()'''
     if window_type == "pos_admin":
         import pos_admin
         pos_admin.create_pos_admin_window()

@@ -83,5 +83,5 @@ def restore_database(local=True):
     os.remove(decrypted_file)  # Remove the decrypted file after restoration
 
     messagebox.showinfo("Success", "Database restored successfully")
-    action = f"Restored a backup of the database found at: {backup_file}"
-    log_actions(shared_state.current_user, action)
+    action = f"Restored a backup of the database found at: {backup_file}" 
+    log_actions(shared_state.current_user, action) # Won't show to the user_logs because when restoring the backup, it will be overwritten.

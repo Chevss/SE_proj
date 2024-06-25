@@ -6,6 +6,9 @@ import sqlite3
 from barcode import Code39
 from barcode.writer import ImageWriter
 
+import shared_state
+from user_logs import log_actions
+
 # Define paths
 OUTPUT_PATH = Path(__file__).parent
 BARCODES_PATH = OUTPUT_PATH / Path("Barcodes")
@@ -70,6 +73,8 @@ def save_barcode_image():
 
         # Optionally provide feedback to the user that the image has been saved
         print(f"Barcode image for {product_name} saved in 'Barcodes' folder.")
+        action = "Saved the image of the barcode for " + product_name + "."
+        log_actions(shared_state.current_user, action)
 
 def search_database():
     # Placeholder for search functionality
