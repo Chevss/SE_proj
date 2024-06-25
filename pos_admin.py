@@ -131,6 +131,9 @@ def go_to_window(window_type):
     elif window_type == "barcode":
         import barcode_ad
         barcode_ad.create_barcode_window()
+    elif window_type == "maintenance":  
+        import maintenance
+        maintenance.create_maintenance_window()
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -260,7 +263,7 @@ def create_pos_admin_window():
     maintenance_button = Button(
         text="Maintenance",
         font=("Hanuman Regular", 20),
-        command=lambda: print("Maintenance Button"),
+        command=lambda: go_to_window("maintenance"),
         bg="#81CDF8",
         relief="ridge"
     )
