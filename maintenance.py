@@ -1,6 +1,8 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
+from tkinter import Button, Canvas, Label, messagebox, PhotoImage
+
+from backup_restore import backup_database, restore_database
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets/Maintenance")
@@ -35,34 +37,23 @@ def create_maintenance_window():
 
     # Create a canvas to place widgets on
     global canvas
-    canvas = Canvas(
-        window,
-        bg="#FFE1C6",
-        height=800,
-        width=1280,
-        bd=0,
-        highlightthickness=0,
-        relief="ridge"
-    )
+    canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-
-
-
+    # Backup
     backup_img = PhotoImage(file=relative_to_assets("backup.png"))
-    backup_btn = Button(image=backup_img, borderwidth=2, highlightthickness=0,  command=lambda: print("Backup"), relief="flat")
+    backup_btn = Button(image=backup_img, borderwidth=2, highlightthickness=0,  command=lambda: backup_database(), relief="flat")
     backup_btn.place(x=30.0, y=20.0)
 
+    # Restore
     restore_img = PhotoImage(file=relative_to_assets("restore.png"))
-    restore_btn = Button(image=restore_img, borderwidth=2, highlightthickness=0, command=lambda: print("Backup"), relief="flat")
+    restore_btn = Button(image=restore_img, borderwidth=2, highlightthickness=0, command=lambda: restore_database(), relief="flat")
     restore_btn.place(x=230.0, y=20.0)
 
+    # Back
     back_img = PhotoImage(file=relative_to_assets("back.png"))
     back_btn = Button(image=back_img, borderwidth=2, highlightthickness=0, command=lambda: go_to_window("pos_admin"), relief="flat")
     back_btn.place(x=430.0, y=20.0)
-
-
-
 
     window.resizable(False, False)
     window.mainloop()
