@@ -8,9 +8,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 import new_pass
+import shared_state
 from user_logs import log_actions
 
-username = None
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Forgot_pass")
@@ -98,14 +98,17 @@ def create_forgot_pass_window():
         email = email_entry.get()
         global verification_code
         verification_code = generate_verification_code()
-        if send_verification_email(email, verification_code):
-            messagebox.showinfo("Success", "Verification code sent to your email.")
-            action = "Forgot password and requested a code for password change."
-            username = get_username_by_email(email)
-            log_actions(username, action)
+        shared_state.current_user = get_username_by_email(email)
 
+        if shared_state.current_user:
+            if send_verification_email(email, verification_code):
+                messagebox.showinfo("Success", "Verification code sent to your email.")
+                action = "Forgot password and requested a code for password change."
+                log_actions(shared_state.current_user, action)
+            else:
+                messagebox.showerror("Error", "Failed to send verification code.")
         else:
-            messagebox.showerror("Error", "Failed to send verification code.")
+            messagebox.showerror("Error", "No account found with that email address.")
 
     send_code_button = Button(window, text="Send Code", font=("Hanuman Regular", 16), bg="#FC7373", fg='white', command=handle_send_code)
     send_code_button.place(x=233.0, y=163.0, width=133.0, height=37.0)
@@ -117,7 +120,7 @@ def create_forgot_pass_window():
         if entered_code == verification_code:
             messagebox.showinfo("Success", "Verification successful!")
             action = "Code verified."
-            log_actions(username, action)
+            log_actions(shared_state.current_user, action)
             window.destroy()  # Destroy window before calling new_pass.create_new_pass_window
 
             # Call create_new_pass_window from new_pass.py with email argument
