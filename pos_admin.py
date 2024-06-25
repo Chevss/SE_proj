@@ -389,7 +389,9 @@ def create_pos_admin_window():
                     if valid:
                         repeat_password = simpledialog.askstring("Change Password", "Repeat new password:")
                         if new_password == repeat_password:
-                            update_password(employee_id, new_password)
+                            salt = generate_salt()
+                            hashed_password = hash_password(new_password, salt)
+                            update_password(employee_id, hashed_password, salt)
                         else:
                             messagebox.showerror("Error", "Passwords do not match")
                     else:
