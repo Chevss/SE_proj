@@ -7,9 +7,9 @@ import sqlite3
 from datetime import datetime
 from email.mime.text import MIMEText
 from pathlib import Path
-from tkinter import Button, Canvas, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
+from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from tkcalendar import DateEntry
-
+from tkinter.ttk import Treeview
 import shared_state
 from user_logs import log_actions
 
@@ -185,7 +185,7 @@ def create_registration_window():
     window.title("Registration")
     window.configure(bg="#FFE1C6")
 
-    window_width, window_height = 600, 730
+    window_width, window_height = 1280, 690
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width // 2) - (window_width // 2)
@@ -193,26 +193,26 @@ def create_registration_window():
 
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-    canvas = Canvas(window, bg="#FFE1C6", height=730, width=600, bd=0, highlightthickness=0, relief="ridge")
+    canvas = Canvas(window, bg="#FFE1C6", height=690, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
 
     # Background creation
 
     # Labels
-    canvas.create_text(119.0, 98.0, anchor="nw", text="First Name", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(447.0, 98.0, anchor="nw", text="M.I.", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 166.0, anchor="nw", text="Last Name", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(439.0, 166.0, anchor="nw", text="Suffix", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 232.0, anchor="nw", text="Birthdate", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 292.0, anchor="nw", text="Contact Number", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 358.0, anchor="nw", text="Home Address", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 420.0, anchor="nw", text="Email Address", fill="#000000", font=("Hanuman Regular", 16 * -1))
-    canvas.create_text(119.0, 497.0, anchor="nw", text="Level of Access", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 98.0, anchor="nw", text="First Name", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(1188.0, 98.0, anchor="nw", text="M.I.", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 166.0, anchor="nw", text="Last Name", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(1180.0, 166.0, anchor="nw", text="Suffix", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 232.0, anchor="nw", text="Birthdate", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 292.0, anchor="nw", text="Contact Number", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 358.0, anchor="nw", text="Home Address", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 420.0, anchor="nw", text="Email Address", fill="#000000", font=("Hanuman Regular", 16 * -1))
+    canvas.create_text(860.0, 497.0, anchor="nw", text="Level of Access", fill="#000000", font=("Hanuman Regular", 16 * -1))
 
     # First name
     first_name_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    first_name_entry.place(x=119.0, y=125.0, width=307.0, height=36.0)
+    first_name_entry.place(x=860.0, y=125.0, width=307.0, height=36.0)
 
     def capitalize_mi(event):
         event.widget.after(0, lambda: update_entry(event.widget))
@@ -224,44 +224,44 @@ def create_registration_window():
 
     # Middle initial    
     mi_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    mi_entry.place(x=435.0, y=125.0, width=47.0, height=36.0)
+    mi_entry.place(x=1176.0, y=125.0, width=47.0, height=36.0)
     mi_entry.bind('<KeyRelease>', capitalize_mi)
     
     # Last name
     last_name_entry = Entry( bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    last_name_entry.place(x=119.0, y=190.0, width=307.0, height=36.0)
+    last_name_entry.place(x=860.0, y=190.0, width=307.0, height=36.0)
 
     # Suffix
     suffix_entry = StringVar()
     suffix_options = ["", "Jr", "Sr", "I", "II", "III"]
     suffix_menu = OptionMenu(window, suffix_entry, *suffix_options)
     suffix_menu.config(bg="#FFE1C6", font=("Hanuman Regular", 14 * -1))
-    suffix_menu.place(x=435.0, y=190.0, width=47.0, height=36.0)
+    suffix_menu.place(x=1176.0, y=190.0, width=47.0, height=36.0)
 
     # Birthdate  
     birthdate_entry = DateEntry(window, width=12, background='darkblue', foreground='white', borderwidth=1, font=("Hanuman Regular", 15))
-    birthdate_entry.place(x=119, y=256)
+    birthdate_entry.place(x=860, y=256)
 
     # Contact number    
     contact_no_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    contact_no_entry.place(x=119.0, y=316.0, width=363.0, height=36.0)
+    contact_no_entry.place(x=860.0, y=316.0, width=363.0, height=36.0)
 
     # Address
     address_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    address_entry.place(x=119.0, y=382.0, width=363.0, height=36.0)
+    address_entry.place(x=860.0, y=382.0, width=363.0, height=36.0)
 
     # Email address
     email_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 20 * -1))
-    email_entry.place(x=119.0, y=444.0, width=363.0, height=36.0)
+    email_entry.place(x=860.0, y=444.0, width=363.0, height=36.0)
     
     # LOA
     loa_var = StringVar(value="employee")
 
     radio_admin = Radiobutton(window, text="Admin", variable=loa_var, value="admin", bg="#FFE1C6", font=("Hanuman Regular", 14 * -1))
-    radio_admin.place(x=145.0, y=524.0)
+    radio_admin.place(x=886.0, y=524.0)
 
     radio_employee = Radiobutton(window, text="Employee/Staff", variable=loa_var, value="employee", bg="#FFE1C6", font=("Hanuman Regular", 14 * -1))
-    radio_employee.place(x=145.0, y=555.0)
+    radio_employee.place(x=886.0, y=555.0)
 
     def clear_entries():
         first_name_entry.delete(0, 'end')
@@ -299,7 +299,7 @@ def create_registration_window():
         fg="#FFFFFF",
         command=lambda: attempt_registration() 
     )
-    register_button.place(x=119.0, y=609.0, width=133.0, height=37.0)
+    register_button.place(x=860.0, y=609.0, width=133.0, height=37.0)
 
     # Back button
     back_button = Button( 
@@ -310,10 +310,59 @@ def create_registration_window():
         command=lambda:go_to_window(window)
     )
     
-    back_button.place(x=349.0, y=609.0, width=133.0, height=37.0)
+    back_button.place(x=1090.0, y=609.0, width=133.0, height=37.0)
 
-    canvas.create_rectangle(162.0, 21.0, 440.0, 85.0, fill="#FB7373", outline="")
-    canvas.create_text(209.0, 29.0, anchor="nw", text="Registration", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
+    canvas.create_rectangle(903.0, 21.0, 1181.0, 85.0, fill="#FB7373", outline="")
+    canvas.create_text(957.0, 33.0, anchor="nw", text="Registration", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
+
+    canvas.create_rectangle(83.0, 21.0, 780.0, 646.0, fill="#FFFFFF", outline="")
+
+    # Create Treeview
+    tree = Treeview(window, columns=("Employee_ID", "LOA", "Name", "Birthdate", "Contact_No", "Address", "Email"),
+                    show="headings", height=15)
+    tree.heading("Employee_ID", text="ID", anchor='center')
+    tree.heading("LOA", text="LOA", anchor='center')
+    tree.heading("Name", text="Name", anchor='center')
+    tree.heading("Birthdate", text="Birthdate", anchor='center')
+    tree.heading("Contact_No", text="Contact No", anchor='center')
+    tree.heading("Address", text="Address", anchor='center')
+    tree.heading("Email", text="Email", anchor='center')
+    tree.column("Employee_ID", minwidth=50, width=50, stretch=True)
+    tree.column("LOA", minwidth=50, width=50, stretch=True)
+    tree.column("Name", minwidth=100, width=110, stretch=True)
+    tree.column("Birthdate", minwidth=50, width=60, stretch=True)
+    tree.column("Contact_No", minwidth=100, width=100, stretch=True)
+    tree.column("Address", minwidth=150, width=200, stretch=True)
+    tree.column("Email", minwidth=150, width=200, stretch=True)
+
+    # Create vertical scrollbar
+    vsb = Scrollbar(window, orient="vertical", command=tree.yview)
+    vsb.place(x=780, y=21, height=625)
+    tree.configure(yscrollcommand=vsb.set)
+    # Create horizontal scrollbar
+    hsb = Scrollbar(window, orient="horizontal", command=tree.xview)
+    hsb.place(x=83, y=646, width=697)
+    tree.configure(xscrollcommand=hsb.set)
+
+    # Place Treeview
+    tree.place(x=83, y=21, width=697, height=625)   
+
+    # Fetch data from database and insert into Treeview
+    cursor.execute("SELECT Employee_ID, LOA, First_Name, MI, Last_Name, Suffix, Birthdate, Contact_No, Address, Email FROM accounts")
+    rows = cursor.fetchall()
+    for row in rows:
+        employee_id = row[0]
+        loa = row[1]
+        first_name = row[2]
+        mi = row[3] if row[3] else ""
+        last_name = row[4]
+        suffix = row[5] if row[5] else ""
+        name = f"{first_name} {mi} {last_name} {suffix}".strip()
+        birthdate = row[6]
+        contact_no = row[7]
+        address = row[8]
+        email = row[9]
+        tree.insert("", "end", values=(employee_id, loa, name, birthdate, contact_no, address, email))
 
     window.resizable(False, False)
     window.mainloop()
