@@ -128,6 +128,9 @@ def go_to_window(window_type):
     elif window_type == "register":
         import registration
         registration.create_registration_window()
+    elif window_type == "barcode":
+        import barcode_ad
+        barcode_ad.create_barcode_window()
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -191,23 +194,21 @@ def create_pos_admin_window():
     total_label.place(x=699.0, y=200.0)
 
     # Buttons for various actions
-    button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
     logout_button = Button(
-        image=button_image_1,
-        borderwidth=0,
-        highlightthickness=0,
+        text="Logout",
+        font=("Hanuman Regular", 16),
         command=lambda: go_to_window("logout"),
-        relief="flat"
+        bg="#FFFFFF",
+        relief="raised"
     )
     logout_button.place(x=1071.0, y=691.0, width=168.86373901367188, height=44.19459533691406)
 
-    button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
     help_button = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("Help Button"),
-        relief="flat"
+        text="Help",
+        font=("Hanuman Regular", 16),
+        command=lambda: print("Help"),
+        bg="#FFFFFF",
+        relief="raised"
     )
     help_button.place(x=1071.0, y=623.0, width=168.86373901367188, height=44.19459533691406)
 
@@ -230,7 +231,7 @@ def create_pos_admin_window():
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
     register_button = Button(
-        text="Register\nAccount",
+        text="Accounts",
         font=("Hanuman Regular", 20),
         command=lambda: go_to_window("register"),
         bg="#81CDF8",
@@ -246,6 +247,15 @@ def create_pos_admin_window():
         relief="ridge"
     )
     reports_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
+
+    barcodes_button = Button(
+        text="Barcode",
+        font=("Hanuman Regular", 20),
+        command=lambda: go_to_window("barcode"),
+        bg="#81CDF8",
+        relief="ridge"
+    )
+    barcodes_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
 
     maintenance_button = Button(
         text="Maintenance",
@@ -315,9 +325,6 @@ def create_pos_admin_window():
         fill="#000000",
         font=("Hanuman Regular", 20 * -1)
     )
-
-
-
 
     def show_hamburger_menu():
         """Shows the hamburger menu with options."""
