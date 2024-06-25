@@ -99,7 +99,7 @@ def create_login_window():
     canvas = Canvas(window, bg="#FFE1C6", height=400, width=600, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    image_image_1 = PhotoImage(file=relative_to_assets("image_1.png"))
+    image_image_1 = PhotoImage(file=relative_to_assets("Tri-mark Logo.png"))
     image_1 = canvas.create_image(300.0, 84.0, image=image_image_1)
 
     user_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
