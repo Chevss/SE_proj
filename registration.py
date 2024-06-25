@@ -178,6 +178,54 @@ def go_to_window(windows):
         from pos_admin import create_pos_admin_window
         create_pos_admin_window()
 
+def void_selected_account():
+    selected_item = tree.focus()  # Get the currently selected item
+    if selected_item:
+        confirm_void = messagebox.askyesno("Confirmation", "Are you sure you want to void this account?")
+        if confirm_void:
+            item = tree.item(selected_item)
+            item_values = item['values']
+            employee_id = item_values[1]  # Assuming Employee_ID is at index 1
+            
+            try:
+                # Update the database
+                cursor.execute("UPDATE accounts SET is_void = 1 WHERE Employee_ID = ?", (employee_id,))
+                conn.commit()  # Commit changes to the database
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been voided.")
+                
+                # Update the treeview display
+                new_status = "Unavailable"
+                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Error updating account: {str(e)}")
+        else:
+            messagebox.showinfo("Canceled", "Operation canceled.")
+
+def activate_selected_account():
+    selected_item = tree.focus()  # Get the currently selected item
+    if selected_item:
+        confirm_activate = messagebox.askyesno("Confirmation", "Are you sure you want to activate this account?")
+        if confirm_activate:
+            item = tree.item(selected_item)
+            item_values = item['values']
+            employee_id = item_values[1]  # Assuming Employee_ID is at index 1
+            
+            try:
+                # Update the database
+                cursor.execute("UPDATE accounts SET is_void = 0 WHERE Employee_ID = ?", (employee_id,))
+                conn.commit()  # Commit changes to the database
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
+                
+                # Update the treeview display
+                new_status = "Available"
+                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Error updating account: {str(e)}")
+        else:
+            messagebox.showinfo("Canceled", "Operation canceled.")
+
 # Registration window
 def create_registration_window():
     global window
@@ -315,11 +363,31 @@ def create_registration_window():
     canvas.create_rectangle(903.0, 21.0, 1181.0, 85.0, fill="#FB7373", outline="")
     canvas.create_text(957.0, 33.0, anchor="nw", text="Registration", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
 
-    canvas.create_rectangle(83.0, 21.0, 780.0, 646.0, fill="#FFFFFF", outline="")
+    activate_button = Button( 
+        window,
+        text="Activate",
+        font=("Hanuman Regular", 16),
+        bg="#FFFFFF",
+        command=activate_selected_account
+    )
 
+    activate_button.place(x=150.0, y=609.0, width=133.0, height=37.0)
+
+
+    void_button = Button( 
+        window,
+        text="Void",
+        font=("Hanuman Regular", 16),
+        bg="#FFFFFF",
+        command=void_selected_account
+    )
+
+    void_button.place(x=350.0, y=609.0, width=133.0, height=37.0)
+    global tree
     # Create Treeview
-    tree = Treeview(window, columns=("Employee_ID", "LOA", "Name", "Birthdate", "Contact_No", "Address", "Email"),
+    tree = Treeview(window, columns=("is_void", "Employee_ID", "LOA", "Name", "Birthdate", "Contact_No", "Address", "Email"),
                     show="headings", height=15)
+    tree.heading("is_void", text="Status", anchor='center')
     tree.heading("Employee_ID", text="ID", anchor='center')
     tree.heading("LOA", text="LOA", anchor='center')
     tree.heading("Name", text="Name", anchor='center')
@@ -327,42 +395,47 @@ def create_registration_window():
     tree.heading("Contact_No", text="Contact No", anchor='center')
     tree.heading("Address", text="Address", anchor='center')
     tree.heading("Email", text="Email", anchor='center')
-    tree.column("Employee_ID", minwidth=50, width=50, stretch=True)
-    tree.column("LOA", minwidth=50, width=50, stretch=True)
-    tree.column("Name", minwidth=100, width=110, stretch=True)
-    tree.column("Birthdate", minwidth=50, width=60, stretch=True)
-    tree.column("Contact_No", minwidth=100, width=100, stretch=True)
-    tree.column("Address", minwidth=150, width=200, stretch=True)
-    tree.column("Email", minwidth=150, width=200, stretch=True)
+    tree.column("is_void",  width=60, stretch=True)
+    tree.column("Employee_ID",  width=55, stretch=True)
+    tree.column("LOA",  width=50, stretch=True)
+    tree.column("Name",  width=110, stretch=True)
+    tree.column("Birthdate",  width=60, stretch=True)
+    tree.column("Contact_No",  width=100, stretch=True)
+    tree.column("Address",  width=200, stretch=True)
+    tree.column("Email",  width=200, stretch=True)
 
     # Create vertical scrollbar
     vsb = Scrollbar(window, orient="vertical", command=tree.yview)
-    vsb.place(x=780, y=21, height=625)
+    vsb.place(x=780, y=21, height=525)
     tree.configure(yscrollcommand=vsb.set)
     # Create horizontal scrollbar
     hsb = Scrollbar(window, orient="horizontal", command=tree.xview)
-    hsb.place(x=83, y=646, width=697)
+    hsb.place(x=83, y=546, width=697)
     tree.configure(xscrollcommand=hsb.set)
 
     # Place Treeview
-    tree.place(x=83, y=21, width=697, height=625)   
+    tree.place(x=83, y=21, width=697, height=525)   
 
     # Fetch data from database and insert into Treeview
-    cursor.execute("SELECT Employee_ID, LOA, First_Name, MI, Last_Name, Suffix, Birthdate, Contact_No, Address, Email FROM accounts")
+    cursor.execute("SELECT is_void, Employee_ID, LOA, First_Name, MI, Last_Name, Suffix, Birthdate, Contact_No, Address, Email FROM accounts")
     rows = cursor.fetchall()
+    
     for row in rows:
-        employee_id = row[0]
-        loa = row[1]
-        first_name = row[2]
-        mi = row[3] if row[3] else ""
-        last_name = row[4]
-        suffix = row[5] if row[5] else ""
+        is_void = "Available" if row[0] == 0 else "Unavailable"
+        employee_id = row[1]
+        loa = row[2]
+        first_name = row[3]
+        mi = row[4] if row[4] else ""
+        last_name = row[5]
+        suffix = row[6] if row[6] else ""
         name = f"{first_name} {mi} {last_name} {suffix}".strip()
-        birthdate = row[6]
-        contact_no = row[7]
-        address = row[8]
-        email = row[9]
-        tree.insert("", "end", values=(employee_id, loa, name, birthdate, contact_no, address, email))
+        birthdate = row[7]
+        contact_no = row[8]
+        address = row[9]
+        email = row[10]
+        tree.insert("", "end", values=(is_void, employee_id, loa, name, birthdate, contact_no, address, email))
+
+      # Update the status in Treeview
 
     window.resizable(False, False)
     window.mainloop()
