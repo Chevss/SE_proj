@@ -2,7 +2,7 @@ import hashlib
 import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
-
+from PIL import Image, ImageTk
 import shared_state
 from user_logs import log_actions
 
@@ -39,17 +39,28 @@ def get_loa(username):
 def go_to_window(windows):
     window.destroy()
     if windows == "forgot pass":
+        log_actions(shared_state.current_user, action="Someone goes to 'forgot password?")
         import forgot_pass
         forgot_pass.create_forgot_pass_window()
     elif windows == "pos_main":
         import pos_admin
         pos_admin.create_pos_admin_window()
 
+def get_user_status(username):
+    cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
+    row = cursor.fetchone()
+    if row:
+        if row[0] == 0:
+            return "Active"
+        return row[0]
+    else:
+        return None
+
 # Check credentials and initiate login process.
 def check_credentials(username, password, user_entry, pass_entry, window):
     global current_user
 
-    if not username and not password:
+    if not username or not password:
         messagebox.showerror("Error", "Please enter your username and password.")
         return
     
@@ -59,20 +70,32 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         hashed_password = hash_password(password, salt)
         if hashed_password == stored_hashed_password:
             loa = get_loa(username)
-            if loa:
-                messagebox.showinfo("Success", "Login successful!")
-                log_actions(username, "Logged In")
-                shared_state.current_user = username
-                shared_state.current_user_loa = loa  # Store the LOA
-                go_to_window("pos_main")
-                window.destroy()
+            if loa is not None:
+                user_status = get_user_status(username)  # Assuming you have a function to get user status
+                if user_status is not None:
+                    if user_status == 0:  # User is available
+                        messagebox.showinfo("Success", "Login successful!")
+                        log_actions(username, action = "Logged In")
+                        shared_state.current_user = username
+                        shared_state.current_user_loa = loa  # Store the LOA
+                        go_to_window("pos_main")
+                        window.destroy()
+                    elif user_status == 1:  # User is unavailable
+                        messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
+                        log_actions(username, action=f"{username} tried to logged in but his account is inactive")
+                    else:
+                        messagebox.showerror("Error", "Invalid user status.")
+                else:
+                    messagebox.showerror("Error", "Unable to retrieve user status.")
             else:
                 messagebox.showerror("Error", "Unable to retrieve access level.")
         else:
             messagebox.showerror("Error", "Incorrect password.")
+            log_actions(username, action=f"{username} tried to logged in but the entered password is incorrect")
             pass_entry.delete(0, 'end')
     else:
         messagebox.showerror("Error", "Username not found.")
+        log_actions(username, action="{username} tried to logged in but this username is not registered")
         user_entry.delete(0, 'end')
 
 def create_login_window():
@@ -98,16 +121,18 @@ def create_login_window():
     canvas = Canvas(window, bg="#FFE1C6", height=400, width=600, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    image_image_1 = PhotoImage(file=relative_to_assets("Tri-mark Logo.png"))
+    original_image = Image.open(relative_to_assets("Tri-mark Logo.png"))
+    resized_image = original_image.resize((350, 150))
+
+    # Convert the resized image to a PhotoImage object
+    image_image_1 = ImageTk.PhotoImage(resized_image)
+
+    # Create the image on the canvas
     image_1 = canvas.create_image(300.0, 84.0, image=image_image_1)
 
-    user_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
-    user_bg_2 = canvas.create_image(300.5, 214.0, image=user_image_1)
     user_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24 * -1))
-    user_entry.place(x=119.0, y=200.0, width=363.0, height=36.0) 
+    user_entry.place(x=119.0, y=195.0, width=363.0, height=36.0) 
 
-    pass_image_2 = PhotoImage(file=relative_to_assets("entry_2.png"))
-    pass_bg_1 = canvas.create_image(300.5, 279.0, image=pass_image_2)
     pass_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24 * -1), show="•")
     pass_entry.place(x=119.0, y=258.0, width=363.0, height=36.0)
 
