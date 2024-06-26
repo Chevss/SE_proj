@@ -49,31 +49,61 @@ def fetch_inventory_data(show_individual=True):
         print(f"Error fetching data: {e}")
         return []
 
-def search_inventory(keyword):
-    query = """
-    SELECT i.Barcode, p.Name, i.Quantity, p.Price, p.Details, i.DateDelivered, i.Supplier 
-    FROM inventory i
-    JOIN product p ON i.Barcode = p.Barcode
-    WHERE i.Barcode LIKE ? OR p.Name LIKE ? OR p.Details LIKE ?
-    """
-    try:
-        cursor.execute(query, (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%'))
-        return cursor.fetchall()
-    except sqlite3.Error as e:
-        messagebox.showerror("Database Error", f"Error searching inventory: {e}")
-        return []
-
-def search_barcode(barcode):
+def get_inventory_data():
     try:
         cursor.execute("""
-        SELECT Name, Price, Details
-        FROM product p
-        WHERE p.Barcode = ?;
-        """, (barcode,))
-
-        return cursor.fetchone()
+        SELECT i.Barcode, p.Name, i.Quantity, p.Price, p.Details, i.DateDelivered, i.Supplier 
+        FROM inventory i
+        JOIN product p ON i.Barcode = p.Barcode
+        """)
+        rows = cursor.fetchall()
+        print(f"Fetched {len(rows)} rows from inventory data.")  # Debug statement
+        return rows
     except sqlite3.Error as e:
-        messagebox.showerror("Database Error", f"Error searching barcode: {e}")
+        messagebox.showerror("Database Error", f"Error fetching inventory data: {e}")
+        return []
+    
+def get_product_data():
+    try:
+        cursor.execute("""
+        SELECT Barcode, Name, Price, Details
+        FROM product
+        """)
+        rows = cursor.fetchall()
+        print(f"Fetched {len(rows)} rows from product data.")  # Debug statement
+        return rows
+    except sqlite3.Error as e:
+        messagebox.showerror("Database Error", f"Error fetching product data: {e}")
+        return []
+
+def search_inventory_linear(keyword):
+    inventory_data = get_inventory_data()
+    if not inventory_data:
+        return []
+
+    keyword = keyword.lower()  # Convert keyword to lowercase for case-insensitive search
+
+    results = []
+    for item in inventory_data:
+        if (keyword in str(item[0]).lower() or  # Check Barcode
+            keyword in item[1].lower() or       # Check Name
+            keyword in item[4].lower()):        # Check Details
+            results.append(item)
+
+    return results
+
+def search_barcode_linear(barcode):
+    product_data = get_product_data()
+    if not product_data:
+        return None
+
+    barcode = str(barcode).strip()
+
+    for item in product_data:
+        if str(item[0]).strip() == barcode:
+            return item[1], item[2], item[3]  # Return Name, Price, Details
+
+    return None
 
 def go_to_window(windows):
     window.destroy()
@@ -198,7 +228,7 @@ def register_product_window():
     register_product_window.mainloop()
 
 def add_supply_window():
-    add_supply_window = Toplevel(window)
+    add_supply_window = Toplevel()
     add_supply_window.resizable(False, False)
     add_supply_window.title("Add Supply")
     add_supply_window.geometry("600x450")
@@ -223,55 +253,41 @@ def add_supply_window():
     barcode_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
     barcode_entry.place(x=220, y=80, width=240)
 
-    def verify_barcode():
-        barcode = barcode_entry.get().strip()
-        print (barcode)
-        result = search_barcode(barcode)
-        print (result)
-
-        if result:
-            product_name_entry.config(state='normal')
-            product_name_entry.delete(0, 'end')
-            product_name_entry.insert(0, result[0])
-            product_name_entry.config(state='disabled')
-        else:
-            messagebox.showerror("Product Not Found", "No product found with the entered barcode.")
-            product_name_entry.delete(0, 'end')
-
-    verify_button = Button(add_supply_window, text="Verify", command=verify_barcode, font=("Hanuman Regular", 12))
-    verify_button.place(x=465, y=78)
-
     product_name_label = Label(add_supply_window, text="Product Name:", bg="#FFE1C6", font=("Hanuman Regular", 16))
-    product_name_label.place(x=50, y=130)
-
     product_name_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
-    product_name_entry.place(x=220, y=130, width=300)
     product_name_entry.config(state='disabled')
 
     product_quantity_label = Label(add_supply_window, text="Add Quantity:", bg="#FFE1C6", font=("Hanuman Regular", 16))
-    product_quantity_label.place(x=50, y=180)
-
     product_quantity_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
-    product_quantity_entry.place(x=220, y=180, width=300)
+    product_quantity_entry.config(state='disabled')
 
     date_label = Label(add_supply_window, text="Date Delivered:", bg="#FFE1C6", font=("Hanuman Regular", 16))
-    date_label.place(x=50, y=230)
-
-    date_entry = DateEntry(add_supply_window, date_pattern="mm-dd-yyyy", width=12, background='darkblue', foreground='white', borderwidth=2, font=("Hanuman Regular", 16))
-    date_entry.place(x=220, y=230)
+    date_entry = DateEntry(add_supply_window, date_pattern="mm-dd-yyyy", width=12, background='darkblue', foreground='white', borderwidth=2, font=("Hanuman Regular", 16), state='disabled')
 
     supplier_label = Label(add_supply_window, text="Supplier:", bg="#FFE1C6", font=("Hanuman Regular", 16))
-    supplier_label.place(x=50, y=280)
-
     supplier_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
-    supplier_entry.place(x=220, y=280, width=300)
+    supplier_entry.config(state='disabled')
+
+    verify_button = Button(add_supply_window, text="Verify", command=verify_barcode, font=("Hanuman Regular", 12))
+    verify_button.place(x=470, y=78)
 
     def save_supply():
         barcode = barcode_entry.get().strip()
         product_name = product_name_entry.get().strip()
-        product_quantity = int(product_quantity_entry.get())
+        product_quantity_str = product_quantity_entry.get().strip()
         date_delivered = date_entry.get_date()
         supplier = supplier_entry.get().strip()
+
+        # Validate inputs
+        if not barcode or not product_name or not product_quantity_str or not supplier:
+            messagebox.showerror("Error", "Please fill in all fields.")
+            return
+        
+        try:
+            product_quantity = int(product_quantity_str)
+        except ValueError:
+            messagebox.showerror("Error", "Invalid quantity. Please enter a valid number.")
+            return
 
         try:
             cursor.execute("SELECT Barcode FROM product WHERE Barcode = ?", (barcode,))
@@ -281,6 +297,7 @@ def add_supply_window():
                 messagebox.showerror("Error", "No product with this barcode exists.")
                 return
 
+            # Insert supply into inventory table
             cursor.execute('''
                 INSERT INTO inventory (Barcode, Quantity, DateDelivered, Supplier)
                 VALUES (?, ?, ?, ?)
@@ -288,16 +305,38 @@ def add_supply_window():
             conn.commit()
 
             messagebox.showinfo("Supply Added", "Supply added successfully!")
-            
+
             # Log action
-            action = "Added " + str(product_quantity) + " to the product " + barcode + " from " + supplier + "."
+            action = f"Added {product_quantity} to the product {barcode} from {supplier}."
             log_actions(username, action)
 
-            add_supply_window.destroy()
-            update_table()
-
+    def verify_barcode():
+        barcode = barcode_entry.get().strip()
+        
+        if not barcode:
+            messagebox.showerror("Error", "Please enter a barcode.")
+            return
+        
+        try:
+            cursor.execute("SELECT Name FROM product WHERE Barcode = ?", (barcode,))
+            product = cursor.fetchone()
+            
+            if not product:
+                messagebox.showerror("Error", "No product with this barcode exists.")
+                return
+            
+            # Enable and populate product_name_entry
+            product_name_entry.config(state='normal')
+            product_name_entry.delete(0, END)
+            product_name_entry.insert(0, product[0])  # Assuming product[0] is the product name
+            
+            # Enable other entry fields
+            product_quantity_entry.config(state='normal')
+            date_entry.config(state='normal')
+            supplier_entry.config(state='normal')
+        
         except sqlite3.Error as e:
-            messagebox.showerror("Error", f"Error adding supply: {e}")
+            messagebox.showerror("Error", f"Error verifying barcode: {e}")
 
     save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
     save_button.place(x=250, y=330)
@@ -459,7 +498,6 @@ def update_table(show_individual=False):
         # Insert the item into the Treeview
         my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
 
-
 def sort_treeview(tree, col, descending):
     # Get all the rows in the treeview
     data = [(tree.set(child, col), child) for child in tree.get_children('')]
@@ -591,7 +629,7 @@ def create_products_window():
 
     def on_search(event):
         keyword = search_entry.get()
-        rows = search_inventory(keyword)
+        rows = search_inventory_linear(keyword)
         my_tree.delete(*my_tree.get_children())
         for row in rows:
             my_tree.insert("", "end", values=row)
@@ -643,7 +681,7 @@ def create_products_window():
 
     # Create vertical scrollbar
     vsb = Scrollbar(window, orient="vertical", command=my_tree.yview)
-    vsb.place(x=1240, y=176, height=482 + 20)  # Adjusted height to match the Treeview height
+    vsb.place(x=1240, y=176, height=482)  # Adjusted height to match the Treeview height
 
     # Configure Treeview to use vertical scrollbar
     my_tree.configure(yscrollcommand=vsb.set)
