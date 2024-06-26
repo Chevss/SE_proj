@@ -1,4 +1,4 @@
-from tkinter import Tk, Canvas, Entry, Button, Label, StringVar
+from tkinter import Tk, Canvas, Entry, Button, Label, StringVar, Scrollbar
 import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from pathlib import Path
@@ -19,7 +19,7 @@ cursor = conn.cursor()
 
 def generate_code39_barcode(barcode_data, product_name):
     # Generate Code 39 barcode
-    code39 = Code39(barcode_data, writer=ImageWriter())
+    code39 = Code39(barcode_data, writer=ImageWriter(), add_checksum=False)
     barcode_image = code39.render()  # Render barcode as PIL Image
     return barcode_image
 
@@ -38,6 +38,10 @@ def on_select(event):
         display_barcode_image(values[1], values[0])  # Display selected barcode image with product name
 
 def display_barcode_image(barcode_data, product_name):
+    # Ensure the barcode data does not have extra characters
+    barcode_data = barcode_data.strip()
+    print(f"Generating barcode for data: '{barcode_data}' and product name: '{product_name}'")
+    
     # Generate Code 39 barcode image
     barcode_image = generate_code39_barcode(barcode_data, product_name)
 
@@ -194,6 +198,10 @@ def create_barcode_window():
 
     tree.bind('<ButtonRelease-1>', on_select)  # Bind selection event
 
+    vsb = Scrollbar(window, orient="vertical", command=tree.yview)
+    vsb.place(x=685, y=165, height=535)
+    tree.configure(yscrollcommand=vsb.set)
+
     save_button = Button(
         text="Save",
         font=("Hanuman Regular", 12),
@@ -202,6 +210,8 @@ def create_barcode_window():
         relief="raised"
     )
     save_button.place(x=480.0, y=770.0)
+
+
 
     # Initialize the table with all products upon window creation
     update_table()
