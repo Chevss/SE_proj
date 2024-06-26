@@ -88,6 +88,7 @@ def create_forgot_pass_window():
         cursor.execute("SELECT Username FROM accounts WHERE Email = ?", (email,))
         result = cursor.fetchone()
         conn.close()
+        log_actions(email, action= f"{email} sends a verification code")
         if result:
             return result[0]
         else:
