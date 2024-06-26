@@ -1,54 +1,55 @@
+import sqlite3
 import tkinter as tk
 from tkinter import Button, Canvas, ttk
+import tkinter.font as tkfont
 
 current_tree = None # For printing
 sort_order = {}
+
+conn = sqlite3.connect('Trimark_construction_supply.db')
+cursor = conn.cursor()
 
 # TEMPORARY DATA
 def generate_user_logs():
     global current_data
     clear_tree()
     
-    # Dummy data for user logs
-    current_data = [
-        (1, "user1", "login", "2024-06-26 08:00"),
-        (2, "user4", "logout", "2024-06-26 09:00"),
-        (3, "user3", "login", "2024-06-26 10:00"),
-        (4, "user2", "changed password", "2024-06-26 12:00"),
-    ]
-    update_tree(current_data, ["ID", "Username", "Action", "Timestamp"])
+    cursor.execute("SELECT log_id, Employee_ID, Username, action, timestamp FROM user_logs")
+    rows = cursor.fetchall()
+
+    current_data = rows
+    update_tree(current_data, ["Log ID", "Employee ID", "Username", "Action", "Timestamp"])
 
 def generate_purchase_history():
     global current_data
     clear_tree()
     
-    # Dummy data for purchase history
-    current_data = [
-        (101, "Laptop", 1, "2024-06-20"),
-        (102, "Mouse", 2, "2024-06-21"),
-        (103, "Keyboard", 1, "2024-06-22"),
-        (104, "Apple", 3, "2024-06-23"),
-    ]
-    update_tree(current_data, ["OrderID", "Product", "Quantity", "Date"])
+    cursor.execute("SELECT Purchase_ID, First_Name, Product_Name, Purchase_Quantity, Product_Price, Total_Price, Amount_Given, Change, Time_Stamp FROM purchase_history")
+    rows = cursor.fetchall()
+
+    current_data = rows
+    update_tree(current_data, ["Purchase ID", "Customer Name", "Product", "Quantity", "Price", "Total Amount", "Amount Paid", "Change", "Timestamp"])
 
 def generate_sales_report():
     global current_data
     clear_tree()
     
-    # Dummy data for sales report
-    current_data = [
-        (201, "Laptop", "$1200", "2024-06-18"),
-        (202, "Monitor", "$300", "2024-06-19"),
-        (203, "Printer", "$150", "2024-06-20"),
-        (204, "Apple", "$1050", "2024-06-21"),
-    ]
-    update_tree(current_data, ["SaleID", "Product", "Amount", "Date"])
+    current_data = ""
+    update_tree(current_data, [""])
 
 def update_tree(data, columns):
     clear_tree()
     tree["columns"] = columns
+
+    window_width = 1082  # Width of the treeview in the window
+    scrollbar_width = 20  # Approximate width of the scrollbar
+    available_width = window_width - scrollbar_width
+    column_width = available_width // len(columns)  # Calculate equal column width
+
     for col in columns:
         tree.heading(col, text=col, command=lambda _col=col: sort_column(_col))
+        tree.column(col, width=column_width)  # Set each column to equal width
+    
     for record in data:
         tree.insert("", tk.END, values=record)
 
@@ -104,10 +105,11 @@ def create_reports_window():
     back_btn = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     back_btn.place(x=920, y=620, height=50, width=200)
 
-    tree = ttk.Treeview(window)
-    tree["columns"] = ("ID", "Username", "Action", "Timestamp")
-    tree.heading("#0", text="Index")
-    tree.heading("ID", text="ID")
+    tree = ttk.Treeview(window, show='headings')
+    tree["columns"] = ("Log ID", "Employee ID", "Username", "Action", "Timestamp")
+    # tree.heading("#0", text="Index")
+    tree.heading("Log ID", text="Log ID")
+    tree.heading("Employee ID", text="Employee ID")
     tree.heading("Username", text="Username")
     tree.heading("Action", text="Action")
     tree.heading("Timestamp", text="Timestamp")
@@ -115,6 +117,9 @@ def create_reports_window():
     tree_scroll = ttk.Scrollbar(window, orient="vertical", command=tree.yview)
     tree_scroll.place(x=1102, y=90, height=480)
     tree.configure(yscrollcommand=tree_scroll.set)
+
+    generate_user_logs() # default
+
 
     window.resizable(False, False)
     window.mainloop()
