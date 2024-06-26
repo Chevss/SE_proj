@@ -6,6 +6,7 @@ import sqlite3
 from barcode import Code39
 from barcode.writer import ImageWriter
 import shared_state
+import user_logs
 
 # Define paths
 OUTPUT_PATH = Path(__file__).parent
@@ -26,6 +27,7 @@ def generate_code39_barcode(barcode_data, product_name):
 def go_to_window(windows):
     window.destroy()
     if windows == "back":
+        user_logs.log_actions(shared_state.current_user, "Back to Pos Window")
         import pos_admin
         pos_admin.create_pos_admin_window()
 
@@ -36,6 +38,8 @@ def on_select(event):
         values = tree.item(item, 'values')
         selected_barcode_var.set(values[1])  # Display selected barcode in entry
         display_barcode_image(values[1], values[0])  # Display selected barcode image with product name
+        
+        user_logs.log_actions(shared_state.current_user, f"Select {values}")
 
 def display_barcode_image(barcode_data, product_name):
     # Ensure the barcode data does not have extra characters
@@ -72,7 +76,8 @@ def save_barcode_image():
 
         # Save the barcode image to disk
         barcode_image.save(barcode_image_path, format="PNG")
-
+        user_logs.log_actions(shared_state.current_user, f"Save {product_name} barcode")
+        
         # Optionally provide feedback to the user that the image has been saved
         print(f"Barcode image for {product_name} saved in 'Barcodes' folder.")
 
