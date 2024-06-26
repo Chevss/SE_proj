@@ -38,9 +38,18 @@ def generate_purchase_history():
 def generate_sales_report():
     global current_data
     clear_tree()
+
+    query = """
+        SELECT Product_Name, SUM(Total_Price) AS Total_Sales
+        FROM purchase_history
+        GROUP BY Product_Name
+        """
     
-    current_data = ""
-    update_tree(current_data, [""])
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    
+    current_data = rows  # Use fetched data from the database
+    update_tree(current_data, ["Product Name", "Total Sales"])
 
 def update_tree(data, columns):
     clear_tree()
