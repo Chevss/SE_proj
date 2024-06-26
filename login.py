@@ -16,40 +16,34 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Login")
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
 def hash_password(password, salt):
     salted_password = password + salt
     return hashlib.sha256(salted_password.encode()).hexdigest()
 
-def check_loa(get_loa):
-    if get_loa == "admin":
-        import pos_admin
-        pos_admin.create_pos_admin_window()
+def get_stored_hashed_password(username):
+    cursor.execute("SELECT salt, password FROM accounts WHERE username =? AND is_void = 0", (username,))
+    row = cursor.fetchone()
+    if row:
+        return row[0], row[1]
     else:
-        import pos_employee
-        pos_employee.create_pos_admin_window()
-
-def get_LOA(username):
-    cursor.execute("SELECT Loa FROM accounts WHERE username =?", (username,))
+        return None, None
+    
+def get_loa(username):
+    cursor.execute("SELECT Loa FROM accounts WHERE username =? AND is_void = 0", (username,))
     row = cursor.fetchone()
     if row:
         return row[0]
     else:
         return None
 
-def get_stored_hashed_password(username):
-    cursor.execute("SELECT salt, password FROM accounts WHERE username =?", (username,))
-    row = cursor.fetchone()
-    if row:
-        return row[0], row[1]
-    else:
-        return None, None
-
 def go_to_window(windows):
-        window.destroy()
-        if windows == "forgot pass":
-            import forgot_pass
-            forgot_pass.create_forgot_pass_window()
+    window.destroy()
+    if windows == "forgot pass":
+        import forgot_pass
+        forgot_pass.create_forgot_pass_window()
+    elif windows == "pos_main":
+        import pos_admin
+        pos_admin.create_pos_admin_window()
 
 # Check credentials and initiate login process.
 def check_credentials(username, password, user_entry, pass_entry, window):
@@ -64,11 +58,16 @@ def check_credentials(username, password, user_entry, pass_entry, window):
     if salt and stored_hashed_password:
         hashed_password = hash_password(password, salt)
         if hashed_password == stored_hashed_password:
-            messagebox.showinfo("Success", "Login successful!")
-            log_actions(username, "Logged In")
-            shared_state.current_user = username
-            window.destroy()
-            check_loa(get_LOA(username))
+            loa = get_loa(username)
+            if loa:
+                messagebox.showinfo("Success", "Login successful!")
+                log_actions(username, "Logged In")
+                shared_state.current_user = username
+                shared_state.current_user_loa = loa  # Store the LOA
+                go_to_window("pos_main")
+                window.destroy()
+            else:
+                messagebox.showerror("Error", "Unable to retrieve access level.")
         else:
             messagebox.showerror("Error", "Incorrect password.")
             pass_entry.delete(0, 'end')

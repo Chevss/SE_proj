@@ -120,6 +120,7 @@ def go_to_window(window_type):
     if window_type == "logout":
         log_actions(shared_state.current_user, "Logged Out")
         shared_state.current_user = None
+        shared_state.current_user_loa = None
         import login
         login.create_login_window()
     elif window_type == "inventory":
@@ -236,9 +237,6 @@ def create_pos_admin_window():
     )
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
-    # Determine if the logged-in user is admin
-    is_admin = shared_state.current_user == "admin"  # Modify with your actual admin check condition
-
     # Accounts (Register) button
     register_button = Button(
         text="Accounts",
@@ -246,7 +244,7 @@ def create_pos_admin_window():
         command=lambda: go_to_window("register"),
         bg="#81CDF8",
         relief="ridge",
-        state=tk.NORMAL if is_admin else tk.DISABLED
+        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
     )
     register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
 
@@ -256,7 +254,7 @@ def create_pos_admin_window():
         command=lambda: go_to_window("reports"),
         bg="#81CDF8",
         relief="ridge",
-        state=tk.NORMAL if is_admin else tk.DISABLED
+        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
     )
     reports_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
 
@@ -266,7 +264,7 @@ def create_pos_admin_window():
         command=lambda: go_to_window("maintenance"),
         bg="#81CDF8",
         relief="ridge",
-        state=tk.NORMAL if is_admin else tk.DISABLED
+        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
     )
     maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
@@ -336,7 +334,7 @@ def create_pos_admin_window():
         41.0,
         20.0,
         anchor="nw",
-        text="Admin",
+        text=shared_state.current_user_loa.capitalize(),
         fill="#000000",
         font=("Hanuman Regular", 20 * -1)
     )
@@ -688,21 +686,21 @@ def update_inventory(purchase_list):
 def create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-********************************
-  Trimark Construction Supply
-********************************
-No. 39 Scout Ybardolaza St. 
-Sacred Heart, Quezon City
-Tel. No. (02) 926-2329 
-********************************
-Cashier: {cashier_name}
-Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-********************************
-Customer Name: {customer_name}
-Customer Contact: {customer_contact}
-********************************
-Items:
-"""
+        ********************************
+        Trimark Construction Supply
+        ********************************
+        No. 39 Scout Ybardolaza St. 
+        Sacred Heart, Quezon City
+        Tel. No. (02) 926-2329 
+        ********************************
+        Cashier: {cashier_name}
+        Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        ********************************
+        Customer Name: {customer_name}
+        Customer Contact: {customer_contact}
+        ********************************
+        Items:
+        """
 
     max_item_name_length = 30  # Adjust this as needed for your receipt layout
 
@@ -726,18 +724,18 @@ Items:
     total = subtotal + tax
 
     receipt_text += f"""
-********************************
-Subtotal: Php {subtotal:.2f}
-Tax (12%): Php {tax:.2f}
-Total: Php {total:.2f}
-********************************
-Bill Given: Php {customer_money:.2f}
-Change: Php {change:.2f}
-********************************
-Thank you for your purchase!
-********************************
+        ********************************
+        Subtotal: Php {subtotal:.2f}
+        Tax (12%): Php {tax:.2f}
+        Total: Php {total:.2f}
+        ********************************
+        Bill Given: Php {customer_money:.2f}
+        Change: Php {change:.2f}
+        ********************************
+        Thank you for your purchase!
+        ********************************
 
-"""
+        """
     
     print_receipt(receipt_text)
 
