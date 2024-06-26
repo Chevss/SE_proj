@@ -61,9 +61,27 @@ def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number,
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
         conn.commit()
+        update_table()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
         conn.rollback()
+
+def update_table():
+    try:
+        cursor.execute('SELECT * FROM accounts')
+        rows = cursor.fetchall()
+        
+        # Clear existing items in the tree view
+        for item in tree.get_children():
+            tree.delete(item)
+        
+        # Insert updated data into the tree view
+        for row in rows:
+            tree.insert('', 'end', values=row)  # Modify according to your treeview structure
+            
+        conn.commit()  # Commit any changes if necessary
+    except sqlite3.Error as e:
+        messagebox.showerror("Error", f"Failed to fetch data from database: {str(e)}")
 
 # Generate employee ID like how TIP does but with modification.
 def generate_employee_id(loa):
@@ -150,7 +168,7 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
     employee_id = generate_employee_id(loa)
     send_email(email, employee_id, username, password)
 
-    log_actions(shared_state.current_user, action = "Registered a user.")
+    log_actions(shared_state.current_user, action = f"Registered {first_name} {last_name} account with {loa} Level of Access.")
 
     messagebox.showinfo("Success", "Registration successful. Your username, temporary password, and Employee ID have been sent to your email.")
     return True
@@ -174,9 +192,10 @@ def is_valid_email(email):
     return True, ""
 
 def go_to_window(windows):
-        window.destroy()
-        from pos_admin import create_pos_admin_window
-        create_pos_admin_window()
+    window.destroy()
+    log_actions(shared_state.current_user, action = "Go back to POS window")
+    from pos_admin import create_pos_admin_window
+    create_pos_admin_window()
 
 def void_selected_account():
     selected_item = tree.focus()  # Get the currently selected item
@@ -191,10 +210,10 @@ def void_selected_account():
                 # Update the database
                 cursor.execute("UPDATE accounts SET is_void = 1 WHERE Employee_ID = ?", (employee_id,))
                 conn.commit()  # Commit changes to the database
-                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been voided.")
-                
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been Deactivated.")
+                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Deactivated user {employee_id}")
                 # Update the treeview display
-                new_status = "Unavailable"
+                new_status = "Inactive"
                 tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
                 
             except Exception as e:
@@ -216,9 +235,9 @@ def activate_selected_account():
                 cursor.execute("UPDATE accounts SET is_void = 0 WHERE Employee_ID = ?", (employee_id,))
                 conn.commit()  # Commit changes to the database
                 messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
-                
+                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Deactivated user {employee_id}")
                 # Update the treeview display
-                new_status = "Available"
+                new_status = "Active"
                 tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
                 
             except Exception as e:
@@ -371,7 +390,7 @@ def create_registration_window():
         command=activate_selected_account
     )
 
-    activate_button.place(x=150.0, y=609.0, width=133.0, height=37.0)
+    activate_button.place(x=250.0, y=609.0, width=133.0, height=37.0)
 
 
     void_button = Button( 
@@ -382,7 +401,7 @@ def create_registration_window():
         command=void_selected_account
     )
 
-    void_button.place(x=350.0, y=609.0, width=133.0, height=37.0)
+    void_button.place(x=450.0, y=609.0, width=133.0, height=37.0)
     global tree
     # Create Treeview
     tree = Treeview(window, columns=("is_void", "Employee_ID", "LOA", "Name", "Birthdate", "Contact_No", "Address", "Email"),
