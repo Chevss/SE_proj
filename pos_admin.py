@@ -1,6 +1,4 @@
 import datetime
-import hashlib
-import secrets
 import sqlite3
 import tkinter as tk
 import win32print
