@@ -52,7 +52,10 @@ def get_user_status(username):
     if row:
         if row[0] == 0:
             return "Active"
-        return row[0]
+        elif row[0] == 1:
+            return "Inactive"
+        else:
+            return "Unknown"
     else:
         return None
 
@@ -73,14 +76,14 @@ def check_credentials(username, password, user_entry, pass_entry, window):
             if loa is not None:
                 user_status = get_user_status(username)  # Assuming you have a function to get user status
                 if user_status is not None:
-                    if user_status == 0:  # User is available
+                    if user_status == "Active":  # User is available
                         messagebox.showinfo("Success", "Login successful!")
                         log_actions(username, action = "Logged In")
                         shared_state.current_user = username
                         shared_state.current_user_loa = loa  # Store the LOA
                         go_to_window("pos_main")
                         window.destroy()
-                    elif user_status == 1:  # User is unavailable
+                    elif user_status == "Inactive":  # User is unavailable
                         messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
                         log_actions(username, action=f"{username} tried to logged in but his account is inactive")
                     else:
@@ -95,7 +98,7 @@ def check_credentials(username, password, user_entry, pass_entry, window):
             pass_entry.delete(0, 'end')
     else:
         messagebox.showerror("Error", "Username not found.")
-        log_actions(username, action="{username} tried to logged in but this username is not registered")
+        log_actions(username, action=f"{username} tried to logged in but this username is not registered")
         user_entry.delete(0, 'end')
 
 def create_login_window():
