@@ -1,8 +1,7 @@
-import hashlib
 import re
-import secrets
 import sqlite3
 from pathlib import Path
+from salt_and_hash import generate_salt, hash_password
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 
 import shared_state

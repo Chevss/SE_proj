@@ -9,6 +9,7 @@ from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simple
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
+from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions
 
 # Define the path to your assets folder
@@ -21,12 +22,6 @@ void_list= []
 def relative_to_assets(path: str) -> Path:
     """Returns the absolute path to an asset relative to ASSETS_PATH."""
     return ASSETS_PATH / Path(path)
-
-def generate_salt():
-    return secrets.token_hex(16)
-
-def hash_password(password, salt):
-    return hashlib.sha256((password + salt).encode()).hexdigest()
 
 def connect_db():
     """Connects to the SQLite database."""

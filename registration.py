@@ -1,7 +1,5 @@
 # Libraries
-import hashlib
 import re
-import secrets
 import smtplib
 import sqlite3
 from datetime import datetime
@@ -11,6 +9,7 @@ from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, Ph
 from tkcalendar import DateEntry
 from tkinter.ttk import Treeview
 import shared_state
+from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions
 
 # Database connection
@@ -23,13 +22,6 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Registration")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
-
-# Using hash to protect the confidentiality of passwords.
-def generate_salt():
-    return secrets.token_hex(16)
-
-def hash_password(password, salt):
-    return hashlib.sha256((password + salt).encode()).hexdigest()
 
 # Send email containing the generated username from registration inputs and random generated password.
 def send_email(email, employee_id, username, password):

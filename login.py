@@ -1,9 +1,9 @@
-import hashlib
 import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 from PIL import Image, ImageTk
 import shared_state
+from salt_and_hash import hash_password
 from user_logs import log_actions
 
 # Global variables
@@ -15,10 +15,6 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Login")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
-
-def hash_password(password, salt):
-    salted_password = password + salt
-    return hashlib.sha256(salted_password.encode()).hexdigest()
 
 def get_stored_hashed_password(username):
     cursor.execute("SELECT salt, password FROM accounts WHERE username =? AND is_void = 0", (username,))
