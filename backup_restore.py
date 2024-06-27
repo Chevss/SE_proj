@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
+# From user made modules
 import shared_state
 from user_logs import log_actions
 

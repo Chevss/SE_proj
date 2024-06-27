@@ -4,6 +4,8 @@ import tkinter as tk
 import win32print
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
+
+# From user made modules
 import shared_state
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name

@@ -5,6 +5,8 @@ from pathlib import Path
 import sqlite3
 from barcode import Code39
 from barcode.writer import ImageWriter
+
+# From user made modules
 import shared_state
 import user_logs
 

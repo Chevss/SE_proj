@@ -9,6 +9,7 @@ import io
 import random
 import sqlite3
 
+# From user made modules
 import shared_state
 from user_logs import log_actions
 

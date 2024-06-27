@@ -2,6 +2,8 @@ import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 from PIL import Image, ImageTk
+
+# From user made modules
 import shared_state
 from salt_and_hash import hash_password
 from user_logs import log_actions

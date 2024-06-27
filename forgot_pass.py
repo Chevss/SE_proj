@@ -7,6 +7,7 @@ from tkinter import Button, Canvas, Entry, messagebox, PhotoImage, Tk
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# From user made modules
 import new_pass
 import shared_state
 from user_logs import log_actions

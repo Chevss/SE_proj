@@ -4,6 +4,7 @@ from pathlib import Path
 from salt_and_hash import generate_salt, hash_password
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 
+# From user made modules
 import shared_state
 from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions

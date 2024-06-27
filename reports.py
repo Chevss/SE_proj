@@ -7,6 +7,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from tkinter import Button, Canvas, filedialog, messagebox, ttk
 
+# From user made modules
 import shared_state
 
 current_data = None
