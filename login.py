@@ -82,7 +82,6 @@ def check_credentials(username, password, user_entry, pass_entry, window):
                         shared_state.current_user = username
                         shared_state.current_user_loa = loa  # Store the LOA
                         go_to_window("pos_main")
-                        window.destroy()
                     elif user_status == "Inactive":  # User is unavailable
                         messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
                         log_actions(username, action=f"{username} tried to logged in but his account is inactive")

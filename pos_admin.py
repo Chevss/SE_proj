@@ -135,7 +135,7 @@ def go_to_window(window_type):
     elif window_type == "maintenance":  
         import maintenance
         maintenance.create_maintenance_window()
-    elif window_type == "report":  
+    elif window_type == "reports":  
         import reports
         reports.create_reports_window()
 
