@@ -29,7 +29,7 @@ def relative_to_assets(path: str) -> Path:
 # Global variable to keep track of sorting order
 SORT_ORDER = {}
 
-def fetch_inventory_data(show_individual=True):
+def fetch_inventory_data(show_individual=False):
     try:
         if show_individual:
             cursor.execute("""
@@ -52,7 +52,7 @@ def fetch_inventory_data(show_individual=True):
 def get_inventory_data():
     try:
         cursor.execute("""
-        SELECT i.Barcode, p.Name, i.Quantity, p.Price, p.Details, i.DateDelivered, i.Supplier 
+        SELECT i.Barcode, p.Name, p.Price, i.Quantity, p.Details, p.Status, i.DateDelivered, i.Supplier 
         FROM inventory i
         JOIN product p ON i.Barcode = p.Barcode
         """)
@@ -76,8 +76,9 @@ def get_product_data():
         messagebox.showerror("Database Error", f"Error fetching product data: {e}")
         return []
 
-def search_inventory_linear(keyword):
+def search_inventory_linear(keyword, individual=False):
     inventory_data = get_inventory_data()
+    print (inventory_data)
     if not inventory_data:
         return []
 
@@ -86,24 +87,13 @@ def search_inventory_linear(keyword):
     results = []
     for item in inventory_data:
         if (keyword in str(item[0]).lower() or  # Check Barcode
-            keyword in item[1].lower() or       # Check Name
-            keyword in item[4].lower()):        # Check Details
+            keyword in item[1].lower()):        # Check name
             results.append(item)
 
-    return results
-
-def search_barcode_linear(barcode):
-    product_data = get_product_data()
-    if not product_data:
-        return None
-
-    barcode = str(barcode).strip()
-
-    for item in product_data:
-        if str(item[0]).strip() == barcode:
-            return item[1], item[2], item[3]  # Return Name, Price, Details
-
-    return None
+    if individual:
+        return results[0] if results else None  # Return the first item or None if no results
+    else:
+        return results
 
 def go_to_window(windows):
     window.destroy()
@@ -126,7 +116,6 @@ def register_product(barcode, product_name, product_price, product_details):
             VALUES (?, ?, ?, ?)
         ''', (barcode, product_name, product_price, product_details))
         conn.commit()
-        update_table()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Error inserting data into product table: {e}")
 
@@ -217,7 +206,7 @@ def register_product_window():
         log_actions(username, action)
 
         # Update table and close the window
-        update_table()
+        update_table(show_individual=False)
         register_product_window.destroy()
 
     save_button = Button(register_product_window, text="Save", command=save_and_close, font=("Hanuman Regular", 16))
@@ -255,11 +244,9 @@ def add_supply_window():
 
     product_name_label = Label(add_supply_window, text="Product Name:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_name_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
-    product_name_entry.config(state='disabled')
 
     product_quantity_label = Label(add_supply_window, text="Add Quantity:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_quantity_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
-    product_quantity_entry.config(state='disabled')
 
     date_label = Label(add_supply_window, text="Date Delivered:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     date_entry = DateEntry(add_supply_window, date_pattern="mm-dd-yyyy", width=12, background='darkblue', foreground='white', borderwidth=2, font=("Hanuman Regular", 16), state='disabled')
@@ -267,6 +254,52 @@ def add_supply_window():
     supplier_label = Label(add_supply_window, text="Supplier:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     supplier_entry = Entry(add_supply_window, font=("Hanuman Regular", 16))
     supplier_entry.config(state='disabled')
+
+    def verify_barcode():
+        barcode = barcode_entry.get().strip()
+        print(f"Verifying barcode: {barcode}")  # Check if the function is called
+        
+        if not barcode:
+            messagebox.showerror("Error", "Please enter a barcode.")
+            return
+        
+        try:
+            cursor.execute("SELECT Name FROM product WHERE Barcode = ?", (barcode,))
+            product = cursor.fetchone()
+            print(product)
+            
+            if not product:
+                messagebox.showerror("Error", "No product with this barcode exists.")
+                return
+            
+            # Enable and populate product_name_entry
+            product_name_label.place(x=50, y=130)
+            product_name_entry.place(x=220, y=130, width=300)
+            product_name_entry.delete(0, END)
+            product_name_entry.insert(0, product[0])
+            product_name_entry.config(state='disabled')
+
+            product_quantity_label.place(x=50, y=180)
+            product_quantity_entry.place(x=220, y=180, width=300)
+            product_quantity_entry.config(state='normal')
+
+            date_label.place(x=50, y=230)
+            date_entry.place(x=220, y=230)
+
+            supplier_label.place(x=50, y=280)
+            supplier_entry.place(x=220, y=280, width=300)
+            supplier_entry.config(state='normal')
+
+            # Enable other entry fields
+            product_quantity_entry.config(state='normal')
+            date_entry.config(state='normal')
+            supplier_entry.config(state='normal')
+
+            save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
+            save_button.place(x=250, y=330)
+        
+        except sqlite3.Error as e:
+            messagebox.showerror("Error", f"Error verifying barcode: {e}")
 
     verify_button = Button(add_supply_window, text="Verify", command=verify_barcode, font=("Hanuman Regular", 12))
     verify_button.place(x=470, y=78)
@@ -310,36 +343,8 @@ def add_supply_window():
             action = f"Added {product_quantity} to the product {barcode} from {supplier}."
             log_actions(username, action)
 
-    def verify_barcode():
-        barcode = barcode_entry.get().strip()
-        
-        if not barcode:
-            messagebox.showerror("Error", "Please enter a barcode.")
-            return
-        
-        try:
-            cursor.execute("SELECT Name FROM product WHERE Barcode = ?", (barcode,))
-            product = cursor.fetchone()
-            
-            if not product:
-                messagebox.showerror("Error", "No product with this barcode exists.")
-                return
-            
-            # Enable and populate product_name_entry
-            product_name_entry.config(state='normal')
-            product_name_entry.delete(0, END)
-            product_name_entry.insert(0, product[0])  # Assuming product[0] is the product name
-            
-            # Enable other entry fields
-            product_quantity_entry.config(state='normal')
-            date_entry.config(state='normal')
-            supplier_entry.config(state='normal')
-        
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error verifying barcode: {e}")
-
-    save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
-    save_button.place(x=250, y=330)
 
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
 
@@ -425,6 +430,9 @@ def update_products_window():
             product_status_var.set(product[4] == 'Available')
             product_status_checkbox.config(state='normal')
 
+            save_button = Button(update_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
+            save_button.place(x=250, y=430)
+
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error fetching product details: {e}")
 
@@ -450,7 +458,7 @@ def update_products_window():
             log_actions(username, action)
             
             update_supply_window.destroy()
-            update_table()
+            update_table(show_individual=False)
 
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error updating supply: {e}")
@@ -458,45 +466,36 @@ def update_products_window():
     verify_button = Button(update_supply_window, text="Verify", command=fetch_product_details, font=("Hanuman Regular", 12))
     verify_button.place(x=470, y=77,)
 
-    save_button = Button(update_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
-    save_button.place(x=250, y=430)
+    
 
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
 
     update_supply_window.mainloop()
 
 def update_table(show_individual=False):
-    # Fetch data from database
-    data = fetch_inventory_data(show_individual)
+    try:
+        data = fetch_inventory_data(show_individual)
+        
+        # Clear existing rows in Treeview
+        for row in my_tree.get_children():
+            my_tree.delete(row)
 
-    # Clear existing rows in Treeview
-    for row in my_tree.get_children():
-        my_tree.delete(row)
-
-    # Insert fetched data into Treeview with correct order
-    for item in data:
-        if show_individual:
-            # Extract item data (example: converting date string to datetime for sorting)
+        # Insert fetched data into Treeview with correct order
+        for item in data:
             barcode = item[0]
             name = item[1]
             price = item[2]
             quantity = item[3]
             details = item[4]
             status = item[5]
-            date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None  # Example date format
+            date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None
             supplier = item[7]
-        else:
-            barcode = item[0]
-            name = item[1]
-            price = item[2]
-            quantity = item[3]  # TotalQuantity
-            details = item[4]
-            status = item[5]
-            date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None  # Example date format
-            supplier = item[7]
-
-        # Insert the item into the Treeview
-        my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
+            
+            # Insert the item into the Treeview
+            my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
+    
+    except sqlite3.Error as e:
+        messagebox.showerror("Database Error", f"Error fetching data: {e}")
 
 def sort_treeview(tree, col, descending):
     # Get all the rows in the treeview
@@ -587,56 +586,66 @@ def create_products_window():
     canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    # Determine if the logged-in user is admin
-    cursor.execute("""
-        SELECT LOA
-        FROM accounts
-        WHERE Username = ?
-    """, (username,))
-    loa=cursor.fetchone()
-    loa = "admin"
-    is_admin = loa == "admin"
-
     back_button = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     back_button.place(x=1071.0, y=696.0, width=169.0, height=64.0)
-
-    register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
-    register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
-
-    update_product_button = Button(window, text="Update Products", command=lambda: update_products_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
-    update_product_button.place(x=617.0, y=691.0, width=237.84408569335938, height=73.0)
-
-    add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
-    add_supply_button.place(x=329.0, y=691.0, width=237.84408569335938, height=73.0)
-    
-    show_individual = False  # Default to show individual items
 
     def toggle_view():
         nonlocal show_individual
         show_individual = not show_individual
         update_table(show_individual)
 
-    toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised", state=tk.NORMAL if is_admin else tk.DISABLED)
-    toggle_button.place(x=1000, y=92, width=237, height=73)
+    # Determine if the logged-in user is admin
+
+    loa=shared_state.current_user_loa
+    loa = "admin"
+
+    if loa == "admin":
+        register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
+        register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
+
+        update_product_button = Button(window, text="Update Products", command=lambda: update_products_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
+        update_product_button.place(x=617.0, y=691.0, width=237.84408569335938, height=73.0)
+
+        add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
+        add_supply_button.place(x=329.0, y=691.0, width=237.84408569335938, height=73.0)
+
+        toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
+        toggle_button.place(x=1000, y=92, width=237, height=73)
+    
+    show_individual = False 
 
     canvas.create_rectangle(41.0, 176.0, 1240.0, 658.0, fill="#FFFFFF", outline="")
-
 
     canvas.create_text(41.0, 20.0, anchor="nw", text= f"{loa}", fill="#000000", font=("Hanuman Regular", 20))
 
     search_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24))
     search_entry.place(x=41.0, y=92.0, width=300, height=47)
 
-    def on_search(event):
-        keyword = search_entry.get()
-        rows = search_inventory_linear(keyword)
-        my_tree.delete(*my_tree.get_children())
-        for row in rows:
-            my_tree.insert("", "end", values=row)
+    def on_search():
+        keyword = search_entry.get().strip()  # Get the input and strip any leading/trailing whitespace
+        if keyword:  # Check if keyword is not empty
+            if show_individual:
+                # Show multiple rows based on the search result
+                rows = search_inventory_linear(keyword)
+                my_tree.delete(*my_tree.get_children())
+                for row in rows:
+                    my_tree.insert("", "end", values=row)
+            else:
+                # Show only one row for the primary key
+                row = search_inventory_linear(keyword, individual=True)  # Assuming a function that fetches only one row for the primary key
+                if row:
+                    my_tree.delete(*my_tree.get_children())
+                    my_tree.insert("", "end", values=row)
+        else:
+            # Handle case where keyword is empty (optional)
+            messagebox.showinfo("Empty Search", "Please enter a barcode or product name to search.")
+
+    def on_enter_pressed(event):
+        on_search()
 
     search_button = Button(window, text="Search", command=on_search, font=("Hanuman Regular", 16), bg="#FFE1C6")
     search_button.place(x=350, y=92, width=100, height=47)
-    search_entry.bind("<Return>", on_search)
+    search_entry.bind("<Return>", on_enter_pressed)
     canvas.create_text(41.0, 50.0, anchor="nw", text="Search Product", fill="#000000", font=("Hanuman Regular", 28))
 
     # Create a style for the Treeview
@@ -659,14 +668,14 @@ def create_products_window():
 
     # Define columns
     my_tree.heading("#0", text="", anchor="center")
-    my_tree.heading("Barcode", text="Barcode")
-    my_tree.heading("Name", text="Product Name")
-    my_tree.heading("Price", text="Price")
-    my_tree.heading("Quantity", text="Quantity")
-    my_tree.heading("Details", text="Details")
-    my_tree.heading("Status", text="Status")
-    my_tree.heading("Date Delivered", text="Date Delivered")
-    my_tree.heading("Supplier", text="Supplier")
+    my_tree.heading("Barcode", text="Barcode", anchor="center")
+    my_tree.heading("Name", text="Product Name", anchor="center")
+    my_tree.heading("Price", text="Price", anchor="center")
+    my_tree.heading("Quantity", text="Quantity", anchor="center")
+    my_tree.heading("Details", text="Details", anchor="center")
+    my_tree.heading("Status", text="Status", anchor="center")
+    my_tree.heading("Date Delivered", text="Date Delivered", anchor="center")
+    my_tree.heading("Supplier", text="Supplier", anchor="center")
 
     # Define column widths
     my_tree.column("#0", stretch=False, width=0)  # Hidden column
@@ -686,7 +695,7 @@ def create_products_window():
     # Configure Treeview to use vertical scrollbar
     my_tree.configure(yscrollcommand=vsb.set)
 
-    update_table()
+    update_table(show_individual=False)
 
     my_tree.bind('<Button-1>', on_header_click)
 
