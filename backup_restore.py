@@ -1,88 +1,58 @@
-import os
-import shutil
-import time
 import tkinter as tk
-from cryptography.fernet import Fernet
 from pathlib import Path
-from tkinter import filedialog, messagebox
+from tkinter import Button, Canvas, Label, messagebox, PhotoImage
 
 # From user made modules
-import shared_state
-from user_logs import log_actions
+from maintenance import backup_database, restore_database
 
 OUTPUT_PATH = Path(__file__).parent
-DATABASE_PATH = OUTPUT_PATH / Path(r"Trimark_construction_supply.db")
+ASSETS_PATH = OUTPUT_PATH / Path(r"assets/Maintenance")
 
-# Generate a key for encryption
-def generate_key():
-    return Fernet.generate_key()
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
 
-# Load or generate a key
-def load_key():
-    key_file = "secret.key"
-    if not os.path.exists(key_file):
-        key = generate_key()
-        with open(key_file, "wb") as key_file:
-            key_file.write(key)
-    else:
-        with open(key_file, "rb") as key_file:
-            key = key_file.read()
-    return key
+def go_to_window(window_type):
+    window.destroy()
+    if window_type == "pos_admin":
+        import pos_admin
+        pos_admin.create_pos_admin_window()
 
-# Encrypt a file
-def encrypt_file(file_path, key):
-    fernet = Fernet(key)
-    with open(file_path, "rb") as file:
-        file_data = file.read()
-    encrypted_data = fernet.encrypt(file_data)
-    encrypted_file_path = file_path + ".enc"
-    with open(encrypted_file_path, "wb") as file:
-        file.write(encrypted_data)
-    return encrypted_file_path
+def create_backup_restore_window():
+    global window
+    window = tk.Tk()
+    window.geometry("640x400")
+    window.configure(bg="#FFE1C6")
+    window.title("Backup/Restore")
 
-# Decrypt a file
-def decrypt_file(file_path, key):
-    fernet = Fernet(key)
-    with open(file_path, "rb") as file:
-        encrypted_data = file.read()
-    decrypted_data = fernet.decrypt(encrypted_data)
-    decrypted_file_path = file_path.replace(".enc", "")
-    with open(decrypted_file_path, "wb") as file:
-        file.write(decrypted_data)
-    return decrypted_file_path
+    window_width, window_height = 640, 160
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-# Backup the database
-def backup_database(local=True):
-    db_path = DATABASE_PATH
-    key = load_key()
-    timestamp = time.strftime("%Y%m%d%H%M%S")
+    # Create a canvas to place widgets on
+    global canvas
+    canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
+    canvas.place(x=0, y=0)
 
-    backup_dir = filedialog.askdirectory()
-    if not backup_dir:
-        return  # User cancelled the operation
-    backup_file = os.path.join(backup_dir, f"backup_{timestamp}.db")
+    # Backup
+    backup_img = PhotoImage(file=relative_to_assets("backup.png"))
+    backup_btn = Button(image=backup_img, borderwidth=2, highlightthickness=0,  command=lambda: backup_database(), relief="flat")
+    backup_btn.place(x=30.0, y=20.0)
 
-    shutil.copy2(db_path, backup_file)
-    encrypted_file = encrypt_file(backup_file, key)
-    os.remove(backup_file)  # Remove the unencrypted file
+    # Restore
+    restore_img = PhotoImage(file=relative_to_assets("restore.png"))
+    restore_btn = Button(image=restore_img, borderwidth=2, highlightthickness=0, command=lambda: restore_database(), relief="flat")
+    restore_btn.place(x=230.0, y=20.0)
 
-    messagebox.showinfo("Success", f"Backup created at {encrypted_file}")
-    action = f"Made a backup of the database stored at: {backup_dir}"
-    log_actions(shared_state.current_user, action)
+    # Back
+    back_img = PhotoImage(file=relative_to_assets("back.png"))
+    back_btn = Button(image=back_img, borderwidth=2, highlightthickness=0, command=lambda: go_to_window("pos_admin"), relief="flat")
+    back_btn.place(x=430.0, y=20.0)
 
-# Restore the database
-def restore_database(local=True):
-    key = load_key()
+    window.resizable(False, False)
+    window.mainloop()
 
-    backup_file = filedialog.askopenfilename(filetypes=[("Encrypted Database", "*.db.enc")])
-    if not backup_file:
-        return  # User cancelled the operation
-
-    decrypted_file = decrypt_file(backup_file, key)
-    db_path = DATABASE_PATH
-    shutil.copy2(decrypted_file, db_path)
-    os.remove(decrypted_file)  # Remove the decrypted file after restoration
-
-    messagebox.showinfo("Success", "Database restored successfully")
-    action = f"Restored a backup of the database found at: {backup_file}" 
-    log_actions(shared_state.current_user, action) # Won't show to the user_logs because when restoring the backup, it will be overwritten.
+if __name__ == "__main__":
+    create_backup_restore_window()

@@ -7,6 +7,7 @@ from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simple
 
 # From user made modules
 import shared_state
+from maintenance import update_first_name, update_last_name, update_email, update_password, update_phone_number
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
 from salt_and_hash import generate_salt, hash_password
@@ -127,9 +128,9 @@ def go_to_window(window_type):
     elif window_type == "barcode":
         import barcode_ad
         barcode_ad.create_barcode_window()
-    elif window_type == "maintenance":  
-        import maintenance
-        maintenance.create_maintenance_window()
+    elif window_type == "backup_restore":  
+        import backup_restore
+        backup_restore.create_backup_restore_window()
     elif window_type == "reports":  
         import reports
         reports.create_reports_window()
@@ -152,26 +153,12 @@ def create_pos_admin_window():
 
     # Create a canvas to place widgets on
     global canvas
-    canvas = Canvas(
-        window,
-        bg="#FFE1C6",
-        height=800,
-        width=1280,
-        bd=0,
-        highlightthickness=0,
-        relief="ridge"
-    )
+    canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
     # Barcode entry widget
     global barcode
-    barcode = Entry(
-        bd=0,
-        bg="#FFFFFF",
-        fg="#000716",
-        highlightthickness=1,
-        font=("Hanuman Regular", 28 * -1)
-    )
+    barcode = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 28 * -1))
     barcode.place(x=699.0, y=127.0, width=552.0, height=58.0)
     barcode.bind("<Return>", on_barcode_entry)  # Bind the Return (Enter) key to trigger the search
 
@@ -196,81 +183,36 @@ def create_pos_admin_window():
     total_label.place(x=699.0, y=200.0)
 
     # Buttons for various actions
-    logout_button = Button(
-        text="Logout",
-        font=("Hanuman Regular", 16),
-        command=lambda: go_to_window("logout"),
-        bg="#FFFFFF",
-        relief="raised"
-    )
+    logout_button = Button(text="Logout", font=("Hanuman Regular", 16), command=lambda: go_to_window("logout"), bg="#FFFFFF", relief="raised")
     logout_button.place(x=1071.0, y=691.0, width=168.86373901367188, height=44.19459533691406)
 
-    help_button = Button(
-        text="Help",
-        font=("Hanuman Regular", 16),
-        command=lambda: print("Help"),
-        bg="#FFFFFF",
-        relief="raised"
-    )
+    help_button = Button(text="Help", font=("Hanuman Regular", 16), command=lambda: print("Help"), bg="#FFFFFF", relief="raised")
     help_button.place(x=1071.0, y=623.0, width=168.86373901367188, height=44.19459533691406)
 
-    purchase_button = Button(
-        text="Purchase",
-        font=("Hanuman Regular", 20),
-        command=open_purchase_window,
-        bg="#83F881",
-        relief="raised"
-    )
+    purchase_button = Button(text="Purchase", font=("Hanuman Regular", 20), command=open_purchase_window, bg="#83F881", relief="raised")
     purchase_button.place(x=42.0, y=623.0, width=464.28277587890625, height=112.0)
 
-    inventory_button = Button(
-        text="Inventory",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("inventory"),
-        bg="#81CDF8",
-        relief="ridge"
-    )
+    inventory_button = Button(text="Inventory", font=("Hanuman Regular", 20), command=lambda: go_to_window("inventory"), bg="#81CDF8", relief="ridge")
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
     if shared_state.current_user_loa == "admin":
         # Accounts (Register) button
-        register_button = Button(
-            text="Accounts",
-            font=("Hanuman Regular", 20),
-            command=lambda: go_to_window("register"),
-            bg="#81CDF8",
-            relief="ridge",
+        register_button = Button(text="Accounts", font=("Hanuman Regular", 20), command=lambda: go_to_window("register"), bg="#81CDF8", relief="ridge",
             state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
         )
         register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
 
-        reports_button = Button(
-            text="Reports",
-            font=("Hanuman Regular", 20),
-            command=lambda: go_to_window("reports"),
-            bg="#81CDF8",
-            relief="ridge",
+        reports_button = Button(text="Reports", font=("Hanuman Regular", 20), command=lambda: go_to_window("reports"), bg="#81CDF8", relief="ridge",
             state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
         )
         reports_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
 
-        maintenance_button = Button(
-            text="Maintenance",
-            font=("Hanuman Regular", 20),
-            command=lambda: go_to_window("maintenance"),
-            bg="#81CDF8",
-            relief="ridge",
+        backup_restore = Button(text="Backup\nRestore", font=("Hanuman Regular", 20), command=lambda: go_to_window("backup_restore"), bg="#81CDF8", relief="ridge",
             state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
         )
-        maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
+        backup_restore.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
-    barcodes_button = Button(
-        text="Barcode",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("barcode"),
-        bg="#81CDF8",
-        relief="ridge"
-    )
+    barcodes_button = Button(text="Barcode", font=("Hanuman Regular", 20), command=lambda: go_to_window("barcode"), bg="#81CDF8", relief="ridge")
     barcodes_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
 
     # Void button function
@@ -289,47 +231,14 @@ def create_pos_admin_window():
         action = "Voided transaction."
         log_actions(shared_state.current_user, action)
 
-    void_button = Button(
-        text="Void",
-        font=("Hanuman Regular", 20),
-        command=void_items,
-        bg="#FF9E9E",
-        relief="raised"
-    )
+    void_button = Button(text="Void", font=("Hanuman Regular", 20), command=void_items, bg="#FF9E9E", relief="raised")
     void_button.place(x=506.0, y=623.0, width=166.0, height=112.0)
 
     # Draw shapes and texts on canvas
-    canvas.create_rectangle(
-        41.0,
-        62.0,
-        672.0,
-        127.0,
-        fill="#FF4E4E",
-        outline=""
-    )
-
-    canvas.create_text(
-        286.0,
-        71.0,
-        anchor="nw",
-        text="Checkout",
-        fill="#FFFFFF",
-        font=("Hanuman Regular", 32 * -1)
-    )
-
-    canvas.create_text(
-        699.0,
-        85.0,
-        anchor="nw",
-        text="Barcode or Product Name",
-        fill="#000000",
-        font=("Hanuman Regular", 28 * -1)
-    )
-
-    canvas.create_text(
-        91.0,
-        20.0,
-        anchor="nw",
+    canvas.create_rectangle(41.0, 62.0, 672.0, 127.0, fill="#FF4E4E", outline="")
+    canvas.create_text(286.0, 71.0, anchor="nw", text="Checkout", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
+    canvas.create_text(699.0, 85.0, anchor="nw", text="Barcode or Product Name", fill="#000000", font=("Hanuman Regular", 28 * -1))
+    canvas.create_text(91.0, 20.0, anchor="nw",
         text=f"{str(shared_state.current_user_loa).capitalize()}, {shared_state.current_user}",
         fill="#000000",
         font=("Hanuman Regular", 20 * -1, "bold")
@@ -460,82 +369,6 @@ def check_email_uniqueness(email, current_email=None):
     if email in existing_emails and email != current_email:
         return False, "Email already in use"
     return True, ""
-
-def update_first_name(employee_id, new_first_name):
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE accounts SET First_Name = ? WHERE Employee_ID = ?", (new_first_name, employee_id))
-        conn.commit()
-        messagebox.showinfo("Success", "First Name updated successfully")
-        action = "Updated first name to " + new_first_name + "."
-        log_actions(shared_state.current_user, action)
-    except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating First Name: {e}")
-    finally:
-        conn.close()
-
-def update_last_name(employee_id, new_last_name):
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE accounts SET Last_Name = ? WHERE Employee_ID = ?", (new_last_name, employee_id))
-        conn.commit()
-        messagebox.showinfo("Success", "Last Name updated successfully")
-        action = "Updated last name to " + new_last_name + "."
-        log_actions(shared_state.current_user, action)
-    except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Last Name: {e}")
-    finally:
-        conn.close()
-
-def update_password(employee_id, new_password, salt):
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE accounts SET Password = ?, Salt = ? WHERE Employee_ID = ?", (new_password, salt, employee_id))
-        conn.commit()
-        messagebox.showinfo("Success", "Password updated successfully")
-        action = "Changed password."
-        log_actions(shared_state.current_user, action)
-    except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Password: {e}")
-    finally:
-        conn.close()
-
-def update_email(employee_id, new_email):
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute("UPDATE accounts SET Email = ? WHERE Employee_ID = ?", (new_email, employee_id))
-        conn.commit()
-        messagebox.showinfo("Success", "Email updated successfully")
-        action = "Updated email to " + new_email + "."
-        log_actions(shared_state.current_user, action)
-    except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Email: {e}")
-    finally:
-        conn.close()
-
-def update_phone_number(employee_id, new_phone_number):
-    conn = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE accounts SET Contact_No = ? WHERE Employee_ID = ?", (new_phone_number, employee_id))
-        conn.commit()
-        messagebox.showinfo("Success", "Phone Number updated successfully")
-        action = "Updated phone number to " + new_phone_number + "."
-        log_actions(shared_state.current_user, action)
-    except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Phone Number: {e}")
-    finally:
-        conn.close()
         
 def open_purchase_window():
     conn = connect_db()
