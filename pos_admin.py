@@ -135,7 +135,7 @@ def go_to_window(window_type):
     elif window_type == "maintenance":  
         import maintenance
         maintenance.create_maintenance_window()
-    elif window_type == "report":  
+    elif window_type == "reports":  
         import reports
         reports.create_reports_window()
 
@@ -331,12 +331,12 @@ def create_pos_admin_window():
     )
 
     canvas.create_text(
-        41.0,
+        91.0,
         20.0,
         anchor="nw",
-        text=shared_state.current_user_loa.capitalize(),
+        text=f"{shared_state.current_user_loa.capitalize()}, {shared_state.current_user}",
         fill="#000000",
-        font=("Hanuman Regular", 20 * -1)
+        font=("Hanuman Regular", 20 * -1, "bold")
     )
 
     def show_hamburger_menu():
@@ -421,7 +421,7 @@ def create_pos_admin_window():
     hamburger_icon_resized = hamburger_icon.subsample(6, 6)
     hamburger_button = Button(window, image=hamburger_icon_resized, borderwidth=0, highlightthickness=0, command=show_hamburger_menu, relief="flat")
     hamburger_button.image = hamburger_icon  # Keep a reference to the image to prevent garbage collection
-    hamburger_button.place(x=110, y=15)
+    hamburger_button.place(x=41, y=15)
 
     # Update display of products being purchased and total label
     update_purchase_display()
