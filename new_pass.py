@@ -5,6 +5,7 @@ from salt_and_hash import generate_salt, hash_password
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 
 import shared_state
+from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions
 
 OUTPUT_PATH = Path(__file__).parent
@@ -12,12 +13,6 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\New_pass")
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
-
-def generate_salt():
-    return secrets.token_hex(16)
-
-def hash_password(password, salt):
-    return hashlib.sha256((password + salt).encode()).hexdigest()
 
 def is_valid_password(password):
     if len(password) < 10:
