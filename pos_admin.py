@@ -237,36 +237,37 @@ def create_pos_admin_window():
     )
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
-    # Accounts (Register) button
-    register_button = Button(
-        text="Accounts",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("register"),
-        bg="#81CDF8",
-        relief="ridge",
-        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-    )
-    register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
+    if shared_state.current_user_loa == "admin":
+        # Accounts (Register) button
+        register_button = Button(
+            text="Accounts",
+            font=("Hanuman Regular", 20),
+            command=lambda: go_to_window("register"),
+            bg="#81CDF8",
+            relief="ridge",
+            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
+        )
+        register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
 
-    reports_button = Button(
-        text="Reports",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("reports"),
-        bg="#81CDF8",
-        relief="ridge",
-        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-    )
-    reports_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
+        reports_button = Button(
+            text="Reports",
+            font=("Hanuman Regular", 20),
+            command=lambda: go_to_window("reports"),
+            bg="#81CDF8",
+            relief="ridge",
+            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
+        )
+        reports_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
 
-    maintenance_button = Button(
-        text="Maintenance",
-        font=("Hanuman Regular", 20),
-        command=lambda: go_to_window("maintenance"),
-        bg="#81CDF8",
-        relief="ridge",
-        state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-    )
-    maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
+        maintenance_button = Button(
+            text="Maintenance",
+            font=("Hanuman Regular", 20),
+            command=lambda: go_to_window("maintenance"),
+            bg="#81CDF8",
+            relief="ridge",
+            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
+        )
+        maintenance_button.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
     barcodes_button = Button(
         text="Barcode",
@@ -275,7 +276,7 @@ def create_pos_admin_window():
         bg="#81CDF8",
         relief="ridge"
     )
-    barcodes_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
+    barcodes_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
 
     # Void button function
     def void_items():
@@ -334,7 +335,7 @@ def create_pos_admin_window():
         91.0,
         20.0,
         anchor="nw",
-        text=f"{shared_state.current_user_loa.capitalize()}, {shared_state.current_user}",
+        text=f"{str(shared_state.current_user_loa).capitalize()}, {shared_state.current_user}",
         fill="#000000",
         font=("Hanuman Regular", 20 * -1, "bold")
     )
@@ -687,11 +688,11 @@ def create_receipt(cashier_name, customer_name, customer_contact, customer_money
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
         ********************************
-        Trimark Construction Supply
+          Trimark Construction Supply
         ********************************
-        No. 39 Scout Ybardolaza St. 
-        Sacred Heart, Quezon City
-        Tel. No. (02) 926-2329 
+           No. 39 Scout Ybardolaza St. 
+            Sacred Heart, Quezon City
+             Tel. No. (02) 926-2329 
         ********************************
         Cashier: {cashier_name}
         Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
@@ -719,15 +720,11 @@ def create_receipt(cashier_name, customer_name, customer_contact, customer_money
         # Accumulate subtotal
         subtotal += item['total_price']
 
-    tax = subtotal * 0.12
-    subtotal = subtotal - tax
-    total = subtotal + tax
+
 
     receipt_text += f"""
         ********************************
-        Subtotal: Php {subtotal:.2f}
-        Tax (12%): Php {tax:.2f}
-        Total: Php {total:.2f}
+        Total: Php {subtotal:.2f}
         ********************************
         Bill Given: Php {customer_money:.2f}
         Change: Php {change:.2f}
@@ -743,9 +740,9 @@ def print_receipt(receipt_text):
     # ESC/POS commands
     ESC = chr(23)
     GS = chr(25)
-    initialize_printer = ESC + "@"
-    select_small_font = ESC + "!" + chr(1)  # Select smaller font
-    cut_paper = GS + "V" + chr(1)
+    initialize_printer = ESC 
+    select_small_font = ESC 
+    cut_paper = GS
 
     # Combine commands with the receipt text
     full_text = initialize_printer + select_small_font + receipt_text + cut_paper

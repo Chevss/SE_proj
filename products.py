@@ -3,7 +3,7 @@ from barcode.writer import ImageWriter
 from datetime import datetime
 from pathlib import Path
 import tkinter as tk
-from tkinter import  ttk, Canvas, Entry, messagebox, Button, Label, Toplevel, Scrollbar, Frame, RIGHT, Y, W, CENTER, NO, END, BooleanVar, Checkbutton
+from tkinter import  ttk, Canvas, Entry, messagebox, Button, Label, Toplevel, Scrollbar, IntVar,  END, BooleanVar, Radiobutton, Checkbutton
 from tkcalendar import DateEntry
 import io
 import random
@@ -11,6 +11,8 @@ import sqlite3
 
 import shared_state
 from user_logs import log_actions
+
+show_individual = False
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
@@ -381,16 +383,17 @@ def update_products_window():
 
     product_price_label = Label(update_supply_window, text="Product Price:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_price_entry = Entry(update_supply_window, font=("Hanuman Regular", 16))
-    product_price_entry.config(state='disabled')
+
 
     product_details_label = Label(update_supply_window, text="Product Details:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_details_entry = Entry(update_supply_window, font=("Hanuman Regular", 16))
-    product_details_entry.config(state='disabled')
+
 
     product_status_label = Label(update_supply_window, text="Status:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_status_var = BooleanVar()
     product_status_checkbox = Checkbutton(update_supply_window, text="Available", variable=product_status_var, bg="#FFE1C6", font=("Hanuman Regular", 16))
-    product_status_checkbox.config(state='disabled')
+
+    
 
     def fetch_product_details():
         barcode = barcode_entry.get().strip()
@@ -436,6 +439,9 @@ def update_products_window():
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error fetching product details: {e}")
 
+    verify_button = Button(update_supply_window, text="Verify", command=fetch_product_details, font=("Hanuman Regular", 12))
+    verify_button.place(x=470, y=77)
+
     def save_supply():
         barcode = barcode_entry.get().strip()
         product_name = product_name_entry.get().strip()
@@ -463,11 +469,6 @@ def update_products_window():
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error updating supply: {e}")
     
-    verify_button = Button(update_supply_window, text="Verify", command=fetch_product_details, font=("Hanuman Regular", 12))
-    verify_button.place(x=470, y=77,)
-
-    
-
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
 
     update_supply_window.mainloop()
@@ -589,12 +590,12 @@ def create_products_window():
     back_button = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     back_button.place(x=1071.0, y=696.0, width=169.0, height=64.0)
 
-    def toggle_view():
-        nonlocal show_individual
-        show_individual = not show_individual
-        update_table(show_individual)
+    show_individual_var = IntVar(value=-1)
 
-    # Determine if the logged-in user is admin
+    def toggle_view():
+        global show_individual
+        show_individual = (show_individual_var.get() == 0)  # 0 for Individual View, 1 for Multiple View
+        update_table(show_individual)
 
     loa=shared_state.current_user_loa
     loa = "admin"
@@ -609,10 +610,14 @@ def create_products_window():
         add_supply_button = Button(window, text="Add Supply", command=lambda: add_supply_window(), font=("Hanuman Regular", 16), bg="#81CDF8", relief="raised")
         add_supply_button.place(x=329.0, y=691.0, width=237.84408569335938, height=73.0)
 
-        toggle_button = Button(window, text="Toggle View", command=toggle_view, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-        toggle_button.place(x=1000, y=92, width=237, height=73)
-    
-    show_individual = False 
+          # Variable to store checkbox state (0 for False, 1 for True)
+        multiple_button = Radiobutton(window, text="Individual View", variable=show_individual_var, value=0,
+                                command=toggle_view, font=("Hanuman Regular", 12), bg="#FFE1C6")
+        multiple_button.place(x=41, y=148)
+
+        individual_button = Radiobutton(window, text="Multiple View", variable=show_individual_var, value=1,
+                                    command=toggle_view, font=("Hanuman Regular", 12), bg="#FFE1C6")
+        individual_button.place(x=171, y=148)
 
     canvas.create_rectangle(41.0, 176.0, 1240.0, 658.0, fill="#FFFFFF", outline="")
 
