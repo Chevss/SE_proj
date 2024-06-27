@@ -37,11 +37,28 @@ def generate_purchase_history():
     report_type = "Purchase History Report"
     clear_tree()
     
-    cursor.execute("SELECT Purchase_ID, First_Name, Product_Name, Purchase_Quantity, Product_Price, Total_Price, Amount_Given, Change, Time_Stamp FROM purchase_history")
+    query = """
+        SELECT 
+            Purchase_ID, 
+            First_Name, 
+            GROUP_CONCAT(Product_Name, '\n') as Products,
+            GROUP_CONCAT(Purchase_Quantity, '\n') as Quantities, 
+            GROUP_CONCAT(Product_Price, '\n') as Prices, 
+            SUM(Total_Price) as Total_Price, 
+            Amount_Given, 
+            `Change`, 
+            Time_Stamp 
+        FROM 
+            purchase_history 
+        GROUP BY 
+            Purchase_ID, First_Name, Amount_Given, `Change`, Time_Stamp
+    """
+    
+    cursor.execute(query)
     rows = cursor.fetchall()
 
     current_data = rows
-    update_tree(current_data, ["Purchase ID", "Customer Name", "Product", "Quantity", "Price", "Total Amount", "Amount Paid", "Change", "Timestamp"])
+    update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Quantities", "Prices", "Total Amount", "Amount Paid", "Change", "Timestamp"])
 
 def generate_sales_report():
     global current_data, report_type
@@ -49,16 +66,20 @@ def generate_sales_report():
     clear_tree()
 
     query = """
-        SELECT Product_Name, SUM(Total_Price) AS Total_Sales
+        SELECT Product_Name, SUM(Purchase_Quantity) AS Total_Quantity_Sold, SUM(Total_Price) AS Total_Sales
         FROM purchase_history
         GROUP BY Product_Name
         """
     
     cursor.execute(query)
     rows = cursor.fetchall()
+    overall_total_sales = sum(row[2] for row in rows)
     
+    overall_total_row = ("Overall Total", "", overall_total_sales)
+    rows.append(overall_total_row)
+
     current_data = rows  # Use fetched data from the database
-    update_tree(current_data, ["Product Name", "Total Sales"])
+    update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
 
 def update_tree(data, columns):
     clear_tree()
@@ -198,18 +219,11 @@ def create_reports_window():
     save_pdf_btn.place(x=920, y=20, height=50, width=200)
 
     tree = ttk.Treeview(window, show='headings')
-    # tree["columns"] = ("Log ID", "Employee ID", "Username", "Action", "Timestamp")
-    # tree.heading("Log ID", text="Log ID")
-    # tree.heading("Employee ID", text="Employee ID")
-    # tree.heading("Username", text="Username")
-    # tree.heading("Action", text="Action")
-    # tree.heading("Timestamp", text="Timestamp")
     tree.place(x=20, y=90, height=480, width=1082)
     tree_scroll = ttk.Scrollbar(window, orient="vertical", command=tree.yview)
     tree_scroll.place(x=1102, y=90, height=480)
     tree.configure(yscrollcommand=tree_scroll.set)
-
-    # generate_user_logs() # default
+    ttk.Style().configure('Treeview', rowheight=25)
 
     window.resizable(False, False)
     window.mainloop()

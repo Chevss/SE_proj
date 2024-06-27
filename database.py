@@ -65,7 +65,7 @@ def create_database():
     # Purchase History
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS purchase_history (
-        Purchase_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Purchase_ID TEXT NOT NULL,
         First_Name TEXT NOT NULL,
         Product_Name TEXT NOT NULL,
         Product_Price REAL NOT NULL,

@@ -1,7 +1,7 @@
-import datetime
 import sqlite3
 import tkinter as tk
 import win32print
+from datetime import datetime
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
 
@@ -369,7 +369,34 @@ def check_email_uniqueness(email, current_email=None):
     if email in existing_emails and email != current_email:
         return False, "Email already in use"
     return True, ""
-        
+    
+def insert_purchase_history(purchase_list, total_amount, customer_money, change, cashier_name, customer_name, purchase_id):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+        # Insert each item in the purchase list into the purchase_history table
+        for item in purchase_list:
+            cursor.execute('''
+                INSERT INTO purchase_history (
+                    Purchase_ID, First_Name, Product_Name, Product_Price, Purchase_Quantity, 
+                    Total_Price, Amount_Given, Change
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                purchase_id, customer_name, item['name'], item['price'], item['quantity'],
+                item['total_price'], customer_money, change
+            ))
+
+        conn.commit()
+        print("Purchase history inserted successfully.")
+
+    except sqlite3.Error as e:
+        conn.rollback()
+        print(f"Error inserting purchase history: {e}")
+
+    finally:
+        conn.close()
+
 def open_purchase_window():
     conn = connect_db()
     cursor = conn.cursor()
@@ -427,6 +454,11 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
     change = customer_money - total_amount
     create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
+
+    # Generate a unique Purchase_ID for this transaction
+    purchase_id = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    insert_purchase_history(purchase_list, total_amount, customer_money, change, cashier_name, customer_name, purchase_id)
 
     action = "Checked out and generated PDF file for the receipt."
     log_actions(shared_state.current_user, action)
@@ -523,7 +555,7 @@ def create_receipt(cashier_name, customer_name, customer_contact, customer_money
              Tel. No. (02) 926-2329 
         ********************************
         Cashier: {cashier_name}
-        Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         ********************************
         Customer Name: {customer_name}
         Customer Contact: {customer_contact}
