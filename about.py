@@ -11,6 +11,11 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets/About")
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def go_to_window(window):
+    if window == "back":
+        import maintenance
+        maintenance.
+
 def create_about_window():
     global window
     window = Tk()
@@ -39,16 +44,14 @@ def create_about_window():
         outline="")
 
     canvas.create_text(
-        430.0,
-        60.0,
+        432.0,
+        64.0,
         anchor="nw",
         text="About",
         fill="#000000",
         font=("Hanuman Regular", 40 * -1)
     )
 
-    button_image_1 = PhotoImage(
-        file=relative_to_assets("button_1.png"))
     button_1 = Button(
         image=button_image_1,
         borderwidth=0,
@@ -63,13 +66,9 @@ def create_about_window():
         height=83.0
     )
 
-    entry_image_1 = PhotoImage(
-        file=relative_to_assets("entry_1.png"))
-    entry_bg_1 = canvas.create_image(
-        486.0,
-        436.5,
-        image=entry_image_1
-    )
+    back_button = Button(text="Back", font=("Hanuman Regular", 20), command=lambda: go_to_window("inventory"), bg="#81CDF8", relief="ridge")
+    back_button.place(x=699.0, y=734.0,
+
     entry_1 = Text(
         bd=0,
         bg="#FFFFFF",
@@ -84,3 +83,6 @@ def create_about_window():
     )
     window.resizable(False, False)
     window.mainloop()
+
+if __name__ == "__main__":
+    create_about_window()

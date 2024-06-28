@@ -345,6 +345,8 @@ def add_supply_window():
             # Log action
             action = f"Added {product_quantity} to the product {barcode} from {supplier}."
             log_actions(username, action)
+            update_table(show_individual=False)
+            add_supply_window.destroy()
 
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error verifying barcode: {e}")
@@ -500,36 +502,33 @@ def update_table(show_individual=False):
         messagebox.showerror("Database Error", f"Error fetching data: {e}")
 
 def sort_treeview(tree, col, descending):
-    # Get all the rows in the treeview
-    data = [(tree.set(child, col), child) for child in tree.get_children('')]
+    data = [(float(tree.set(child, col)), child) for child in tree.get_children('')]
     
-    # Sort the data by the column clicked
     data.sort(reverse=descending)
     
     for index, (val, child) in enumerate(data):
         tree.move(child, '', index)
     
-    # Switch the heading so that it will sort in the opposite direction next time
     tree.heading(col, command=lambda: sort_treeview(tree, col, not descending))
+
 
 def on_header_click(event):
     # Identify which column header was clicked
     region = my_tree.identify_region(event.x, event.y)
     if region == 'heading':
         column = my_tree.identify_column(event.x)
+        print(column)
         column_name = my_tree.heading(column, 'text')
+        print(column_name)
 
         # Determine current sort order or initialize if not set
         descending = SORT_ORDER.get(column_name, False)
 
         # Sort the Treeview
-        sort_treeview(column_name, descending)
+        sort_treeview(column_name, column, descending)
 
         # Toggle sort order for next click
         SORT_ORDER[column_name] = not descending
-
-def treeview_sort_column(tv, col):
-    sort_treeview(col)
     
 def combine_similar_barcodes():
     # Fetch all inventory data
@@ -644,7 +643,7 @@ def create_products_window():
                     my_tree.insert("", "end", values=row)
         else:
             # Handle case where keyword is empty (optional)
-            messagebox.showinfo("Empty Search", "Please enter a barcode or product name to search.")
+            update_table(show_individual=False)
 
     def on_enter_pressed(event):
         on_search()

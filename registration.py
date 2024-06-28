@@ -408,14 +408,14 @@ def create_registration_window():
     tree.heading("Contact_No", text="Contact No", anchor='center')
     tree.heading("Address", text="Address", anchor='center')
     tree.heading("Email", text="Email", anchor='center')
-    tree.column("is_void",  width=60, stretch=True)
-    tree.column("Employee_ID",  width=55, stretch=True)
-    tree.column("LOA",  width=50, stretch=True)
-    tree.column("Name",  width=110, stretch=True)
-    tree.column("Birthdate",  width=60, stretch=True)
-    tree.column("Contact_No",  width=100, stretch=True)
-    tree.column("Address",  width=200, stretch=True)
-    tree.column("Email",  width=200, stretch=True)
+    tree.column("is_void",  width=60, stretch=False, anchor='center')
+    tree.column("Employee_ID",  width=55, stretch=False, anchor='center')
+    tree.column("LOA",  width=50, stretch=False, anchor='center')
+    tree.column("Name",  width=110, stretch=False, anchor='center')
+    tree.column("Birthdate",  width=60, stretch=False, anchor='center')
+    tree.column("Contact_No",  width=100, stretch=False, anchor='center')
+    tree.column("Address",  width=200, stretch=False, anchor='center')
+    tree.column("Email",  width=200, stretch=False, anchor='center')
 
     # Create vertical scrollbar
     vsb = Scrollbar(window, orient="vertical", command=tree.yview)
@@ -434,7 +434,7 @@ def create_registration_window():
     rows = cursor.fetchall()
     
     for row in rows:
-        is_void = "Available" if row[0] == 0 else "Unavailable"
+        is_void = "Active" if row[0] == 0 else "Inactive"
         employee_id = row[1]
         loa = row[2]
         first_name = row[3]

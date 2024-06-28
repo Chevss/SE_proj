@@ -195,21 +195,17 @@ def create_pos_admin_window():
     inventory_button = Button(text="Inventory", font=("Hanuman Regular", 20), command=lambda: go_to_window("inventory"), bg="#81CDF8", relief="ridge")
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
-    if shared_state.current_user_loa == "admin":
+
+    loa = "admin"
+    if loa == "admin":
         # Accounts (Register) button
-        register_button = Button(text="Accounts", font=("Hanuman Regular", 20), command=lambda: go_to_window("register"), bg="#81CDF8", relief="ridge",
-            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-        )
+        register_button = Button(text="Accounts", font=("Hanuman Regular", 20), command=lambda: go_to_window("register"), bg="#81CDF8", relief="ridge")
         register_button.place(x=699.0, y=477.0, width=170.28277587890625, height=112.0)
 
-        reports_button = Button(text="Reports", font=("Hanuman Regular", 20), command=lambda: go_to_window("reports"), bg="#81CDF8", relief="ridge",
-            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-        )
+        reports_button = Button(text="Reports", font=("Hanuman Regular", 20), command=lambda: go_to_window("reports"), bg="#81CDF8", relief="ridge")
         reports_button.place(x=884.0, y=477.0, width=170.28277587890625, height=112.0)
 
-        backup_restore = Button(text="Backup\nRestore", font=("Hanuman Regular", 20), command=lambda: go_to_window("backup_restore"), bg="#81CDF8", relief="ridge",
-            state=tk.NORMAL if shared_state.current_user_loa == "admin" else tk.DISABLED
-        )
+        backup_restore = Button(text="Backup\nRestore", font=("Hanuman Regular", 20), command=lambda: go_to_window("backup_restore"), bg="#81CDF8", relief="ridge")
         backup_restore.place(x=1068.0, y=477.0, width=170.28277587890625, height=112.0)
 
     barcodes_button = Button(text="Barcode", font=("Hanuman Regular", 20), command=lambda: go_to_window("barcode"), bg="#81CDF8", relief="ridge")
@@ -452,11 +448,12 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
         return
 
     change = customer_money - total_amount
+    purchase_id = datetime.now().strftime("%Y%m%d%H%M%S")
     create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
 
     # Generate a unique Purchase_ID for this transaction
-    purchase_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    
 
     insert_purchase_history(purchase_list, total_amount, customer_money, change, cashier_name, customer_name, purchase_id)
 
@@ -543,25 +540,25 @@ def update_inventory(purchase_list):
     finally:
         # Close the database connection
         conn.close()
-        
+
 def create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
-        ********************************
-          Trimark Construction Supply
-        ********************************
-           No. 39 Scout Ybardolaza St. 
-            Sacred Heart, Quezon City
-             Tel. No. (02) 926-2329 
-        ********************************
-        Cashier: {cashier_name}
-        Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-        ********************************
-        Customer Name: {customer_name}
-        Customer Contact: {customer_contact}
-        ********************************
-        Items:
-        """
+********************************
+  Trimark Construction Supply
+********************************
+   No. 39 Scout Ybardolaza St. 
+    Sacred Heart, Quezon City
+     Tel. No. (02) 926-2329 
+********************************
+Cashier: {cashier_name}
+Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+********************************
+Customer Name: {customer_name}
+Customer Contact: {customer_contact}
+********************************
+Items:
+"""
 
     max_item_name_length = 30  # Adjust this as needed for your receipt layout
 
@@ -583,14 +580,14 @@ def create_receipt(cashier_name, customer_name, customer_contact, customer_money
 
 
     receipt_text += f"""
-        ********************************
-        Total: Php {subtotal:.2f}
-        ********************************
-        Bill Given: Php {customer_money:.2f}
-        Change: Php {change:.2f}
-        ********************************
-        Thank you for your purchase!
-        ********************************
+********************************
+Total: Php {subtotal:.2f}
+********************************
+Bill Given: Php {customer_money:.2f}
+Change: Php {change:.2f}
+********************************
+Thank you for your purchase!
+********************************
 
         """
     
@@ -602,7 +599,7 @@ def print_receipt(receipt_text):
     GS = chr(25)
     initialize_printer = ESC 
     select_small_font = ESC 
-    cut_paper = GS
+    cut_paper = GS 
 
     # Combine commands with the receipt text
     full_text = initialize_printer + select_small_font + receipt_text + cut_paper
