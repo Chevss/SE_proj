@@ -1,6 +1,6 @@
 import json
-from tkinter import Tk, Canvas, Entry, Text, Button, Toplevel, Label, END, messagebox
-# import shared_state
+from tkinter import Tk, Canvas, Text, Button, Toplevel, END, messagebox, Label, Entry
+from portalocker import lock, unlock, LOCK_EX
 
 # Load or initialize the FAQ data
 FAQ_FILE = 'faqs.json'
@@ -11,7 +11,14 @@ try:
 except FileNotFoundError:
     faqs = []
 
-window = Tk()
+
+
+# Function to save the FAQs to a JSON file with restricted permissions
+def save_faqs():
+    with open(FAQ_FILE, 'w') as file:
+        lock(file, LOCK_EX)  # Acquire an exclusive lock
+        json.dump(faqs, file)
+        unlock(file)  # Release the lock
 
 
 def center_window(curr_window, win_width, win_height):
@@ -21,22 +28,18 @@ def center_window(curr_window, win_width, win_height):
     x = (screen_width // 2) - (window_width // 2)
     y = (screen_height // 2) - (window_height // 2)
     curr_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
-    
-# Function to save the FAQs to a JSON file
-def save_faqs():
-    with open(FAQ_FILE, 'w') as file:
-        json.dump(faqs, file)
 
 # Function to go to another window
 def go_to_window(windows):
-    pass
-    """window.destroy()
+    window.destroy()
     if windows == "back":
         import pos_admin
-        pos_admin.create_pos_admin_window()"""
+        pos_admin.create_pos_admin_window()
 
 # Function to create the Help window
 def create_help_window():
+    global window
+    window = Tk()
     window.geometry("972x835")
     window.configure(bg = "#FFE1C6")
 
