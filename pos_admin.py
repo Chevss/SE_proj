@@ -1,6 +1,6 @@
 import sqlite3
 import tkinter as tk
-from win32 import win32print
+import win32print
 from datetime import datetime
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
@@ -60,6 +60,11 @@ def on_barcode_entry(event):
             product_name, product_quantity, product_price, product_barcode = result
         else:
             messagebox.showerror("Search Result Error", "Invalid result returned by search function")
+            return
+
+        # Ensure product_quantity is not zero
+        if product_quantity <= 0:
+            messagebox.showwarning("Quantity Error", f"The quantity of '{product_name}' is zero or negative. Please check.")
             return
 
         product_found = False
@@ -134,6 +139,9 @@ def go_to_window(window_type):
     elif window_type == "reports":  
         import reports
         reports.create_reports_window()
+    elif window_type == "help":
+        import help_ad
+        help_ad.create_help_window()
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -186,7 +194,7 @@ def create_pos_admin_window():
     logout_button = Button(text="Logout", font=("Hanuman Regular", 16), command=lambda: go_to_window("logout"), bg="#FFFFFF", relief="raised")
     logout_button.place(x=1071.0, y=691.0, width=168.86373901367188, height=44.19459533691406)
 
-    help_button = Button(text="Help", font=("Hanuman Regular", 16), command=lambda: print("Help"), bg="#FFFFFF", relief="raised")
+    help_button = Button(text="Help", font=("Hanuman Regular", 16), command=lambda: go_to_window("help"), bg="#FFFFFF", relief="raised")
     help_button.place(x=1071.0, y=623.0, width=168.86373901367188, height=44.19459533691406)
 
     purchase_button = Button(text="Purchase", font=("Hanuman Regular", 20), command=open_purchase_window, bg="#83F881", relief="raised")
