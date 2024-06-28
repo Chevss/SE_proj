@@ -40,13 +40,7 @@ def create_help_window():
     window.geometry("972x835")
     window.configure(bg = "#FFE1C6")
 
-    # Center the window on the screen
-    window_width, window_height = 972, 835
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    x = (screen_width // 2) - (window_width // 2)
-    y = (screen_height // 2) - (window_height // 2)
-    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+    center_window(window,972,835)
 
     canvas = Canvas(
         window,
@@ -84,13 +78,14 @@ def create_help_window():
 
     edit_faq_button = Button(text="Edit FAQ", font=("Hanuman Regular", 16), command=open_edit_faq_window, bg="#F8D48E", relief="raised")
     edit_faq_button.place(x=515.0, y=727.0, height=50, width=125)
-
+    
+    global faq_entry
     faq_entry = Text(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
         highlightthickness=0,
-        state="disable"
+        state='normal'
     )
     faq_entry.place(
         x=102.0,
@@ -101,7 +96,6 @@ def create_help_window():
 
     # Display the FAQs in the required format
     display_faqs(faq_entry)
-    
     window.resizable(False, False)
     window.mainloop()
 
@@ -111,6 +105,8 @@ def display_faqs(faq_entry):
     for i, faq in enumerate(faqs, 1):
         faq_entry.insert(END, f"{i}.) {faq['question']}\n", 'bold')
         faq_entry.insert(END, f"- {faq['answer']}\n\n")
+
+    faq_entry.config(state='disabled')
 
 # Function to open the Add FAQ window
 def open_add_faq_window():
@@ -130,10 +126,8 @@ def open_add_faq_window():
 
     Button(add_window, text="Add", command=lambda: add_faq(question_entry.get("1.0", "end-1c"), answer_entry.get("1.0", "end-1c"), add_window)).place(x=190, y=250)
 
-    
-
 # Function to add a new FAQ
-def add_faq(question, answer, add_window, faq_entry):
+def add_faq(question, answer, add_window):
     if question and answer:
         faqs.append({"question": question, "answer": answer})
         save_faqs()
@@ -141,7 +135,6 @@ def add_faq(question, answer, add_window, faq_entry):
         add_window.destroy()
     else:
         messagebox.showerror("Input Error", "Please enter both a question and an answer.")
-
 
 # Function to open the Edit FAQ window
 def open_edit_faq_window():
