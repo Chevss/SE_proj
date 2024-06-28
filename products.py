@@ -65,19 +65,6 @@ def get_inventory_data():
     except sqlite3.Error as e:
         messagebox.showerror("Database Error", f"Error fetching inventory data: {e}")
         return []
-    
-def get_product_data():
-    try:
-        cursor.execute("""
-        SELECT Barcode, Name, Price, Details
-        FROM product
-        """)
-        rows = cursor.fetchall()
-        print(f"Fetched {len(rows)} rows from product data.")  # Debug statement
-        return rows
-    except sqlite3.Error as e:
-        messagebox.showerror("Database Error", f"Error fetching product data: {e}")
-        return []
 
 def search_inventory_linear(keyword, individual=False):
     inventory_data = get_inventory_data()
@@ -90,7 +77,10 @@ def search_inventory_linear(keyword, individual=False):
     results = []
     for item in inventory_data:
         if (keyword in str(item[0]).lower() or  # Check Barcode
-            keyword in item[1].lower()):        # Check name
+            keyword in item[1].lower() or       # Check name
+            keyword in str(item[2]) or               # Check Price
+            keyword in str(item[3])):                # Check Quantity
+            
             results.append(item)
 
     if individual:
@@ -511,7 +501,6 @@ def sort_treeview(tree, col, descending):
     
     tree.heading(col, command=lambda: sort_treeview(tree, col, not descending))
 
-
 def on_header_click(event):
     # Identify which column header was clicked
     region = my_tree.identify_region(event.x, event.y)
@@ -599,7 +588,6 @@ def create_products_window():
 
     loa=shared_state.current_user_loa
     loa = "admin"
-
     if loa == "admin":
         register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
         register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
