@@ -64,19 +64,20 @@ def create_help_window():
     )
 
     back_button = Button(text="Back", font=("Hanuman Regular", 16), command=lambda: go_to_window("back"), bg="#FFFFFF", relief="raised")
-    back_button.place(x=785.0, y=727.0)
+    back_button.place(x=785.0, y=727.0, height=50, width=125)
 
     add_faq_button = Button(text="Add FAQ", font=("Hanuman Regular", 16), command=open_add_faq_window, bg="#F8D48E", relief="raised")
-    add_faq_button.place(x=265.0, y=727.0)
+    add_faq_button.place(x=315.0, y=727.0, height=50, width=125)
 
     edit_faq_button = Button(text="Edit FAQ", font=("Hanuman Regular", 16), command=open_edit_faq_window, bg="#F8D48E", relief="raised")
-    edit_faq_button.place(x=465.0, y=727.0)
+    edit_faq_button.place(x=515.0, y=727.0, height=50, width=125)
 
     faq_entry = Text(
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        state="disable"
     )
     faq_entry.place(
         x=102.0,
@@ -115,7 +116,7 @@ def open_add_faq_window():
     Button(add_window, text="Add", command=lambda: add_faq(question_entry.get(), answer_entry.get(), add_window)).pack(pady=20)
 
 # Function to add a new FAQ
-def add_faq(question, answer, add_window):
+def add_faq(question, answer, add_window, faq_entry):
     if question and answer:
         faqs.append({"question": question, "answer": answer})
         save_faqs()
@@ -155,7 +156,7 @@ def find_faq(question, edit_window):
     messagebox.showerror("Error", "Question not found in the FAQ list.")
 
 # Function to save the edited FAQ
-def save_edited_faq(question, new_answer, edit_faq_window, edit_window):
+def save_edited_faq(question, new_answer, edit_faq_window, edit_window, faq_entry):
     for faq in faqs:
         if faq['question'] == question:
             faq['answer'] = new_answer
