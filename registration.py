@@ -1,12 +1,11 @@
 # Libraries
 import re
-import secrets
 import smtplib
 import sqlite3
 from datetime import datetime
 from email.mime.text import MIMEText
 from pathlib import Path
-from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, Radiobutton, StringVar, Tk
+from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from tkcalendar import DateEntry
 from tkinter.ttk import Treeview
 
