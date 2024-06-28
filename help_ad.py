@@ -104,6 +104,7 @@ def display_faqs(faq_entry):
     faq_entry.delete(1.0, END)
     for i, faq in enumerate(faqs, 1):
         faq_entry.insert(END, f"{i}.) {faq['question']}\n", 'bold')
+        faq_entry.tag_configure('bold', font=('Hanuman Regular', 20))
         faq_entry.insert(END, f"- {faq['answer']}\n\n")
 
     faq_entry.config(state='disabled')
@@ -128,6 +129,7 @@ def open_add_faq_window():
 
 # Function to add a new FAQ
 def add_faq(question, answer, add_window):
+    faq_entry.config(state='normal')
     if question and answer:
         faqs.append({"question": question, "answer": answer})
         save_faqs()
@@ -169,14 +171,15 @@ def find_faq(question, edit_window):
     messagebox.showerror("Error", "Question not found in the FAQ list.")
 
 # Function to save the edited FAQ
-def save_edited_faq(question, new_answer, edit_faq_window, edit_window, faq_entry):
+def save_edited_faq(question, new_answer, edit_faq_window, edit_window):
+    faq_entry.config(state='normal')
     for faq in faqs:
         if faq['question'] == question:
             faq['answer'] = new_answer
             save_faqs()
-            display_faqs(faq_entry)
             edit_faq_window.destroy()
             edit_window.destroy()
+            display_faqs(faq_entry)
             return
 
 if __name__ == "__main__":
