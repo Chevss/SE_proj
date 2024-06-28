@@ -1,6 +1,6 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import Button, Canvas, Label, messagebox, PhotoImage
+from tkinter import Button, Canvas, PhotoImage
 
 # From user made modules
 from maintenance import backup_database, restore_database

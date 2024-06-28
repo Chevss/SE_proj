@@ -1,4 +1,4 @@
-import win32print
+from win32 import win32print
 import os
 
 # From user made modules

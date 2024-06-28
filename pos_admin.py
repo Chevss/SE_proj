@@ -1,6 +1,6 @@
 import sqlite3
 import tkinter as tk
-import win32print
+from win32 import win32print
 from datetime import datetime
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk

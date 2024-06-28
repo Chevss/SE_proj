@@ -3,7 +3,7 @@ import smtplib
 import sqlite3
 import string
 from pathlib import Path
-from tkinter import Button, Canvas, Entry, messagebox, PhotoImage, Tk
+from tkinter import Button, Canvas, Entry, messagebox, Tk
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 

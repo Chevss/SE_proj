@@ -2,7 +2,7 @@ import re
 import sqlite3
 from pathlib import Path
 from salt_and_hash import generate_salt, hash_password
-from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
+from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, Tk
 
 # From user made modules
 import shared_state

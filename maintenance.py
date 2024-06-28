@@ -2,7 +2,6 @@ import os
 import shutil
 import sqlite3
 import time
-import tkinter as tk
 from cryptography.fernet import Fernet
 from pathlib import Path
 from tkinter import filedialog, messagebox
