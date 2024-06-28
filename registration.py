@@ -8,7 +8,7 @@ from pathlib import Path
 from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from tkcalendar import DateEntry
 from tkinter.ttk import Treeview
-
+import secrets
 # From user made modules
 import shared_state
 from salt_and_hash import generate_salt, hash_password
