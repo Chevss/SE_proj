@@ -45,10 +45,10 @@ def update_password(email, new_password):
         conn.close()
 
 def go_to_window(windows):
-        window.destroy()
-        if windows == "Cancel":
-            import login
-            login.create_login_window()
+    window.destroy()
+    if windows == "Cancel":
+        import login
+        login.create_login_window()
 
 def create_new_pass_window(email):
     global window
