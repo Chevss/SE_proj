@@ -1,5 +1,6 @@
 import json
 from tkinter import Tk, Canvas, Entry, Text, Button, Toplevel, Label, END, messagebox
+# import shared_state
 
 # Load or initialize the FAQ data
 FAQ_FILE = 'faqs.json'
@@ -10,6 +11,17 @@ try:
 except FileNotFoundError:
     faqs = []
 
+window = Tk()
+
+
+def center_window(curr_window, win_width, win_height):
+    window_width, window_height = win_width, win_height
+    screen_width = curr_window.winfo_screenwidth()
+    screen_height = curr_window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+    curr_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+    
 # Function to save the FAQs to a JSON file
 def save_faqs():
     with open(FAQ_FILE, 'w') as file:
@@ -17,10 +29,11 @@ def save_faqs():
 
 # Function to go to another window
 def go_to_window(windows):
-    window.destroy()
+    pass
+    """window.destroy()
     if windows == "back":
         import pos_admin
-        pos_admin.create_pos_admin_window()
+        pos_admin.create_pos_admin_window()"""
 
 # Function to create the Help window
 def create_help_window():
@@ -105,15 +118,19 @@ def open_add_faq_window():
     add_window.geometry("400x300")
     add_window.title("Add FAQ")
 
+    center_window(add_window, 400, 300)
+
     Label(add_window, text="Question:").pack(pady=10)
-    question_entry = Entry(add_window, width=50)
-    question_entry.pack()
+    question_entry = Text(add_window, width=50, height=1)  # Set height to 1 line
+    question_entry.place(x=50, y=35, width=300, height=20)
 
-    Label(add_window, text="Answer:").pack(pady=10)
-    answer_entry = Entry(add_window, width=50)
-    answer_entry.pack()
+    Label(add_window, text="Answer:").pack(pady=15)
+    answer_entry = Text(add_window, height=5)  # Adjust height as needed
+    answer_entry.place(x=50, y=80, width=300, height=75)
 
-    Button(add_window, text="Add", command=lambda: add_faq(question_entry.get(), answer_entry.get(), add_window)).pack(pady=20)
+    Button(add_window, text="Add", command=lambda: add_faq(question_entry.get("1.0", "end-1c"), answer_entry.get("1.0", "end-1c"), add_window)).place(x=190, y=250)
+
+    
 
 # Function to add a new FAQ
 def add_faq(question, answer, add_window, faq_entry):
@@ -125,11 +142,14 @@ def add_faq(question, answer, add_window, faq_entry):
     else:
         messagebox.showerror("Input Error", "Please enter both a question and an answer.")
 
+
 # Function to open the Edit FAQ window
 def open_edit_faq_window():
     edit_window = Toplevel(window)
     edit_window.geometry("400x300")
     edit_window.title("Edit FAQ")
+
+    center_window(edit_window, 400, 300)
 
     Label(edit_window, text="Question to edit:").pack(pady=10)
     question_entry = Entry(edit_window, width=50)
@@ -167,5 +187,4 @@ def save_edited_faq(question, new_answer, edit_faq_window, edit_window, faq_entr
             return
 
 if __name__ == "__main__":
-    window = Tk()
     create_help_window()
