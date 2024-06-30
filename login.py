@@ -66,37 +66,37 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         return
     
     salt, stored_hashed_password = get_stored_hashed_password(username)
-    
-    if salt and stored_hashed_password:
-        hashed_password = hash_password(password, salt)
-        if hashed_password == stored_hashed_password:
-            loa = get_loa(username)
-            if loa is not None:
-                user_status = get_user_status(username)  # Assuming you have a function to get user status
-                if user_status is not None:
-                    if user_status == "Active":  # User is available
-                        messagebox.showinfo("Success", "Login successful!")
-                        log_actions(username, action = "Logged In")
-                        shared_state.current_user = username
-                        shared_state.current_user_loa = loa  # Store the LOA
-                        go_to_window("pos_main")
-                    elif user_status == "Inactive":  # User is unavailable
-                        messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
-                        log_actions(username, action=f"{username} tried to logged in but his account is inactive")
+    user_status = get_user_status(username)
+    if user_status is not None:
+        if user_status == "Active":
+            if salt and stored_hashed_password:
+                hashed_password = hash_password(password, salt)
+                if hashed_password == stored_hashed_password:
+                    loa = get_loa(username)
+                    if loa is not None:     
+                            # User is available
+                                messagebox.showinfo("Success", "Login successful!")
+                                log_actions(username, action = "Logged In")
+                                shared_state.current_user = username
+                                shared_state.current_user_loa = loa  # Store the LOA
+                                go_to_window("pos_main")
                     else:
-                        messagebox.showerror("Error", "Invalid user status.")
+                        messagebox.showerror("Error", "Unable to retrieve access level.")
                 else:
-                    messagebox.showerror("Error", "Unable to retrieve user status.")
+                    messagebox.showerror("Error", "Incorrect password.")
+                    log_actions(username, action=f"{username} tried to logged in but the entered password is incorrect")
+                    pass_entry.delete(0, 'end')
             else:
-                messagebox.showerror("Error", "Unable to retrieve access level.")
+                messagebox.showerror("Error", "Username not found.")
+                log_actions(username, action=f"{username} tried to logged in but this username is not registered")
+                user_entry.delete(0, 'end')
+        elif user_status == "Inactive":  # User is unavailable
+            messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
+            log_actions(username, action=f"{username} tried to logged in but his account is inactive")
         else:
-            messagebox.showerror("Error", "Incorrect password.")
-            log_actions(username, action=f"{username} tried to logged in but the entered password is incorrect")
-            pass_entry.delete(0, 'end')
+            messagebox.showerror("Error", "Invalid user status.")
     else:
-        messagebox.showerror("Error", "Username not found.")
-        log_actions(username, action=f"{username} tried to logged in but this username is not registered")
-        user_entry.delete(0, 'end')
+        messagebox.showerror("Error", "Unable to retrieve user status.")
 
 def create_login_window():
     global window
