@@ -2,11 +2,13 @@ import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 from PIL import Image, ImageTk
-
+from io import BytesIO
+import base64
 # From user made modules
 import shared_state
 from salt_and_hash import hash_password
 from user_logs import log_actions
+import about
 
 # Global variables
 conn = sqlite3.connect('Trimark_construction_supply.db')
@@ -43,6 +45,20 @@ def go_to_window(windows):
     elif windows == "pos_main":
         import pos_admin
         pos_admin.create_pos_admin_window()
+    elif windows == "about_login":
+        import about
+        about.create_about_window()
+
+def load_image_from_about():
+    if 'Logo' in shared_state.abouts:
+        try:
+            logo_data = base64.b64decode(shared_state.abouts['Logo'])
+            logo_image = Image.open(BytesIO(logo_data))
+            resized_image = logo_image.resize((350, 150), Image.LANCZOS)
+            return ImageTk.PhotoImage(resized_image)
+        except Exception as e:
+            print(f"Error loading logo from abouts: {e}")
+    return None
 
 def get_user_status(username):
     cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
@@ -121,14 +137,20 @@ def create_login_window():
     canvas = Canvas(window, bg="#FFE1C6", height=400, width=600, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    original_image = Image.open(relative_to_assets("Tri-mark Logo.png"))
-    resized_image = original_image.resize((350, 150))
+    def handle_abouts_change():
+        image_image_1 = load_image_from_about()
+        if image_image_1:
+            canvas.itemconfig(image_1, image=image_image_1)
+            canvas.image = image_image_1
 
-    # Convert the resized image to a PhotoImage object
-    image_image_1 = ImageTk.PhotoImage(resized_image)
+    shared_state.event_dispatcher.add_handler(handle_abouts_change)
 
-    # Create the image on the canvas
-    image_1 = canvas.create_image(300.0, 84.0, image=image_image_1)
+    image_image_1 = load_image_from_about()
+
+    if image_image_1:
+        canvas = Canvas(window, bg="#FFE1C6", height=400, width=600, bd=0, highlightthickness=0, relief="ridge")
+        canvas.place(x=0, y=0)
+        image_1 = canvas.create_image(300.0, 84.0, image=image_image_1)
 
     user_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24 * -1))
     user_entry.place(x=119.0, y=195.0, width=363.0, height=36.0) 
@@ -144,6 +166,12 @@ def create_login_window():
     canvas.tag_bind(forgot_pass, "<Button-1>", lambda event: go_to_window("forgot pass"))
     canvas.tag_bind(forgot_pass, "<Enter>", lambda event: canvas.itemconfig(forgot_pass, fill="green"))
     canvas.tag_bind(forgot_pass, "<Leave>", lambda event: canvas.itemconfig(forgot_pass, fill="blue"))
+
+    about = canvas.create_text(555.0, 385.0, anchor="nw", text="About", fill="black", font=("Hanuman Regular", 12 * -1))
+
+    canvas.tag_bind(about, "<Button-1>", lambda event: go_to_window("about_login"))
+    canvas.tag_bind(about, "<Enter>", lambda event: canvas.itemconfig(about, fill="red"))
+    canvas.tag_bind(about, "<Leave>", lambda event: canvas.itemconfig(about, fill="black"))
 
     exit_image = PhotoImage(file=relative_to_assets("button_1.png"))
     exit_ = Button(image=exit_image, borderwidth=0, highlightthickness=0, command=exit, relief="flat")

@@ -16,7 +16,8 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Pos Admin")
 
 # Initialize an empty list to store purchased items
 purchase_list = []
-void_list= []
+void_list = []
+
 def relative_to_assets(path: str) -> Path:
     """Returns the absolute path to an asset relative to ASSETS_PATH."""
     return ASSETS_PATH / Path(path)
@@ -91,11 +92,32 @@ def on_barcode_entry(event):
         # Update the total label
         update_total_label()
 
+        # Insert scanned barcode into scanned_barcode entry
+        scanned_barcode.config(state='normal')
+        scanned_barcode.delete(0, 'end')  # Clear any previous value
+        scanned_barcode.insert(0, barcode_value)
+        scanned_barcode.config(state='disabled')
+
         # Clear the barcode entry after processing
         barcode.delete(0, 'end')
 
     else:
         messagebox.showwarning("Search Result", "Product Not Found")
+
+def add_quantity():
+    """Prompts the user to enter quantity for the scanned product."""
+    if purchase_list:
+        quantity = simpledialog.askinteger("Quantity Input", "Enter Quantity:")
+        if quantity:
+            # Update the quantity of the last scanned item
+            purchase_list[-1]['quantity'] = quantity
+            purchase_list[-1]['total_price'] = purchase_list[-1]['price'] * quantity
+
+            # Update the display
+            update_purchase_display()
+            update_total_label()
+    else:
+        messagebox.showwarning("No Product Scanned", "Please scan a product first.")
 
 def update_purchase_display():
     """Updates the display of products being purchased."""
@@ -139,6 +161,17 @@ def go_to_window(window_type):
     elif window_type == "help":
         import help_ad
         help_ad.create_help_window()
+    elif window_type == "about":
+        import about
+        about.create_about_window()
+
+def center_window(curr_window, win_width, win_height):
+    window_width, window_height = win_width, win_height
+    screen_width = curr_window.winfo_screenwidth()
+    screen_height = curr_window.winfo_screenheight()
+    x = (screen_width // 2) - (window_width // 2)
+    y = (screen_height // 2) - (window_height // 2)
+    curr_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -148,13 +181,7 @@ def create_pos_admin_window():
     window.configure(bg="#FFE1C6")
     window.title("POS")
 
-    # Center the window on the screen
-    window_width, window_height = 1280, 800
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    x = (screen_width // 2) - (window_width // 2)
-    y = (screen_height // 2) - (window_height // 2)
-    window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+    center_window(window, 1280, 800)
 
     # Create a canvas to place widgets on
     global canvas
@@ -164,8 +191,18 @@ def create_pos_admin_window():
     # Barcode entry widget
     global barcode
     barcode = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 28 * -1))
-    barcode.place(x=699.0, y=127.0, width=552.0, height=58.0)
-    barcode.bind("<Return>", on_barcode_entry)  # Bind the Return (Enter) key to trigger the search
+    barcode.place(x=699.0, y=197.0, width=552.0, height=58.0)
+    barcode.focus_set()  # Ensure the barcode entry has focus
+    global scanned_barcode
+    scanned_barcode = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 28 * -1), state='disabled')
+    scanned_barcode.place(x=699.0, y=127.0, width=552.0, height=58.0)
+
+    # Bind the <Return> key to trigger the search
+    barcode.bind("<Return>", lambda event: on_barcode_entry(barcode.get()))  # Bind the Return (Enter) key to trigger the search
+
+    # Add Quantity button
+    add_quantity_button = Button(text="Quantity", font=("Hanuman Regular", 16), command=add_quantity, bg="#FFFFFF", relief="raised")
+    add_quantity_button.place(x=699.0, y=260.0, width=100, height=50)
 
     # Treeview widget to display purchased items
     global tree
@@ -185,7 +222,7 @@ def create_pos_admin_window():
     # Total Label
     global total_label
     total_label = Label(window, text="Total: Php 0.00", font=("Arial", 30, "bold"), bg="#FFE1C6")
-    total_label.place(x=699.0, y=200.0)
+    total_label.place(x=699.0, y=400.0)
 
     # Buttons for various actions
     logout_button = Button(text="Logout", font=("Hanuman Regular", 16), command=lambda: go_to_window("logout"), bg="#FFFFFF", relief="raised")
@@ -238,7 +275,7 @@ def create_pos_admin_window():
     # Draw shapes and texts on canvas
     canvas.create_rectangle(41.0, 62.0, 672.0, 127.0, fill="#FF4E4E", outline="")
     canvas.create_text(286.0, 71.0, anchor="nw", text="Checkout", fill="#FFFFFF", font=("Hanuman Regular", 32 * -1))
-    canvas.create_text(699.0, 85.0, anchor="nw", text="Barcode or Product Name", fill="#000000", font=("Hanuman Regular", 28 * -1))
+    canvas.create_text(699.0, 85.0, anchor="nw", text="Barcode", fill="#000000", font=("Hanuman Regular", 28 * -1))
     canvas.create_text(91.0, 20.0, anchor="nw",
         text=f"{str(shared_state.current_user_loa).capitalize()}, {shared_state.current_user}",
         fill="#000000",
@@ -270,6 +307,12 @@ def create_pos_admin_window():
     hamburger_button = Button(window, image=hamburger_icon_resized, borderwidth=0, highlightthickness=0, command=show_hamburger_menu, relief="flat", bg="#FFE1C6")
     hamburger_button.image = hamburger_icon  # Keep a reference to the image to prevent garbage collection
     hamburger_button.place(x=41, y=15)
+
+    about = canvas.create_text(1230.0, 10.0, anchor="nw", text="About", fill="black", font=("Hanuman Regular", 12 * -1))
+
+    canvas.tag_bind(about, "<Button-1>", lambda event: go_to_window("about"))
+    canvas.tag_bind(about, "<Enter>", lambda event: canvas.itemconfig(about, fill="red"))
+    canvas.tag_bind(about, "<Leave>", lambda event: canvas.itemconfig(about, fill="black"))
 
     # Update display of products being purchased and total label
     update_purchase_display()
@@ -310,6 +353,8 @@ def open_purchase_window():
     purchase_window = tk.Toplevel(window)
     purchase_window.title("Purchase")
     purchase_window.geometry("400x300")
+
+    center_window(purchase_window, 400, 300)
 
     print(purchase_list)
 
@@ -456,18 +501,27 @@ def create_receipt(cashier_name, customer_name, customer_contact, customer_money
     # Adjusting the width for 58mm receipt paper
     receipt_text = f"""
 ********************************
+
   Trimark Construction Supply
+
 ********************************
+
    No. 39 Scout Ybardolaza St. 
     Sacred Heart, Quezon City
      Tel. No. (02) 926-2329 
+
 ********************************
+
 Cashier: {cashier_name}
 Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
 ********************************
+
 Customer Name: {customer_name}
 Customer Contact: {customer_contact}
+
 ********************************
+
 Items:
 """
 
@@ -491,14 +545,22 @@ Items:
 
 
     receipt_text += f"""
+
 ********************************
+
 Total: Php {subtotal:.2f}
+
 ********************************
+
 Bill Given: Php {customer_money:.2f}
 Change: Php {change:.2f}
+
 ********************************
+
 Thank you for your purchase!
+
 ********************************
+
         """
 
     print_receipt(receipt_text)

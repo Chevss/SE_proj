@@ -1,28 +1,40 @@
 import json
-from tkinter import Tk, Canvas, Text, Button, Toplevel, END, messagebox, Label, Entry
+import os
+import base64
+from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog, Scrollbar
+from PIL import Image, ImageTk
+from io import BytesIO
 from portalocker import lock, unlock, LOCK_EX
 import shared_state
 
 # Load or initialize the About data
-ABOUT_FILE = 'faqs.json'
+ABOUT_FILE = 'abouts.json'
 
-try:
-    with open(ABOUT_FILE, 'r') as file:
-        abouts = json.load(file)
-except FileNotFoundError:
-    abouts = []
+def load_about():
+    try:
+        with open(ABOUT_FILE, 'r') as file:
+            data = json.load(file)
+            if isinstance(data, dict):
+                return data
+            return {}
+    except FileNotFoundError:
+        return {}
 
 def save_about():
     with open(ABOUT_FILE, 'w') as file:
-        lock(file, LOCK_EX)  # Acquire an exclusive lock
-        json.dump(abouts, file)
-        unlock(file)  # Release the lock
+        lock(file, LOCK_EX)
+        json.dump(shared_state.abouts, file)
+        unlock(file)
+    os.chmod(ABOUT_FILE, 0o600)
+
+shared_state.abouts = load_about()
+abouts = load_about()
 
 def go_to_window(windows):
     window.destroy()
-    if windows == "login":
-        import login
-        login.create_login_window()
+    if windows == "pos":
+        import pos_admin
+        pos_admin.create_pos_admin_window()
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -71,11 +83,10 @@ def create_about_window():
     edit_about_button = Button(text="Edit About", font=("Hanuman Regular", 16), command=open_edit_about_window, bg="#F8D48E", relief="raised")
 
     loa = shared_state.current_user_loa
-    loa = "admin"
     if loa == "admin":
         edit_about_button.place(x=415.0, y=727.0, height=50, width=125)
 
-    back_button = Button(text="Back", font=("Hanuman Regular", 16), command=lambda: go_to_window("login"), bg="#FFFFFF", relief="raised")
+    back_button = Button(text="Back", font=("Hanuman Regular", 16), command=lambda: go_to_window("pos"), bg="#FFFFFF", relief="raised")
     back_button.place(x=785.0, y=727.0, height=50, width=125)
 
     global about_entry
@@ -88,59 +99,87 @@ def create_about_window():
     )
     about_entry.place(
         x=102.0,
-        y=180.0,
+        y=325.0,
         width=768.0,
-        height=511.0
+        height=366.0
     )
+
+    # vsb = Scrollbar(window, orient="vertical", command=about_entry.yview)
+    # vsb.place(x=870, y=325, height=366)
+
+    # about_entry.configure(yscrollcommand=vsb.set)
 
     display_about(about_entry)
 
-    # Display the FAQs in the required format
     window.resizable(False, False)
     window.mainloop()
 
 def display_about(about_entry):
     about_entry.delete(1.0, END)
-    for i, faq in enumerate(abouts, 1):
-        if 'Details' in faq:
-            about_entry.insert(END, f"{i}.) {faq['Details']}\n", 'bold')
-            about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
-        else:
-            about_entry.insert(END, f"{i}.) <Missing Details>\n", 'bold')
-            about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+    if 'Details' in shared_state.abouts:
+        about_entry.insert(END, f"{shared_state.abouts['Details']}\n", 'bold')
+        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+    else:
+        about_entry.insert(END, f"<Missing Details>\n", 'bold')
+        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+    if 'Logo' in shared_state.abouts:
+        try:
+            logo_data = base64.b64decode(shared_state.abouts['Logo'])
+            logo_image = Image.open(BytesIO(logo_data))
+            logo_image = logo_image.resize((350, 150), Image.LANCZOS)  # Resize the image
+            logo_photo = ImageTk.PhotoImage(logo_image)
+            logo_label = Label(window, image=logo_photo)
+            logo_label.image = logo_photo
+            logo_label.place(x=305, y=150)
+        except Exception as e:
+            print(f"Error displaying logo: {e}")
     about_entry.config(state='disabled')
-
 
 def open_edit_about_window():
     edit_window = Toplevel(window)
-    edit_window.geometry("400x300")
+    edit_window.geometry("400x400")
     edit_window.title("Edit About")
 
-    center_window(edit_window, 400, 300)
+    center_window(edit_window, 400, 400)
     Label(edit_window, text='Edit About').pack(pady=10)
-    edit_entry_1 = Text(
+
+    logo_path_label = Label(edit_window, text='No file chosen')
+    logo_path_label.pack(pady=5)
+
+    def upload_logo():
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.gif")])
+        if file_path:
+            logo_path_label.config(text=file_path)
+            try:
+                with open(file_path, 'rb') as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                    shared_state.abouts['Logo'] = encoded_string
+                    shared_state.save_about()  # Save changes and trigger event
+            except Exception as e:
+                print(f"Error encoding logo: {e}")
+
+    upload_logo_button = Button(edit_window, text="Upload Logo", command=upload_logo)
+    upload_logo_button.pack(pady=5)
+
+    edit_entry = Text(
         edit_window,
         bd=0,
         bg="#FFFFFF",
         fg="#000000",
         highlightthickness=0
     )
-    edit_entry_1.place(x=50, y=50, width=300, height=200)
+    edit_entry.place(x=50, y=120, width=300, height=200)
+    if 'Details' in abouts:
+        edit_entry.insert(1.0, abouts['Details'])
 
-    # Function to save changes and update entry_1 in main window
-    def save_edited_about(edit_entry):
-        about_entry.config(state='normal')
-        selected_index = about_entry.index('1.0')
-        for about in abouts:
-            about['Details'] = edit_entry
-            save_about()
-            about_entry.destroy()
-            edit_window.destroy()
-            display_about(about_entry)
-            return
+    def save_edited_about():
+        abouts['Details'] = edit_entry.get('1.0', END).strip()
+        save_about()
+        display_about(about_entry)
+        edit_window.destroy()
 
-    save_button = Button(edit_window, text="Save Changes", command=lambda: save_edited_about(edit_entry_1.get('1.0', END)))
-    save_button.place(x=150, y=255, width=100, height=30)
+    save_button = Button(edit_window, text="Save Changes", command=save_edited_about)
+    save_button.place(x=150, y=350, width=100, height=30)
 
 if __name__ == "__main__":
     create_about_window()

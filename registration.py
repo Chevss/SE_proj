@@ -222,7 +222,9 @@ def activate_selected_account():
         if confirm_activate:
             item = tree.item(selected_item)
             item_values = item['values']
-            employee_id = item_values[1]  # Assuming Employee_ID is at index 1
+            print(item_values)
+            employee_id = item_values[1]
+            print(employee_id)  # Assuming Employee_ID is at index 1
             
             try:
                 # Update the database
