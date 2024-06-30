@@ -11,7 +11,9 @@ try:
 except FileNotFoundError:
     faqs = []
 
-
+# Ensure faqs is a list
+if not isinstance(faqs, list):
+    faqs = []
 
 # Function to save the FAQs to a JSON file with restricted permissions
 def save_faqs():
@@ -106,9 +108,13 @@ def create_help_window():
 def display_faqs(faq_entry):
     faq_entry.delete(1.0, END)
     for i, faq in enumerate(faqs, 1):
-        faq_entry.insert(END, f"{i}.) {faq['question']}\n", 'bold')
-        faq_entry.tag_configure('bold', font=('Hanuman Regular', 20))
-        faq_entry.insert(END, f"- {faq['answer']}\n\n")
+        if isinstance(faq, dict) and 'question' in faq and 'answer' in faq:
+            faq_entry.insert(END, f"{i}.) {faq['question']}\n", 'bold')
+            faq_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+            faq_entry.insert(END, f"- {faq['answer']}\n\n")
+        else:
+            # Handle unexpected data
+            print(f"Unexpected faq format at index {i}: {faq}")
 
     faq_entry.config(state='disabled')
 
@@ -130,11 +136,12 @@ def open_add_faq_window():
 
     Button(add_window, text="Add", command=lambda: add_faq(question_entry.get("1.0", "end-1c"), answer_entry.get("1.0", "end-1c"), add_window)).place(x=190, y=250)
 
+
 # Function to add a new FAQ
 def add_faq(question, answer, add_window):
     faq_entry.config(state='normal')
     if question and answer:
-        faqs.append({"question": question, "answer": answer})
+        faqs.append({"question": question, "answer": answer})  # Append to the list
         save_faqs()
         display_faqs(faq_entry)
         add_window.destroy()
@@ -155,6 +162,7 @@ def open_edit_faq_window():
 
     Button(edit_window, text="Find", command=lambda: find_faq(question_entry.get(), edit_window)).pack(pady=20)
 
+
 # Function to find and edit an FAQ
 def find_faq(question, edit_window):
     for faq in faqs:
@@ -163,10 +171,12 @@ def find_faq(question, edit_window):
             edit_faq_window.geometry("400x300")
             edit_faq_window.title("Edit FAQ")
 
+            center_window(edit_faq_window, 400, 300)
+
             Label(edit_faq_window, text="Answer:").pack(pady=10)
-            answer_entry = Entry(edit_faq_window, width=50)
-            answer_entry.pack()
-            answer_entry.insert(0, faq['answer'])
+            answer_entry = Text(edit_faq_window, height=40, width=40)
+            answer_entry.pack(pady=5)
+            answer_entry.insert("1.0", faq['answer'])
 
             Button(edit_faq_window, text="Save", command=lambda: save_edited_faq(question, answer_entry.get(), edit_faq_window, edit_window)).pack(pady=20)
             return
