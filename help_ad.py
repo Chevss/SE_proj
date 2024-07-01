@@ -5,15 +5,29 @@ from portalocker import lock, unlock, LOCK_EX
 # Load or initialize the FAQ data
 FAQ_FILE = 'faqs.json'
 
+# Default FAQs
+default_faqs = [
+    {"question": "What is the primary purpose of the product management system?", "answer": "The system aims to automate and improve the efficiency of daily transactions, inventory management, and record-keeping at Tri-Mark Construction Supply using barcode technology."},
+    {"question": "How will the barcode technology be implemented in the system?", "answer": "Barcode technology will be used to encode product information, which can be scanned for quick and accurate data collection during transactions and inventory checks."},
+    {"question": "What are the main modules included in the product management system?", "answer": "The system includes a POS module, Barcode module, Security module, Records Database module, Reports module, Inventory module, Search module, Maintenance module, Help module, and About module."},
+    {"question": "How does the POS module function?", "answer": "The POS module handles all store transactions, including scanning barcodes, calculating total prices, processing payments, and printing receipts."},
+    {"question": "What security measures are in place to protect data within the system?", "answer": "The system includes a security module that manages user authentication and access levels, ensuring only authorized personnel can access sensitive data."},
+    {"question": "How does the system handle inventory management?", "answer": "The inventory module tracks all products and their quantities, updates stock levels after transactions, and generates reports on inventory status."},
+    {"question": "Can new employees easily learn to use the system?", "answer": "Yes, the system features an easy-to-use interface with labeled buttons and a help module containing FAQs and a user manual to minimize the need for extensive training."},
+    {"question": "What should I do if I encounter an issue with the system?", "answer": "The Maintenance module provides information on system issues and updates. Users can also refer to the Help module or contact support for assistance."},
+    {"question": "How does the system improve record-keeping and reporting?", "answer": "The Records Database module stores all transaction data securely, allowing for accurate record-keeping. The Reports module can generate various reports based on stored data."},
+    {"question": "Is the system accessible online?", "answer": "No, the system is LAN-based and designed for use within Tri-Mark Construction Supply's local network, enhancing security and reliability."}
+]
+
 try:
     with open(FAQ_FILE, 'r') as file:
         faqs = json.load(file)
 except FileNotFoundError:
-    faqs = []
+    faqs = default_faqs
 
 # Ensure faqs is a list
 if not isinstance(faqs, list):
-    faqs = []
+    faqs = default_faqs
 
 # Function to save the FAQs to a JSON file with restricted permissions
 def save_faqs():
@@ -21,7 +35,6 @@ def save_faqs():
         lock(file, LOCK_EX)  # Acquire an exclusive lock
         json.dump(faqs, file)
         unlock(file)  # Release the lock
-
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -87,10 +100,10 @@ def create_help_window():
     global faq_entry
     faq_entry = Text(
         bd=0,
-        bg="#FFFFFF",
+        bg="#FFE1C6",  # Match background color
         fg="#000716",
         highlightthickness=0,
-        state='normal'
+        wrap='word'  # Prevent cutting words
     )
     faq_entry.place(
         x=102.0,
@@ -110,8 +123,9 @@ def display_faqs(faq_entry):
     for i, faq in enumerate(faqs, 1):
         if isinstance(faq, dict) and 'question' in faq and 'answer' in faq:
             faq_entry.insert(END, f"{i}.) {faq['question']}\n", 'bold')
-            faq_entry.tag_configure('bold', font=('Hanuman Regular', 20))
-            faq_entry.insert(END, f"- {faq['answer']}\n\n")
+            faq_entry.tag_configure('bold', font=('Hanuman Regular', 20, 'bold'))
+            faq_entry.insert(END, f"- {faq['answer']}\n\n", 'normal')
+            faq_entry.tag_configure('normal', font=('Hanuman Regular', 16, 'normal'))
         else:
             # Handle unexpected data
             print(f"Unexpected faq format at index {i}: {faq}")
@@ -174,11 +188,11 @@ def find_faq(question, edit_window):
             center_window(edit_faq_window, 400, 300)
 
             Label(edit_faq_window, text="Answer:").pack(pady=10)
-            answer_entry = Text(edit_faq_window, height=40, width=40)
+            answer_entry = Text(edit_faq_window, height=5, width=40)
             answer_entry.pack(pady=5)
             answer_entry.insert("1.0", faq['answer'])
 
-            Button(edit_faq_window, text="Save", command=lambda: save_edited_faq(question, answer_entry.get(), edit_faq_window, edit_window)).pack(pady=20)
+            Button(edit_faq_window, text="Save", command=lambda: save_edited_faq(question, answer_entry.get("1.0", "end-1c"), edit_faq_window, edit_window)).pack(pady=20)
             return
 
     messagebox.showerror("Error", "Question not found in the FAQ list.")
