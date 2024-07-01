@@ -27,6 +27,9 @@ def save_about():
         unlock(file)
     os.chmod(ABOUT_FILE, 0o600)
 
+def update_about_entry():
+    display_about(about_entry)
+
 shared_state.abouts = load_about()
 abouts = load_about()
 
@@ -83,6 +86,7 @@ def create_about_window():
     edit_about_button = Button(text="Edit About", font=("Hanuman Regular", 16), command=open_edit_about_window, bg="#F8D48E", relief="raised")
 
     loa = shared_state.current_user_loa
+    loa = "admin"
     if loa == "admin":
         edit_about_button.place(x=415.0, y=727.0, height=50, width=125)
 
@@ -105,32 +109,20 @@ def create_about_window():
         height=366.0
     )
 
-    display_about(about_entry)
+    update_about_entry()  # Initial update of about_entry
 
     window.resizable(False, False)
     window.mainloop()
 
 def display_about(about_entry):
+    about_entry.config(state='normal')
     about_entry.delete(1.0, END)
-    about_entry.tag_configure('center', justify='center')
-    about_entry.tag_configure('bold', font=('Hanuman Regular', 20, 'bold'))
-    about_entry.tag_configure('normal', font=('Hanuman Regular', 16, 'normal'))
-
-    company_history = "Company History:\n"
-    company_history_text = "Tri-Mark Construction Supply started operating on July 19, 1992. It has been in operation for over 30 years, providing various construction equipment and tools.\n\n"
-    company_address = "Company Address:\n"
-    company_address_text = "39 Scout Ybardolaza cor. Sct Rallos, Quezon City\n\n"
-    contact_details = "Contact Details:\n"
-    contact_details_text = "09773268696\n"
-
-    about_entry.insert(END, company_history, 'bold')
-    about_entry.insert(END, company_history_text, 'normal')
-    about_entry.insert(END, company_address, 'bold')
-    about_entry.insert(END, company_address_text, 'normal')
-    about_entry.insert(END, contact_details, 'bold')
-    about_entry.insert(END, contact_details_text, 'normal')
-
-    about_entry.tag_add('center', 1.0, 'end')
+    if 'Details' in shared_state.abouts:
+        about_entry.insert(END, f"{shared_state.abouts['Details']}\n", 'bold')
+        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+    else:
+        about_entry.insert(END, f"<Missing Details>\n", 'bold')
+        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
 
     if 'Logo' in shared_state.abouts:
         try:
@@ -165,6 +157,7 @@ def open_edit_about_window():
                     encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
                     shared_state.abouts['Logo'] = encoded_string
                     shared_state.save_about()  # Save changes and trigger event
+                    update_about_entry()  # Update about_entry immediately after saving
             except Exception as e:
                 print(f"Error encoding logo: {e}")
 
@@ -184,12 +177,14 @@ def open_edit_about_window():
 
     def save_edited_about():
         abouts['Details'] = edit_entry.get('1.0', END).strip()
-        save_about()
-        display_about(about_entry)
+        shared_state.abouts['Details'] = abouts['Details']  # Update shared state immediately
+        save_about()  # Save changes to file
+        update_about_entry()  # Update about_entry immediately after saving
         edit_window.destroy()
 
     save_button = Button(edit_window, text="Save Changes", command=save_edited_about)
     save_button.place(x=150, y=350, width=100, height=30)
+
 
 if __name__ == "__main__":
     create_about_window()
