@@ -19,14 +19,12 @@ def load_about():
     except FileNotFoundError:
         return {}
 
-def save_about():
+def save_manual():
     with open(ABOUT_FILE, 'w') as file:
         lock(file, LOCK_EX)
         json.dump(shared_state.abouts, file)
         unlock(file)
     os.chmod(ABOUT_FILE, 0o600)
-
-shared_state.abouts = load_about()
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -66,17 +64,18 @@ def create_user_manual_window():
         432.0,
         64.0,
         anchor="nw",
-        text="About",
+        text="User Manual",
         fill="#000000",
         font=("Hanuman Regular", 40 * -1)
     )
 
     loa = shared_state.current_user_loa
+    loa = "admin" 
     if loa == "admin":
         edit_user_manual_button = Button(
-            text="Edit About",
+            text="Edit Manual",
             font=("Hanuman Regular", 16),
-            command=open_edit_about_window,
+            command=open_edit_manual_window,
             bg="#F8D48E",
             relief="raised"
         )
@@ -125,26 +124,22 @@ def go_to_window(windows):
 def open_edit_about_window():
     edit_window = Toplevel(window)
     edit_window.geometry("600x400")
-    edit_window.title("Edit About")
+    edit_window.title("Edit Manual")
 
     center_window(edit_window, 600, 400)
 
-    Label(edit_window, text="Edit About Information", font=("Hanuman Regular", 20)).pack(pady=20)
+    Label(edit_window, text="Edit User Manual Information", font=("Hanuman Regular", 20)).pack(pady=20)
 
     # Entry widget for editing
     edit_entry = Text(edit_window, wrap='word', height=15, width=60)
     edit_entry.pack(pady=10)
 
-    # Populate with existing about content
-    current_about = shared_state.abouts.get('about_text', '')
-    edit_entry.insert(END, current_about)
-
     # Save button
     save_button = Button(edit_window, text="Save", font=("Hanuman Regular", 16),
-                         command=lambda: save_edited_about(edit_entry.get("1.0", "end-1c"), edit_window))
+                         command=lambda: save_edited_manual(edit_entry.get("1.0", "end-1c"), edit_window))
     save_button.pack(pady=20)
 
-def save_edited_about(new_about, edit_window):
+def save_edited_manual(new_manual, edit_window):
     shared_state.abouts['about_text'] = new_about
     save_about()
     edit_window.destroy()
