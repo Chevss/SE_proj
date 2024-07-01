@@ -9,9 +9,8 @@ import shared_state
 from salt_and_hash import hash_password
 from user_logs import log_actions
 
-
 # Global variables
-conn = sqlite3.connect('Trimark_construction_supply.db')
+conn = sqlite3.connect("Trimark_construction_supply.db")
 cursor = conn.cursor()
 
 OUTPUT_PATH = Path(__file__).parent
@@ -27,14 +26,6 @@ def get_stored_hashed_password(username):
         return row[0], row[1]
     else:
         return None, None
-    
-def get_loa(username):
-    cursor.execute("SELECT Loa FROM accounts WHERE username =? AND is_void = 0", (username,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
-    else:
-        return None
 
 def go_to_window(windows):
     window.destroy()
@@ -64,39 +55,44 @@ def get_user_status(username):
     cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
     row = cursor.fetchone()
     if row:
-        if row[0] == 0:
+        if row[0] == '0':
             return "Active"
-        elif row[0] == 1:
+        elif row[0] == '1':
             return "Inactive"
-        else:
-            return "Unknown"
+    else:
+        return None
+
+def get_loa(username):
+    cursor.execute("SELECT LOA FROM accounts WHERE username =?", (username,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
     else:
         return None
 
 # Check credentials and initiate login process.
 def check_credentials(username, password, user_entry, pass_entry, window):
+    user_status = get_user_status(username)
+    if user_status == "Inactive":
+        messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
+        log_actions(username, action=f"{username} tried to log in but their account is inactive")
+        return
+    
     salt, stored_hashed_password = get_stored_hashed_password(username)
 
     if salt and stored_hashed_password:
         hashed_password = hash_password(password, salt)
         if hashed_password == stored_hashed_password:
             loa = get_loa(username)
-            if loa is not None:     
-                user_status = get_user_status(username)  # Assuming you have a function to get user status
-                if user_status is not None:
-                    if user_status == "Active":  # User is available
-                                messagebox.showinfo("Success", "Login successful!")
-                                log_actions(username, action = "Logged In")
-                                shared_state.current_user = username
-                                shared_state.current_user_loa = loa  # Store the LOA
-                                go_to_window("pos_main")
-                    elif user_status == "Inactive":  # User is unavailable
-                        messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
-                        log_actions(username, action=f"{username} tried to logged in but his account is inactive")
-                    else:
-                        messagebox.showerror("Error", "Invalid user status.")
+            if loa is not None:
+                if user_status == "Active":
+                    messagebox.showinfo("Success", "Login successful!")
+                    log_actions(username, action = "Logged In")
+                    shared_state.current_user = username
+                    shared_state.current_user_loa = loa
+                    go_to_window("pos_main")
                 else:
-                    messagebox.showerror("Error", "Unable to retrieve user status.")
+                    messagebox.showerror("Error", "Invalid user status.")
             else:
                 messagebox.showerror("Error", "Unable to retrieve access level.")
         else:
@@ -109,7 +105,7 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         user_entry.delete(0, 'end')
 
 def create_login_window():
-    global window
+    global window, user_entry
     window = Tk()
     window.title("Login")
     window.geometry("600x400")
@@ -147,7 +143,7 @@ def create_login_window():
         image_1 = canvas.create_image(300.0, 84.0, image=image_image_1)
 
     user_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24 * -1))
-    user_entry.place(x=119.0, y=195.0, width=363.0, height=36.0) 
+    user_entry.place(x=119.0, y=195.0, width=363.0, height=36.0)
 
     pass_entry = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=0, font=("Hanuman Regular", 24 * -1), show="•")
     pass_entry.place(x=119.0, y=258.0, width=363.0, height=36.0)

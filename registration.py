@@ -42,7 +42,7 @@ def send_email(email, employee_id, username, password):
         print(f"Failed to send email: {str(e)}")
 
 # Store the registered employee or admin to the database.
-def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password):
+def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password, is_void):
     salt = generate_salt()
     hashed_password = hash_password(password, salt)
     date_registered = datetime.now()
@@ -52,9 +52,9 @@ def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number,
         employee_id = generate_employee_id(loa)
 
         cursor.execute('''
-        INSERT INTO accounts ( Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ( employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
+        INSERT INTO accounts ( Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, is_void, Date_Registered)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ( employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, is_void, date_registered))
         conn.commit()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
@@ -160,8 +160,9 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
         return False
 
     password = secrets.token_urlsafe(10)
+    is_void = 0
 
-    save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password)
+    save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password, is_void)
     employee_id = generate_employee_id(loa)
     send_email(email, employee_id, username, password)
 
@@ -457,9 +458,10 @@ def create_registration_window():
     rows = cursor.fetchall()
     
     for row in rows:
-        if row[0] == 0:
+        if row[0] == '0':
             is_void = "Active"
-        else: is_void = "Inactive"
+        elif row[0] == '1':
+            is_void = "Inactive"
         employee_id = row[1]
         loa = row[2]
         first_name = row[3]
