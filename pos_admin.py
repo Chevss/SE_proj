@@ -254,22 +254,9 @@ def create_pos_admin_window():
     barcodes_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
 
     # Void button function
-    def void_items():
-        void_list  # Access void_list from the outer scope
+    
 
-        # Move items from purchase_list to void_list
-        void_list.extend(purchase_list)
-        print(void_list)
-        purchase_list.clear()
-
-        # Update display of products being purchased and total label
-        update_purchase_display()
-        update_total_label()
-
-        action = "Voided transaction."
-        log_actions(shared_state.current_user, action)
-
-    void_button = Button(text="Void", font=("Hanuman Regular", 20), command=void_items, bg="#FF9E9E", relief="raised")
+    void_button = Button(text="Void", font=("Hanuman Regular", 20), command=lambda: shared_state.void_items(purchase_list, update_purchase_display, update_total_label), bg="#FF9E9E", relief="raised")
     void_button.place(x=506.0, y=623.0, width=166.0, height=112.0)
 
     # Draw shapes and texts on canvas
