@@ -1,17 +1,16 @@
 import json
 import os
-from tkinter import Tk, Canvas, Text, Button, Scrollbar, END, filedialog
-from PIL import Image, ImageTk
+import tkinter as tk
+from tkinter import Text, Button, DISABLED, messagebox
 from portalocker import lock, unlock, LOCK_EX
 import shared_state
-from functools import partial
 
-# Load or initialize the About data
-ABOUT_FILE = 'user_manual.json'
+# Load or initialize the User manual data
+USER_MANUAL_FILE = 'user_manual.json'
 
-def load_about():
+def load_user_manual():
     try:
-        with open(ABOUT_FILE, 'r') as file:
+        with open(USER_MANUAL_FILE, 'r') as file:
             data = json.load(file)
             if isinstance(data, dict):
                 return data
@@ -19,30 +18,72 @@ def load_about():
     except FileNotFoundError:
         return {}
 
-def save_manual():
-    with open(ABOUT_FILE, 'w') as file:
-        lock(file, LOCK_EX)
-        json.dump(shared_state.abouts, file)
-        unlock(file)
-    os.chmod(ABOUT_FILE, 0o600)
+def save_manual(content):
+    user_manual_data = {'manual_content': content}
+    try:
+        with open(USER_MANUAL_FILE, 'w') as file:
+            lock(file, LOCK_EX)
+            json.dump(user_manual_data, file)
+            unlock(file)
+        os.chmod(USER_MANUAL_FILE, 0o600)
+        messagebox.showinfo("Saved", "Manual content saved successfully.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save manual content: {str(e)}")
+        # Log the exception for further debugging
+        print(f"Error saving manual content: {str(e)}")
 
-def center_window(curr_window, win_width, win_height):
-    window_width, window_height = win_width, win_height
-    screen_width = curr_window.winfo_screenwidth()
-    screen_height = curr_window.winfo_screenheight()
-    x = (screen_width // 2) - (window_width // 2)
-    y = (screen_height // 2) - (window_height // 2)
-    curr_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+def open_edit_manual_window():
+    edit_window = tk.Toplevel()
+    edit_window.title("Edit Manual")
+    edit_window.geometry("600x500")
+
+    center_window(edit_window, 600,500)
+
+    edit_text = Text(edit_window)
+    edit_text.pack(expand=True, fill="both")
+
+    # Load existing manual content into the Text widget for editing
+    user_manual_data = load_user_manual()
+    if user_manual_data and 'manual_content' in user_manual_data:
+        edit_text.insert("1.0", user_manual_data['manual_content'])
+
+    def save_and_close():
+        content = edit_text.get("1.0", "end-1c")
+        save_manual(content)
+        edit_window.destroy()
+        update_user_manual_entry(content)
+
+    save_button = Button(edit_window, text="Save", command=save_and_close)
+    save_button.pack()
+
+    edit_window.mainloop()
+
+def update_user_manual_entry(content=None):
+    if content is None:
+        user_manual_data = load_user_manual()
+        if user_manual_data and 'manual_content' in user_manual_data:
+            content = user_manual_data['manual_content']
+
+    user_manual_entry.config(state="normal")  # Enable editing temporarily
+    user_manual_entry.delete("1.0", "end")
+    user_manual_entry.insert("1.0", content)
+    user_manual_entry.config(state=DISABLED)  # Disable editing again
+
+def center_window(win, width, height):
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        win.geometry(f'{width}x{height}+{x}+{y}')
 
 def create_user_manual_window():
-    global window
-    window = Tk()
+    window = tk.Tk()
     window.geometry("972x835")
     window.configure(bg="#FFE1C6")
 
     center_window(window, 972, 835)
 
-    canvas = Canvas(
+    canvas = tk.Canvas(
         window,
         bg="#FFE1C6",
         height=835,
@@ -53,26 +94,27 @@ def create_user_manual_window():
     )
     canvas.place(x=0, y=0)
     canvas.create_rectangle(
-        365.0,
+        395.0,
         40.0,
-        608.0,
-        139.0,
+        588.0,
+        99.0,
         fill="#5CB0FF",
         outline=""
     )
     canvas.create_text(
-        432.0,
-        64.0,
+        408.0,
+        50.0,
         anchor="nw",
         text="User Manual",
         fill="#000000",
-        font=("Hanuman Regular", 40 * -1)
+        font=("Hanuman Regular", 30 * -1)
     )
 
     loa = shared_state.current_user_loa
-    loa = "admin" 
+    loa = "admin"
     if loa == "admin":
         edit_user_manual_button = Button(
+            window,
             text="Edit Manual",
             font=("Hanuman Regular", 16),
             command=open_edit_manual_window,
@@ -82,9 +124,10 @@ def create_user_manual_window():
         edit_user_manual_button.place(x=415.0, y=727.0, height=50, width=125)
 
     back_button = Button(
+        window,
         text="Back",
         font=("Hanuman Regular", 16),
-        command=lambda: go_to_window("pos"),
+        command=lambda: go_to_window(window, "pos"),
         bg="#FFFFFF",
         relief="raised"
     )
@@ -96,59 +139,27 @@ def create_user_manual_window():
         bd=0,
         bg="#FFFFFF",
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        state=DISABLED  # Make the Text widget initially non-editable
     )
     user_manual_entry.place(
         x=102.0,
-        y=325.0,
+        y=125.0,
         width=768.0,
-        height=366.0
+        height=566.0
     )
 
-    # Add scrollbars to the Text widget
-    vsb = Scrollbar(window, orient="vertical", command=user_manual_entry.yview)
-    vsb.place(x=870, y=325, height=366)
-    user_manual_entry.config(yscrollcommand=vsb.set)
-
-    display_about(user_manual_entry)
+    # Load manual content into the Text widget
+    update_user_manual_entry()
 
     window.resizable(False, False)
     window.mainloop()
 
-def go_to_window(windows):
-    window.destroy()
-    if windows == "pos":
+def go_to_window(curr_window, window_type):
+    curr_window.destroy()
+    if window_type == "pos":
         import pos_admin
         pos_admin.create_pos_admin_window()
-
-def open_edit_about_window():
-    edit_window = Toplevel(window)
-    edit_window.geometry("600x400")
-    edit_window.title("Edit Manual")
-
-    center_window(edit_window, 600, 400)
-
-    Label(edit_window, text="Edit User Manual Information", font=("Hanuman Regular", 20)).pack(pady=20)
-
-    # Entry widget for editing
-    edit_entry = Text(edit_window, wrap='word', height=15, width=60)
-    edit_entry.pack(pady=10)
-
-    # Save button
-    save_button = Button(edit_window, text="Save", font=("Hanuman Regular", 16),
-                         command=lambda: save_edited_manual(edit_entry.get("1.0", "end-1c"), edit_window))
-    save_button.pack(pady=20)
-
-def save_edited_manual(new_manual, edit_window):
-    shared_state.abouts['about_text'] = new_about
-    save_about()
-    edit_window.destroy()
-    display_about(user_manual_entry)
-
-def display_about(text_widget):
-    about_text = shared_state.abouts.get('about_text', '')
-    text_widget.delete(1.0, END)
-    text_widget.insert(END, about_text)
 
 if __name__ == "__main__":
     create_user_manual_window()
