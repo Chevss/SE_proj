@@ -72,7 +72,16 @@ def generate_purchase_history():
     cursor.execute(query, (from_date, to_date))
     rows = cursor.fetchall()
 
-    current_data = rows
+    formatted_rows = []
+    for row in rows:
+        formatted_row = list(row)
+        formatted_row[4] = "\n".join([f"{float(price):.2f}" for price in formatted_row[4].split('\n')])
+        formatted_row[5] = f"{float(formatted_row[5]):.2f}"
+        formatted_row[6] = f"{float(formatted_row[6]):.2f}"
+        formatted_row[7] = f"{float(formatted_row[7]):.2f}"
+        formatted_rows.append(tuple(formatted_row))
+
+    current_data = formatted_rows
     update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Quantities", "Prices", "Total Amount", "Amount Paid", "Change", "Timestamp"])
 
 def generate_sales_report():
@@ -95,8 +104,9 @@ def generate_sales_report():
     rows = cursor.fetchall()
     overall_total_sales = sum(row[2] for row in rows)
     
-    overall_total_row = ("Overall Total", "", overall_total_sales)
-    rows.append(overall_total_row)
+    overall_total_row = ("Overall Total", "", f"{overall_total_sales:.2f}")
+    formatted_rows = [(row[0], row[1], f"{row[2]:.2f}") for row in rows]
+    formatted_rows.append(overall_total_row)
 
     current_data = rows  # Use fetched data from the database
     update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
