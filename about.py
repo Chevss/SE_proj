@@ -1,7 +1,7 @@
 import json
 import os
 import base64
-from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog, Scrollbar
+from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog
 from PIL import Image, ImageTk
 from io import BytesIO
 from portalocker import lock, unlock, LOCK_EX
@@ -93,9 +93,10 @@ def create_about_window():
     about_entry = Text(
         window,
         bd=0,
-        bg="#FFFFFF",
+        bg="#FFE1C6",  # Match background color
         fg="#000716",
-        highlightthickness=0
+        highlightthickness=0,
+        wrap='word'  # Prevent cutting words
     )
     about_entry.place(
         x=102.0,
@@ -104,11 +105,6 @@ def create_about_window():
         height=366.0
     )
 
-    # vsb = Scrollbar(window, orient="vertical", command=about_entry.yview)
-    # vsb.place(x=870, y=325, height=366)
-
-    # about_entry.configure(yscrollcommand=vsb.set)
-
     display_about(about_entry)
 
     window.resizable(False, False)
@@ -116,12 +112,26 @@ def create_about_window():
 
 def display_about(about_entry):
     about_entry.delete(1.0, END)
-    if 'Details' in shared_state.abouts:
-        about_entry.insert(END, f"{shared_state.abouts['Details']}\n", 'bold')
-        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
-    else:
-        about_entry.insert(END, f"<Missing Details>\n", 'bold')
-        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+    about_entry.tag_configure('center', justify='center')
+    about_entry.tag_configure('bold', font=('Hanuman Regular', 20, 'bold'))
+    about_entry.tag_configure('normal', font=('Hanuman Regular', 16, 'normal'))
+
+    company_history = "Company History:\n"
+    company_history_text = "Tri-Mark Construction Supply started operating on July 19, 1992. It has been in operation for over 30 years, providing various construction equipment and tools.\n\n"
+    company_address = "Company Address:\n"
+    company_address_text = "39 Scout Ybardolaza cor. Sct Rallos, Quezon City\n\n"
+    contact_details = "Contact Details:\n"
+    contact_details_text = "09773268696\n"
+
+    about_entry.insert(END, company_history, 'bold')
+    about_entry.insert(END, company_history_text, 'normal')
+    about_entry.insert(END, company_address, 'bold')
+    about_entry.insert(END, company_address_text, 'normal')
+    about_entry.insert(END, contact_details, 'bold')
+    about_entry.insert(END, contact_details_text, 'normal')
+
+    about_entry.tag_add('center', 1.0, 'end')
+
     if 'Logo' in shared_state.abouts:
         try:
             logo_data = base64.b64decode(shared_state.abouts['Logo'])
