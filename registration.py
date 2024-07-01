@@ -47,35 +47,38 @@ def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number,
     hashed_password = hash_password(password, salt)
     date_registered = datetime.now()
 
+
     try:
         employee_id = generate_employee_id(loa)
 
         cursor.execute('''
-        INSERT INTO accounts (Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
+        INSERT INTO accounts ( Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, Date_Registered)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
+        ''', ( employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, date_registered))
         conn.commit()
-        update_table()
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
         conn.rollback()
 
-def update_table():
-    try:
-        cursor.execute('SELECT * FROM accounts')
-        rows = cursor.fetchall()
+# def update_table():
+#     try:
+#         cursor.execute('SELECT * FROM accounts')
+#         rows = cursor.fetchall()
+#         print (rows)
         
-        # Clear existing items in the tree view
-        for item in tree.get_children():
-            tree.delete(item)
+#         # Clear existing items in the tree view
+#         for item in tree.get_children():
+#             print (item)
+#             tree.delete(item)
         
-        # Insert updated data into the tree view
-        for row in rows:
-            tree.insert('', 'end', values=row)  # Modify according to your treeview structure
+#         # Insert updated data into the tree view
+#         for row in rows:
+#             tree.insert('', 'end', values=row)  # Modify according to your treeview structure
             
-        conn.commit()  # Commit any changes if necessary
-    except sqlite3.Error as e:
-        messagebox.showerror("Error", f"Failed to fetch data from database: {str(e)}")
+#         conn.commit()  # Commit any changes if necessary
+#     except sqlite3.Error as e:
+#         messagebox.showerror("Error", f"Failed to fetch data from database: {str(e)}")
+
 
 # Generate employee ID like how TIP does but with modification.
 def generate_employee_id(loa):
@@ -118,7 +121,7 @@ def generate_username(first_name, mi, last_name, suffix, loa):
     return f"{prefix}{first_name_initials}{mi_part}{last_name.lower()}{suffix_part}_tmcs"
 
 # Register user
-def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, home_address, email, loa):
+def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, home_address, email, loa, window):
     if not first_name or not last_name or not contact_number or not home_address or not email:
         messagebox.showerror("Error", "All fields except Middle Initial and Suffix are required")
         return False
@@ -165,6 +168,7 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
     log_actions(shared_state.current_user, action = f"Registered {first_name} {last_name} account with {loa} Level of Access.")
 
     messagebox.showinfo("Success", "Registration successful. Your username, temporary password, and Employee ID have been sent to your email.")
+
     return True
 
 # Functions to check if the inputs are valid.
@@ -194,26 +198,34 @@ def go_to_window(windows):
 def void_selected_account():
     selected_item = tree.focus()  # Get the currently selected item
     if selected_item:
-        confirm_void = messagebox.askyesno("Confirmation", "Are you sure you want to void this account?")
-        if confirm_void:
+        confirm_activate = messagebox.askyesno("Confirmation", "Are you sure you want to activate this account?")
+        if confirm_activate:
             item = tree.item(selected_item)
             item_values = item['values']
-            employee_id = item_values[1]  # Assuming Employee_ID is at index 1
-            
+            print(f"Current values before update: {item_values}")
+            employee_id = item_values[1]
+
             try:
                 # Update the database
                 cursor.execute("UPDATE accounts SET is_void = 1 WHERE Employee_ID = ?", (employee_id,))
                 conn.commit()  # Commit changes to the database
-                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been Deactivated.")
-                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Deactivated user {employee_id}")
+                print(f"Database updated successfully for Employee ID {employee_id}")
+
                 # Update the treeview display
                 new_status = "Inactive"
-                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
-                
+                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))  # Update the status in the Treeview
+                print(f"Current values after update: {tree.item(selected_item)['values']}")  # Print updated values
+
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
+                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Activated user {employee_id}")
+
             except Exception as e:
                 messagebox.showerror("Error", f"Error updating account: {str(e)}")
+                print(f"Error updating account: {str(e)}")
         else:
             messagebox.showinfo("Canceled", "Operation canceled.")
+    else:
+        messagebox.showinfo("Error", "No item selected.")
 
 def activate_selected_account():
     selected_item = tree.focus()  # Get the currently selected item
@@ -222,24 +234,31 @@ def activate_selected_account():
         if confirm_activate:
             item = tree.item(selected_item)
             item_values = item['values']
-            print(item_values)
+            print(f"Current values before update: {item_values}")
             employee_id = item_values[1]
-            print(employee_id)  # Assuming Employee_ID is at index 1
-            
+
             try:
                 # Update the database
                 cursor.execute("UPDATE accounts SET is_void = 0 WHERE Employee_ID = ?", (employee_id,))
                 conn.commit()  # Commit changes to the database
-                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
-                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Deactivated user {employee_id}")
+                print(f"Database updated successfully for Employee ID {employee_id}")
+
                 # Update the treeview display
                 new_status = "Active"
-                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))
-                
+                tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))  # Update the status in the Treeview
+                print(f"Current values after update: {tree.item(selected_item)['values']}")  # Print updated values
+
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
+                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Activated user {employee_id}")
+
             except Exception as e:
                 messagebox.showerror("Error", f"Error updating account: {str(e)}")
+                print(f"Error updating account: {str(e)}")
         else:
             messagebox.showinfo("Canceled", "Operation canceled.")
+    else:
+        messagebox.showinfo("Error", "No item selected.")
+
 
 # Registration window
 def create_registration_window():
@@ -345,11 +364,13 @@ def create_registration_window():
             contact_no_entry.get(), 
             address_entry.get(), 
             email_entry.get(), 
-            loa_var.get()
+            loa_var.get(),
+            window
         )
         if success:
             print(f"User {email_entry.get()} registered successfully.")
             clear_entries()
+            reload_window(window)
         else:
             print("Registration failed.")
 
@@ -436,7 +457,9 @@ def create_registration_window():
     rows = cursor.fetchall()
     
     for row in rows:
-        is_void = "Active" if row[0] == 0 else "Inactive"
+        if row[0] == 0:
+            is_void = "Active"
+        else: is_void = "Inactive"
         employee_id = row[1]
         loa = row[2]
         first_name = row[3]
@@ -454,6 +477,10 @@ def create_registration_window():
 
     window.resizable(False, False)
     window.mainloop()
+
+def reload_window(window):
+    window.destroy()
+    create_registration_window()
 
 # Run main
 if __name__ == "__main__":
