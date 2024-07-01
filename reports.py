@@ -8,9 +8,9 @@ from reportlab.platypus import Frame, Paragraph, SimpleDocTemplate, Spacer, Tabl
 from tkinter import Button, Canvas, filedialog, messagebox, ttk
 from tkcalendar import DateEntry
 
-# From user made modules
 import shared_state
 
+# From user made module
 current_data = None
 sort_order = {}
 
@@ -110,6 +110,30 @@ def generate_sales_report():
 
     current_data = rows  # Use fetched data from the database
     update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
+
+def generate_void_transac():
+    global current_data, report_type
+    report_type = "Void Transactions Report"
+    update_report_type_label()
+    clear_tree()
+    from shared_state import void_list
+    # Prepare data for the report
+    rows = []
+    for void_item in void_list:
+        product_name = void_item.get('name', '')  # Ensure 'Void_ID' matches the key in your dictionary
+        void_quantity = void_item.get('quantity', '')  # Ensure 'Product_Name' matches the key in your dictionary
+        price = void_item.get('price', '')  # Ensure 'Void_Quantity' matches the key in your dictionary
+        total_price = void_item.get('total_price', '')
+        timestamp = void_item.get('timestamp', '')  # Ensure 'timestamp' matches the key in your dictionary
+
+        rows.append((product_name, void_quantity, price, total_price, timestamp))
+
+    # Print for debugging purposes
+    print("Rows:", rows)
+
+    current_data = rows
+    update_tree(current_data, ["Product Name", "Quantity", "Price", "Total_Price", "Timestamp"])
+
 
 def update_tree(data, columns):
     clear_tree()
@@ -265,10 +289,13 @@ def create_reports_window():
     user_logs_btn.place(x=20, y=620, height=50, width=200)
 
     purchase_history_btn = Button(window, text="Purchase History", command=generate_purchase_history, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    purchase_history_btn.place(x=320, y=620, height=50, width=200)
+    purchase_history_btn.place(x=460, y=620, height=50, width=200)
 
     sales_report_btn = Button(window, text="Sales Report", command=generate_sales_report, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    sales_report_btn.place(x=620, y=620, height=50, width=200)
+    sales_report_btn.place(x=680, y=620, height=50, width=200)
+
+    void_transac_btn = Button(window, text="Void Transac", command=generate_void_transac, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
+    void_transac_btn.place(x=240, y=620, height=50, width=200)
 
     back_btn = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     back_btn.place(x=920, y=620, height=50, width=200)
