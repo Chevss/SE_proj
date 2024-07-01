@@ -77,9 +77,7 @@ def search_inventory_linear(keyword, individual=False):
     results = []
     for item in inventory_data:
         if (keyword in str(item[0]).lower() or  # Check Barcode
-            keyword in item[1].lower() or       # Check name
-            keyword in str(item[2]) or               # Check Price
-            keyword in str(item[3])):                # Check Quantity
+            keyword in item[1].lower()):        # Check Name
             
             results.append(item)
 
