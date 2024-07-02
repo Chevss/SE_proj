@@ -164,6 +164,9 @@ def go_to_window(window_type):
     elif window_type == "about":
         import about
         about.create_about_window()
+    elif window_type == "manual":
+        import user_manual
+        user_manual.create_users_manual_window()
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -237,8 +240,11 @@ def create_pos_admin_window():
     inventory_button = Button(text="Inventory", font=("Hanuman Regular", 20), command=lambda: go_to_window("inventory"), bg="#81CDF8", relief="ridge")
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
-
-    loa = "admin"
+    manual_button = Button(text="Manual Input", font=("Hanuman Regular", 16),  bg="#FFFFFF", relief="raised")
+    manual_button.place(x=849.0, y=260.0, width=130, height=50)
+    
+    
+    loa = shared_state.current_user_loa
     if loa == "admin":
         # Accounts (Register) button
         register_button = Button(text="Accounts", font=("Hanuman Regular", 20), command=lambda: go_to_window("register"), bg="#81CDF8", relief="ridge")
@@ -252,10 +258,7 @@ def create_pos_admin_window():
 
     barcodes_button = Button(text="Barcode", font=("Hanuman Regular", 20), command=lambda: go_to_window("barcode"), bg="#81CDF8", relief="ridge")
     barcodes_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
-
-    # Void button function
     
-
     void_button = Button(text="Void", font=("Hanuman Regular", 20), command=lambda: shared_state.void_items(purchase_list, update_purchase_display, update_total_label), bg="#FF9E9E", relief="raised")
     void_button.place(x=506.0, y=623.0, width=166.0, height=112.0)
 
@@ -300,6 +303,12 @@ def create_pos_admin_window():
     canvas.tag_bind(about, "<Button-1>", lambda event: go_to_window("about"))
     canvas.tag_bind(about, "<Enter>", lambda event: canvas.itemconfig(about, fill="red"))
     canvas.tag_bind(about, "<Leave>", lambda event: canvas.itemconfig(about, fill="black"))
+    
+    users_manual = canvas.create_text(1130.0, 10.0, anchor="nw", text="Users Manual", fill="black", font=("Hanuman Regular", 12 * -1))
+
+    canvas.tag_bind(users_manual, "<Button-1>", lambda event: go_to_window("manual"))
+    canvas.tag_bind(users_manual, "<Enter>", lambda event: canvas.itemconfig(users_manual, fill="red"))
+    canvas.tag_bind(users_manual, "<Leave>", lambda event: canvas.itemconfig(users_manual, fill="black"))
 
     # Update display of products being purchased and total label
     update_purchase_display()
@@ -544,9 +553,12 @@ Change: Php {change:.2f}
 
 ********************************
 
-Thank you for your purchase!
+  Thank you for your purchase!
 
 ********************************
+
+ THIS DOCUMENT IS NOT VALID FOR
+      CLAIM OF INPUT TAX
 
         """
 
