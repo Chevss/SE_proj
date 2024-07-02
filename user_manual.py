@@ -13,8 +13,8 @@ def center_window(curr_window, win_width, win_height):
 
 def go_to_window():
     window.destroy()
-    import help_ad
-    help_ad.create_help_window()
+    import pos_admin
+    pos_admin.create_pos_admin_window()
 
 def show_pdf(tab, pdf_path):
     doc = fitz.open(pdf_path)
@@ -44,14 +44,13 @@ def create_users_manual_window():
 
     # Create tabs with corresponding PDF files
     tabs = [
-        ("Login", "path/to/login.pdf"),
-        ("POS", "path/to/pos.pdf"),
-        ("Account", "path/to/account.pdf"),
-        ("Reports", "path/to/reports.pdf"),
-        ("Barcodes", "path/to/barcodes.pdf"),
-        ("Inventory", "path/to/inventory.pdf"),
-        ("Backup", "path/to/backup.pdf"),
-        ("Restore", "path/to/restore.pdf")
+        ("Login", "assets\Manual\Login.pdf"),
+        ("POS", "assets\Manual\POS.pdf"),
+        ("Account", "assets\Manual\BackupRestore.pdf"),
+        ("Reports", "assets\Manual\Reports.pdf"),
+        ("Barcodes", "assets\Manual\Barcode.pdf"),
+        ("Inventory", "assets\Manual\Inventory.pdf"),
+        ("Backup & Restore", "assets\Manual\BackupRestore.pdf"),
     ]
 
     for tab_name, pdf_path in tabs:
@@ -61,6 +60,8 @@ def create_users_manual_window():
 
     back_button = tk.Button(window, text="Back", command=go_to_window, font=("Hanuman Regular", 12))
     back_button.place(x=900, y=15)
+    
+    
 
     # Start the main loop
     window.mainloop()
