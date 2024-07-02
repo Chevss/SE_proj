@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, Tk, Canvas
+from tkinter import ttk, Tk
+from PIL import Image, ImageTk
+import fitz  # PyMuPDF
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -13,6 +15,16 @@ def go_to_window():
     window.destroy()
     import help_ad
     help_ad.create_help_window()
+
+def show_pdf(tab, pdf_path):
+    doc = fitz.open(pdf_path)
+    page = doc.load_page(0)
+    pix = page.get_pixmap()
+    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    img = ImageTk.PhotoImage(img)
+    label = tk.Label(tab, image=img)
+    label.image = img  # Keep a reference to prevent garbage collection
+    label.pack()
 
 def create_users_manual_window():
     global window
@@ -30,22 +42,22 @@ def create_users_manual_window():
     notebook = ttk.Notebook(window, width=972, height=835, style='Custom.TNotebook')
     notebook.pack(padx=25, pady=25)
 
-    # Create tabs (dummy content for demonstration)
+    # Create tabs with corresponding PDF files
     tabs = [
-        ("Login", "Login Content"),
-        ("POS", "POS Content"),
-        ("Account", "Account Content"),
-        ("Reports", "Reports Content"),
-        ("Barcodes", "Barcodes Content"),
-        ("Inventory", "Inventory Content"),
-        ("Backup", "Backup Content"),
-        ("Restore", "Restore Content")
+        ("Login", "path/to/login.pdf"),
+        ("POS", "path/to/pos.pdf"),
+        ("Account", "path/to/account.pdf"),
+        ("Reports", "path/to/reports.pdf"),
+        ("Barcodes", "path/to/barcodes.pdf"),
+        ("Inventory", "path/to/inventory.pdf"),
+        ("Backup", "path/to/backup.pdf"),
+        ("Restore", "path/to/restore.pdf")
     ]
 
-    for tab_name, tab_content in tabs:
+    for tab_name, pdf_path in tabs:
         tab = ttk.Frame(notebook)
         notebook.add(tab, text=tab_name)
-        tk.Label(tab, text=tab_content, font=("Hanuman Regular", 12)).pack()
+        show_pdf(tab, pdf_path)
 
     back_button = tk.Button(window, text="Back", command=go_to_window, font=("Hanuman Regular", 12))
     back_button.place(x=900, y=15)
