@@ -100,13 +100,18 @@ def is_barcode_unique(barcode):
         messagebox.showerror("Database Error", f"Error checking barcode uniqueness: {e}")
         return False
 
-def register_product(barcode, product_name, product_price, product_details):
+def register_product(barcode, product_name, product_price, product_details, critikal_lvl):
     try:
         cursor.execute('''
-            INSERT INTO product (Barcode, Name, Price, Details)
-            VALUES (?, ?, ?, ?)
-        ''', (barcode, product_name, product_price, product_details))
+            ALTER TABLE product ADD COLUMN critikal_lvl INTEGER
+        ''')
+        
+        cursor.execute('''
+            INSERT INTO product (Barcode, Name, Price, Details, critikal_lvl)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (barcode, product_name, product_price, product_details, critikal_lvl))
         conn.commit()
+        
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Error inserting data into product table: {e}")
 
@@ -141,6 +146,9 @@ def register_product_window():
 
     product_details_label = Label(register_product_window, text="Product Details:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_details_label.place(x=50, y=270)
+    
+    critikal_lvl_label = Label(register_product_window, text="Critikal Level:", bg="#FFE1C6", font=("Hanuman Regular", 16))
+    critikal_lvl_label.place(x=50, y=320)
 
     barcode_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
     barcode_entry.place(x=220, y=80, width=300)
@@ -153,6 +161,9 @@ def register_product_window():
 
     product_details_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
     product_details_entry.place(x=220, y=270, width=300)
+    
+    critikal_lvl_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
+    critikal_lvl_entry.place(x=220, y=320, width=300)
 
     def generate_unique_barcode():
         while True:
@@ -175,6 +186,7 @@ def register_product_window():
         product_name = product_name_entry.get()
         product_price_str = product_price_entry.get()
         product_details = product_details_entry.get()
+        critikal_lvl = critikal_lvl_entry.get()
 
         # Check if any entry field is empty
         if not barcode or not product_name or not product_price_str:
@@ -189,7 +201,7 @@ def register_product_window():
             return
 
         # Register the product and show success message
-        register_product(barcode, product_name, product_price, product_details)
+        register_product(barcode, product_name, product_price, product_details, critikal_lvl)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
         
         # Log action
@@ -201,7 +213,7 @@ def register_product_window():
         register_product_window.destroy()
 
     save_button = Button(register_product_window, text="Save", command=save_and_close, font=("Hanuman Regular", 16))
-    save_button.place(x=250, y=380)
+    save_button.place(x=250, y=420)
 
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
 
@@ -288,6 +300,8 @@ def add_supply_window():
 
             save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
             save_button.place(x=250, y=330)
+            
+            
         
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"Error verifying barcode: {e}")
@@ -375,16 +389,15 @@ def update_products_window():
     product_price_label = Label(update_supply_window, text="Product Price:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_price_entry = Entry(update_supply_window, font=("Hanuman Regular", 16))
 
-
     product_details_label = Label(update_supply_window, text="Product Details:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_details_entry = Entry(update_supply_window, font=("Hanuman Regular", 16))
-
-
+    
+    critical_lvl_label = Label(update_supply_window, text="Critical Level:", bg="#FFE1C6", font=("Hanuman Regular", 16))
+    critical_lvl_entry = Entry(update_supply_window, font=("Hanuman Regular", 16))
+    
     product_status_label = Label(update_supply_window, text="Status:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_status_var = BooleanVar()
     product_status_checkbox = Checkbutton(update_supply_window, text="Available", variable=product_status_var, bg="#FFE1C6", font=("Hanuman Regular", 16))
-
-    
 
     def fetch_product_details():
         barcode = barcode_entry.get().strip()
@@ -418,9 +431,13 @@ def update_products_window():
             product_details_entry.config(state='normal')
             product_details_entry.delete(0, END)
             product_details_entry.insert(0, product[3])
+            
+            critical_lvl_label.place(x=50, y=280)
+            critical_lvl_entry.place(x=220, y=280)
+            critical_lvl_entry.delete(0, END)
 
-            product_status_label.place(x=50, y=280)
-            product_status_checkbox.place(x=220, y=280)
+            product_status_label.place(x=50, y=330)
+            product_status_checkbox.place(x=220, y=330)
             product_status_var.set(product[4] == 'Available')
             product_status_checkbox.config(state='normal')
 
@@ -438,14 +455,15 @@ def update_products_window():
         product_name = product_name_entry.get().strip()
         product_price = float(product_price_entry.get().strip())
         product_details = product_details_entry.get().strip()
+        critical_lvl = critical_lvl_entry.get().strip()
         product_status = 'Available' if product_status_var.get() else 'Unavailable'
 
         try:
             cursor.execute('''
                 UPDATE product
-                SET Name = ?, Price = ?, Details = ?, Status = ?
+                SET Name = ?, Price = ?, Details = ?, Status = ?, critikal_lvl = ?
                 WHERE Barcode = ?
-            ''', (product_name, product_price, product_details, product_status, barcode))
+            ''', (product_name, product_price, product_details, product_status, critical_lvl, barcode))
             conn.commit()
 
             messagebox.showinfo("Supply Updated", "Supply updated successfully!")
@@ -465,29 +483,47 @@ def update_products_window():
     update_supply_window.mainloop()
 
 def update_table(show_individual=False):
+    global barcode_updt
     try:
+        # Fetch inventory data
         data = fetch_inventory_data(show_individual)
-        
+
         # Clear existing rows in Treeview
         for row in my_tree.get_children():
             my_tree.delete(row)
 
+        # Configure the tag for red font color
+        my_tree.tag_configure('low_quantity', foreground='red')
+
         # Insert fetched data into Treeview with correct order
         for item in data:
-            barcode = item[0]
+            barcode_updt = item[0]
             name = item[1]
-            price = item[2]
-            quantity = item[3]
+            price = float(item[2]) if item[2] is not None else 0.00  # Ensure price is a float
+            quantity = item[3] if item[3] is not None else 0  # Handle None by setting to 0
             details = item[4]
             status = item[5]
             date_delivered = datetime.strptime(item[6], '%Y-%m-%d').date() if item[6] else None
             supplier = item[7]
-            
-            # Insert the item into the Treeview
-            my_tree.insert('', 'end', values=(barcode, name, price, quantity, details, status, date_delivered, supplier))
-    
+
+            # Fetch critical level from the database
+            cursor.execute("SELECT critikal_lvl FROM product WHERE Barcode = ?", (barcode_updt,))
+            result = cursor.fetchone()
+            critical_level = int(result[0]) if result and result[0] is not None else 0
+
+            # Format the price to two decimal points
+            formatted_price = f"{price:.2f}"
+
+            # Determine the tag based on quantity
+            tags = ('low_quantity',) if quantity <= critical_level else ()
+
+            # Insert the item into the Treeview with the appropriate tag
+            my_tree.insert('', 'end', values=(barcode_updt, name, formatted_price, quantity, details, status, date_delivered, supplier), tags=tags)
+
     except sqlite3.Error as e:
         messagebox.showerror("Database Error", f"Error fetching data: {e}")
+    except ValueError as ve:
+        messagebox.showerror("Value Error", f"Invalid value encountered: {ve}")
 
 def sort_treeview(tree, col, descending):
     data = [(float(tree.set(child, col)), child) for child in tree.get_children('')]
@@ -585,7 +621,6 @@ def create_products_window():
         update_table(show_individual)
 
     loa=shared_state.current_user_loa
-    loa = "admin"
     if loa == "admin":
         register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
         register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
