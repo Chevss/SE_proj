@@ -100,12 +100,16 @@ def is_barcode_unique(barcode):
         messagebox.showerror("Database Error", f"Error checking barcode uniqueness: {e}")
         return False
 
-def register_product(barcode, product_name, product_price, product_details, critikal_lvl):
+def register_product(barcode, product_name, product_price, product_details, critical_lvl):
     try:
+        # cursor.execute('''
+        #     ALTER TABLE product ADD Critical_lvl INTEGER
+        # ''')
+
         cursor.execute('''
-            INSERT INTO product (Barcode, Name, Price, Details, critikal_lvl)
+            INSERT INTO product (Barcode, Name, Price, Details, Critical_lvl)
             VALUES (?, ?, ?, ?, ?)
-        ''', (barcode, product_name, product_price, product_details, critikal_lvl))
+        ''', (barcode, product_name, product_price, product_details, critical_lvl))
         conn.commit()
         
     except sqlite3.Error as e:
@@ -158,8 +162,8 @@ def register_product_window():
     product_details_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
     product_details_entry.place(x=220, y=270, width=300)
     
-    critikal_lvl_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
-    critikal_lvl_entry.place(x=220, y=320, width=300)
+    critical_lvl_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
+    critical_lvl_entry.place(x=220, y=320, width=300)
 
     def generate_unique_barcode():
         while True:
@@ -182,7 +186,7 @@ def register_product_window():
         product_name = product_name_entry.get()
         product_price_str = product_price_entry.get()
         product_details = product_details_entry.get()
-        critikal_lvl = critikal_lvl_entry.get()
+        critikal_lvl = critical_lvl_entry.get()
 
         # Check if any entry field is empty
         if not barcode or not product_name or not product_price_str:
@@ -400,11 +404,11 @@ def update_products_window():
         if not barcode:
             messagebox.showerror("Error", "Please enter a barcode.")
             return
-
+        
         try:
             cursor.execute("SELECT * FROM product WHERE Barcode = ?", (barcode,))
             product = cursor.fetchone()
-
+            print(product[5])
             if not product:
                 messagebox.showerror("Error", "Product not found.")
                 return
@@ -427,15 +431,16 @@ def update_products_window():
             product_details_entry.config(state='normal')
             product_details_entry.delete(0, END)
             product_details_entry.insert(0, product[3])
-            
-            critical_lvl_label.place(x=50, y=280)
-            critical_lvl_entry.place(x=220, y=280)
-            critical_lvl_entry.delete(0, END)
 
             product_status_label.place(x=50, y=330)
             product_status_checkbox.place(x=220, y=330)
             product_status_var.set(product[4] == 'Available')
             product_status_checkbox.config(state='normal')
+
+            critical_lvl_label.place(x=50, y=280)
+            critical_lvl_entry.place(x=220, y=280)
+            critical_lvl_entry.delete(0, END)
+            critical_lvl_entry.insert(0, product[5])
 
             save_button = Button(update_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
             save_button.place(x=250, y=430)
@@ -457,7 +462,7 @@ def update_products_window():
         try:
             cursor.execute('''
                 UPDATE product
-                SET Name = ?, Price = ?, Details = ?, Status = ?, critikal_lvl = ?
+                SET Name = ?, Price = ?, Details = ?, Status = ?, Critical_lvl = ?
                 WHERE Barcode = ?
             ''', (product_name, product_price, product_details, product_status, critical_lvl, barcode))
             conn.commit()
@@ -503,7 +508,7 @@ def update_table(show_individual=False):
             supplier = item[7]
 
             # Fetch critical level from the database
-            cursor.execute("SELECT critikal_lvl FROM product WHERE Barcode = ?", (barcode_updt,))
+            cursor.execute("SELECT Critical_lvl FROM product WHERE Barcode = ?", (barcode_updt,))
             result = cursor.fetchone()
             critical_level = int(result[0]) if result and result[0] is not None else 0
 
@@ -617,6 +622,7 @@ def create_products_window():
         update_table(show_individual)
 
     loa=shared_state.current_user_loa
+    loa = "admin"
     if loa == "admin":
         register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
         register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)

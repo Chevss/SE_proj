@@ -45,9 +45,8 @@ def search_barcode(barcode):
     conn.close()
     return result
 
-def on_barcode_entry(event):
-    """Handles the event when a barcode is entered."""
-    barcode_value = barcode.get()
+def process_barcode(barcode_value):
+    """Handles the logic for processing a barcode."""
     result = search_barcode(barcode_value)
 
     if result:
@@ -97,12 +96,14 @@ def on_barcode_entry(event):
         scanned_barcode.delete(0, 'end')  # Clear any previous value
         scanned_barcode.insert(0, barcode_value)
         scanned_barcode.config(state='disabled')
-
-        # Clear the barcode entry after processing
-        barcode.delete(0, 'end')
-
     else:
         messagebox.showwarning("Search Result", "Product Not Found")
+
+def on_barcode_entry(event):
+    """Handles the event when a barcode is entered."""
+    barcode_value = barcode.get()
+    process_barcode(barcode_value)
+    barcode.delete(0, 'end')  # Clear the barcode entry after processing
 
 def add_quantity():
     """Prompts the user to enter quantity for the scanned product."""
@@ -118,6 +119,11 @@ def add_quantity():
             update_total_label()
     else:
         messagebox.showwarning("No Product Scanned", "Please scan a product first.")
+
+def manual_input():
+    manual_barcode = simpledialog.askstring("Manual Barcode Input", "Input Barcode:")
+    if manual_barcode:
+        process_barcode(manual_barcode)
 
 def update_purchase_display():
     """Updates the display of products being purchased."""
@@ -194,21 +200,17 @@ def create_pos_admin_window():
     canvas = Canvas(window, bg="#FFE1C6", height=800, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
 
-    # Barcode entry widget
+     # Hidden Barcode entry widget to capture barcode scanner input
     global barcode
-    barcode = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 28 * -1))
-    barcode.place(x=699.0, y=197.0, width=552.0, height=58.0)
-    barcode.focus_set()  # Ensure the barcode entry has focus
+    barcode = Entry(window)
+    barcode.place(x=-100, y=-100)  # Place it outside the visible area
+    barcode.focus_set()  # Ensure the hidden entry has focus
+
+    barcode.bind("<Return>", on_barcode_entry)  # Bind the Return (Enter) key to trigger the search
+    
     global scanned_barcode
     scanned_barcode = Entry(bd=0, bg="#FFFFFF", fg="#000716", highlightthickness=1, font=("Hanuman Regular", 28 * -1), state='disabled')
     scanned_barcode.place(x=699.0, y=127.0, width=552.0, height=58.0)
-
-    # Bind the <Return> key to trigger the search
-    barcode.bind("<Return>", lambda event: on_barcode_entry(barcode.get()))  # Bind the Return (Enter) key to trigger the search
-
-    # Add Quantity button
-    add_quantity_button = Button(text="Quantity", font=("Hanuman Regular", 16), command=add_quantity, bg="#FFFFFF", relief="raised")
-    add_quantity_button.place(x=699.0, y=260.0, width=100, height=50)
 
     # Treeview widget to display purchased items
     global tree
@@ -243,8 +245,12 @@ def create_pos_admin_window():
     inventory_button = Button(text="Inventory", font=("Hanuman Regular", 20), command=lambda: go_to_window("inventory"), bg="#81CDF8", relief="ridge")
     inventory_button.place(x=699.0, y=623.0, width=170.28277587890625, height=112.0)
 
-    manual_button = Button(text="Manual Input", font=("Hanuman Regular", 16),  bg="#FFFFFF", relief="raised")
+    manual_button = Button(text="Manual Input", font=("Hanuman Regular", 16), command=manual_input, bg="#FFFFFF", relief="raised")
     manual_button.place(x=849.0, y=260.0, width=130, height=50)
+
+    # Add Quantity button
+    add_quantity_button = Button(text="Quantity", font=("Hanuman Regular", 16), command=add_quantity, bg="#FFFFFF", relief="raised")
+    add_quantity_button.place(x=699.0, y=260.0, width=100, height=50)
 
     return_item_button = Button(text="Return Item", font=("Hanuman Regular", 16), command=lambda: go_to_window("return"), bg="#FFFFFF", relief="raised")
     return_item_button.place(x=1029.0, y=260.0, width=130, height=50)
