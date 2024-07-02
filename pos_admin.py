@@ -167,6 +167,9 @@ def go_to_window(window_type):
     elif window_type == "manual":
         import user_manual
         user_manual.create_users_manual_window()
+    elif window_type == "return":
+        import return_item
+        return_item.create_return_item_window()
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -242,6 +245,9 @@ def create_pos_admin_window():
 
     manual_button = Button(text="Manual Input", font=("Hanuman Regular", 16),  bg="#FFFFFF", relief="raised")
     manual_button.place(x=849.0, y=260.0, width=130, height=50)
+
+    return_item_button = Button(text="Return Item", font=("Hanuman Regular", 16), command=lambda: go_to_window("return"), bg="#FFFFFF", relief="raised")
+    return_item_button.place(x=1029.0, y=260.0, width=130, height=50)
     
     
     loa = shared_state.current_user_loa

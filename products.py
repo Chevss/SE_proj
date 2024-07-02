@@ -103,10 +103,6 @@ def is_barcode_unique(barcode):
 def register_product(barcode, product_name, product_price, product_details, critikal_lvl):
     try:
         cursor.execute('''
-            ALTER TABLE product ADD COLUMN critikal_lvl INTEGER
-        ''')
-        
-        cursor.execute('''
             INSERT INTO product (Barcode, Name, Price, Details, critikal_lvl)
             VALUES (?, ?, ?, ?, ?)
         ''', (barcode, product_name, product_price, product_details, critikal_lvl))
