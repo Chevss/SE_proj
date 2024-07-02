@@ -1,11 +1,31 @@
 import json
 import os
-import base64
 from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog
 from PIL import Image, ImageTk
-from io import BytesIO
 from portalocker import lock, unlock, LOCK_EX
+from pathlib import Path
 import shared_state
+
+# Relative paths to developer images
+logo_path = 'V.V. Love Vanilla Essence.png'  # Adjust as per your directory structure
+logo_image = Image.open(logo_path)
+developers = [
+    {
+        'image_path': logo_image,
+        'name': 'Developer 1',
+        'email': 'developer1@example.com'
+    },
+    {
+        'image_path': 'developer_images/developer2.jpg',
+        'name': 'Developer 2',
+        'email': 'developer2@example.com'
+    },
+    {
+        'image_path': 'developer_images/developer3.jpg',
+        'name': 'Developer 3',
+        'email': 'developer3@example.com'
+    }
+]
 
 # Load or initialize the About data
 ABOUT_FILE = 'abouts.json'
@@ -118,16 +138,44 @@ def display_about(about_entry):
     about_entry.config(state='normal')
     about_entry.delete(1.0, END)
     if 'Details' in shared_state.abouts:
-        about_entry.insert(END, f"{shared_state.abouts['Details']}\n", 'bold')
-        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+        about_text = shared_state.abouts['Details']
     else:
-        about_entry.insert(END, f"<Missing Details>\n", 'bold')
-        about_entry.tag_configure('bold', font=('Hanuman Regular', 20))
+        about_text = "<Missing Details>"
+
+    about_entry.insert(END, about_text + '\n\n')
+
+    # Calculate number of lines and length of each line
+    num_lines = len(about_text.split('\n'))
+    max_line_length = max(len(line) for line in about_text.split('\n'))
+
+    # Calculate x and y offsets to center text
+    text_width = max_line_length * 10  # Approximate width of characters
+    text_height = num_lines * 25  # Approximate height of characters
+    x_offset = (768 - text_width) / 2  # 768 is the width of about_entry
+    y_offset = (366 - text_height) / 2  # 366 is the height of about_entry
+
+    about_entry.insert(END, about_text)
+    about_entry.insert(END, about_text + '\n\n')
+
+    # Tag and configure to center text
+    about_entry.tag_configure('center', justify='center')
+    about_entry.tag_add('center', '1.0', 'end')
+    about_entry.tag_configure('big', font=('Hanuman Regular', 20))
+    about_entry.tag_add('big', '1.0', 'end')
+
+    about_entry.insert(END, "Developers:\n\n")
+    for developer in developers:
+        image = load_image(developer['image_path'])
+        if image:
+            about_entry.image_create(END, image=image)
+        about_entry.insert(END, f"\n{developer['name']}\n{developer['email']}\n\n")
+
+    about_entry.config(state='disabled')
 
     if 'Logo' in shared_state.abouts:
         try:
-            logo_data = base64.b64decode(shared_state.abouts['Logo'])
-            logo_image = Image.open(BytesIO(logo_data))
+            logo_path = shared_state.abouts['Logo']
+            logo_image = Image.open(logo_path)
             logo_image = logo_image.resize((350, 150), Image.LANCZOS)  # Resize the image
             logo_photo = ImageTk.PhotoImage(logo_image)
             logo_label = Label(window, image=logo_photo)
@@ -135,7 +183,6 @@ def display_about(about_entry):
             logo_label.place(x=305, y=150)
         except Exception as e:
             print(f"Error displaying logo: {e}")
-    about_entry.config(state='disabled')
 
 def open_edit_about_window():
     edit_window = Toplevel(window)
@@ -153,13 +200,11 @@ def open_edit_about_window():
         if file_path:
             logo_path_label.config(text=file_path)
             try:
-                with open(file_path, 'rb') as image_file:
-                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                    shared_state.abouts['Logo'] = encoded_string
-                    shared_state.save_about()  # Save changes and trigger event
-                    update_about_entry()  # Update about_entry immediately after saving
+                shared_state.abouts['Logo'] = file_path
+                shared_state.save_about()  # Save changes and trigger event
+                update_about_entry()  # Update about_entry immediately after saving
             except Exception as e:
-                print(f"Error encoding logo: {e}")
+                print(f"Error saving logo path: {e}")
 
     upload_logo_button = Button(edit_window, text="Upload Logo", command=upload_logo)
     upload_logo_button.pack(pady=5)
@@ -185,6 +230,14 @@ def open_edit_about_window():
     save_button = Button(edit_window, text="Save Changes", command=save_edited_about)
     save_button.place(x=150, y=350, width=100, height=30)
 
+def load_image(image_path):
+    try:
+        image = Image.open(image_path)
+        image = image.resize((100, 100), Image.LANCZOS)  # Resize image as needed
+        return ImageTk.PhotoImage(image)
+    except Exception as e:
+        print(f"Error loading image: {e}")
+        return None
 
 if __name__ == "__main__":
     create_about_window()
