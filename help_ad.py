@@ -1,6 +1,7 @@
 import json
 from tkinter import Tk, Canvas, Text, Button, Toplevel, END, messagebox, Label, Entry
 from portalocker import lock, unlock, LOCK_EX
+
 import shared_state
 # Load or initialize the FAQ data
 FAQ_FILE = 'faqs.json'
@@ -50,9 +51,6 @@ def go_to_window(windows):
     if windows == "back":
         import pos_admin
         pos_admin.create_pos_admin_window()
-    elif windows == "manual":
-        import user_manual
-        user_manual.create_users_manual_window()
 
 # Function to create the Help window
 def create_help_window():
@@ -93,24 +91,15 @@ def create_help_window():
 
     back_button = Button(text="Back", font=("Hanuman Regular", 16), command=lambda: go_to_window("back"), bg="#FFFFFF", relief="raised")
     back_button.place(x=785.0, y=727.0, height=50, width=125)
-
-    add_faq_button = Button(text="Add FAQ", font=("Hanuman Regular", 16), command=open_add_faq_window, bg="#F8D48E", relief="raised")
-
-    edit_faq_button = Button(text="Edit FAQ", font=("Hanuman Regular", 16), command=open_edit_faq_window, bg="#F8D48E", relief="raised")
     
-    user_manual_button = Button(text="User Manual", font=("Hanuman Regular", 16), command=lambda: go_to_window("manual"), bg="#FFFFFF", relief="raised")
-    user_manual_button.place(x=65.0, y=727.0, height=50, width=125)
-
-    loa = shared_state.current_user_loa
-    loa = "admin"
-    if loa == "admin":
-        edit_faq_button.place(x=515.0, y=727.0, height=50, width=125)
+    if shared_state.current_user_loa == "admin":
+        add_faq_button = Button(text="Add FAQ", font=("Hanuman Regular", 16), command=open_add_faq_window, bg="#F8D48E", relief="raised")
         add_faq_button.place(x=315.0, y=727.0, height=50, width=125)
 
-    
-    
+        edit_faq_button = Button(text="Edit FAQ", font=("Hanuman Regular", 16), command=open_edit_faq_window, bg="#F8D48E", relief="raised")
+        edit_faq_button.place(x=515.0, y=727.0, height=50, width=125)
 
-
+    
     global faq_entry
     faq_entry = Text(
         bd=0,
