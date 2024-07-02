@@ -61,6 +61,19 @@ def create_database():
         FOREIGN KEY (Barcode) REFERENCES product(Barcode) ON DELETE CASCADE
     );
     ''')
+
+    # Broken Inventory
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS broken_inventory (
+            BrokenID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Barcode TEXT,
+            Product_Name TEXT,
+            Quantity INT NOT NULL,
+            DateBroken DATE NOT NULL,
+            Original_Purchase_ID INTEGER,
+            FOREIGN KEY (Barcode) REFERENCES product(Barcode) ON DELETE CASCADE
+        );
+    ''')
     
     # Purchase History
     cursor.execute('''
@@ -74,6 +87,19 @@ def create_database():
         Total_Price REAL NOT NULL,
         Amount_Given REAL NOT NULL,
         Change REAL NOT NULL
+        )
+    ''')
+
+    # Return History
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS return_history (
+        Purchase_ID TEXT NOT NULL,
+        First_Name TEXT NOT NULL,
+        Product_Name TEXT NOT NULL,
+        Product_Price REAL NOT NULL,
+        Returned_Quantity INTEGER NOT NULL,
+        Time_Stamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        Amount_Given REAL NOT NULL -- Amount given back to the customer
         )
     ''')
 

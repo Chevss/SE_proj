@@ -61,7 +61,7 @@ def generate_purchase_history():
             SUM(Total_Price) as Total_Price, 
             Amount_Given, 
             `Change`, 
-            Time_Stamp 
+            Time_Stamp
         FROM 
             purchase_history 
         WHERE date(Time_Stamp) BETWEEN ? AND ?
@@ -84,6 +84,45 @@ def generate_purchase_history():
     current_data = formatted_rows
     update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Quantities", "Prices", "Total Amount", "Amount Paid", "Change", "Timestamp"])
 
+def generate_return_history():
+    global current_data, report_type
+    report_type = "Return History Report"
+    update_report_type_label()
+    clear_tree()
+
+    from_date = from_date_entry.get_date().strftime("%Y-%m-%d")
+    to_date = to_date_entry.get_date().strftime("%Y-%m-%d")
+
+    query = """
+        SELECT
+            Purchase_ID,
+            First_Name,
+            GROUP_CONCAT(Product_Name, '\n') as Products,
+            GROUP_CONCAT(Product_Price, '\n') as Prices,
+            GROUP_CONCAT(Returned_Quantity, '\n') as Returned_Quantities,
+            Time_Stamp,
+            Amount_Given
+        FROM
+            return_history
+        WHERE date(Time_Stamp) BETWEEN ? AND ?
+        GROUP BY 
+            Purchase_ID, First_Name, Time_Stamp
+    """
+    
+    cursor.execute(query, (from_date, to_date))
+    rows = cursor.fetchall()
+
+    formatted_rows = []
+    for row in rows:
+        formatted_row = list(row)
+        formatted_row[3] = "\n".join([f"{float(price):.2f}" for price in formatted_row[3].split('\n')])
+        formatted_row[4] = "\n".join([quantity for quantity in formatted_row[4].split('\n')])
+        formatted_row[6] = f"{float(formatted_row[6]):.2f}"
+        formatted_rows.append(tuple(formatted_row))
+
+    current_data = formatted_rows
+    update_tree(current_data, ["Return ID", "Customer Name", "Products", "Prices", "Returned Quantities", "Timestamp", "Amount Given"])
+
 def generate_sales_report():
     global current_data, report_type
     report_type = "Sales Report"
@@ -94,10 +133,18 @@ def generate_sales_report():
     to_date = to_date_entry.get_date().strftime("%Y-%m-%d")
 
     query = """
-        SELECT Product_Name, SUM(Purchase_Quantity) AS Total_Quantity_Sold, SUM(Total_Price) AS Total_Sales
-        FROM purchase_history
-        WHERE date(Time_Stamp) BETWEEN ? AND ?
-        GROUP BY Product_Name
+        SELECT
+            p.Product_Name,
+            ROUND(SUM(p.Purchase_Quantity - COALESCE(r.Returned_Quantity, 0)), 2) AS Total_Quantity_Sold,
+            ROUND(SUM(p.Total_Price - COALESCE(r.Returned_Quantity*r.Product_Price, 0)), 2) AS Total_Sales
+        FROM
+            purchase_history p
+        LEFT JOIN
+            return_history r ON p.Purchase_ID = r.Purchase_ID AND p.Product_Name = r.Product_Name
+        WHERE
+            date(p.Time_Stamp) BETWEEN ? AND ?
+        GROUP BY
+            p.Product_Name
     """
     
     cursor.execute(query, (from_date, to_date))
@@ -286,19 +333,22 @@ def create_reports_window():
     report_type_label.place(x=20, y=60)
 
     user_logs_btn = Button(window, text="User Logs", command=generate_user_logs, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    user_logs_btn.place(x=20, y=620, height=50, width=200)
+    user_logs_btn.place(x=20, y=585, height=50, width=200)
 
     purchase_history_btn = Button(window, text="Purchase History", command=generate_purchase_history, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    purchase_history_btn.place(x=460, y=620, height=50, width=200)
+    purchase_history_btn.place(x=20, y=645, height=50, width=200)
+
+    return_history_btn = Button(window, text="Return History", command=generate_return_history, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
+    return_history_btn.place(x=240, y=645, height=50, width=200)
 
     sales_report_btn = Button(window, text="Sales Report", command=generate_sales_report, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    sales_report_btn.place(x=680, y=620, height=50, width=200)
+    sales_report_btn.place(x=460, y=585, height=50, width=200)
 
     void_transac_btn = Button(window, text="Void Transac", command=generate_void_transac, font=("Hanuman Regular", 16), bg="#F8D48E", relief="raised")
-    void_transac_btn.place(x=240, y=620, height=50, width=200)
+    void_transac_btn.place(x=240, y=585, height=50, width=200)
 
     back_btn = Button(window, text="Back", command=lambda: go_to_window("back"), font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
-    back_btn.place(x=920, y=620, height=50, width=200)
+    back_btn.place(x=920, y=645, height=50, width=200)
 
     save_pdf_btn = Button(window, text="Save as PDF", command=save_current_tree_to_pdf, font=("Hanuman Regular", 16), bg="#FFFFFF", relief="raised")
     save_pdf_btn.place(x=920, y=20, height=50, width=200)
