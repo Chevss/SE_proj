@@ -200,5 +200,5 @@ def create_login_window():
     window.resizable(False, False)
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_login_window()
+if __name__ == "__main__":
+    create_login_window()

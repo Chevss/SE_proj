@@ -231,6 +231,6 @@ def create_barcode_window():
     window.resizable(False, False)
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_barcode_window()
+if __name__ == "__main__":
+    create_barcode_window()
 

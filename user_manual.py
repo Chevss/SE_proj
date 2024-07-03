@@ -87,5 +87,5 @@ def create_users_manual_window():
     # Start the main loop
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_users_manual_window()
+if __name__ == "__main__":
+    create_users_manual_window()

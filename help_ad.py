@@ -212,5 +212,5 @@ def save_edited_faq(question, new_answer, edit_faq_window, edit_window):
             display_faqs(faq_entry)
             return
 
-# if __name__ == "__main__":
-#     create_help_window()
+if __name__ == "__main__":
+    create_help_window()

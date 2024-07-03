@@ -209,5 +209,5 @@ def add_to_broken_inventory(barcode, product_name, quantity, purchase_id):
     conn.commit()
     conn.close()
 
-# if __name__ == "__main__":
-#     create_return_item_window()
+if __name__ == "__main__":
+    create_return_item_window()

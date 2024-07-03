@@ -661,5 +661,5 @@ def print_receipt(receipt_text):
     finally:
         win32print.ClosePrinter(hPrinter)
 
-# if __name__ == "__main__":
-#     create_pos_admin_window()
+if __name__ == "__main__":
+    create_pos_admin_window()

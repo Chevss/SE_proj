@@ -208,5 +208,5 @@ def load_image(image_path):
         print(f"Error loading image: {e}")
         return None
 
-# if __name__ == "__main__":
-#     create_about_window()
+if __name__ == "__main__":
+    create_about_window()

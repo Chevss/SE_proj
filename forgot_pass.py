@@ -139,5 +139,5 @@ def create_forgot_pass_window():
     window.resizable(False, False)
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_forgot_pass_window()
+if __name__ == "__main__":
+    create_forgot_pass_window()

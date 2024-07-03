@@ -54,5 +54,5 @@ def create_backup_restore_window():
     window.resizable(False, False)
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_backup_restore_window()
+if __name__ == "__main__":
+    create_backup_restore_window()

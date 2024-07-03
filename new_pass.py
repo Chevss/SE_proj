@@ -130,5 +130,5 @@ def create_new_pass_window(email):
     window.resizable(False, False)
     window.mainloop()
 
-# if __name__ == "__main__":
-#     create_new_pass_window("user@example.com")
+if __name__ == "__main__":
+    create_new_pass_window("user@example.com")
