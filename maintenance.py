@@ -177,10 +177,9 @@ def update_phone_number(employee_id, new_phone_number):
     finally:
         conn.close()
 
-from pos_admin import window
 
 def perform_action(command_name):
-    
+    from pos_admin import window
     if shared_state.current_user:
         username = shared_state.current_user  # Assuming current_user stores the username
         employee_id = get_employee_id(username) # Fetch the Employee_ID using the username

@@ -38,8 +38,8 @@ def go_to_window(windows):
         import pos_admin
         pos_admin.create_pos_admin_window()
     elif windows == "about_login":
-        import about
-        about.create_about_window()
+        import about_login
+        about_login.create_about_window()
 
 def load_image_from_about():
     if 'Logo' in abouts:
