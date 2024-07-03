@@ -1,17 +1,17 @@
 import json
 import os
-from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog
+import tkinter as tk
+from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog, PhotoImage
 from PIL import Image, ImageTk
 from portalocker import lock, unlock, LOCK_EX
 from pathlib import Path
 import shared_state
 
 # Relative paths to developer images
-logo_path = 'V.V. Love Vanilla Essence.png'  # Adjust as per your directory structure
-logo_image = Image.open(logo_path)
+
 developers = [
     {
-        'image_path': logo_image,
+        'image_path': "logo_image",
         'name': 'Developer 1',
         'email': 'developer1@example.com'
     },
@@ -69,7 +69,7 @@ def center_window(curr_window, win_width, win_height):
 
 def create_about_window():
     global window
-    window = Tk()
+    window = tk.Tk()
     window.geometry("972x835")
     window.configure(bg="#FFE1C6")
 
@@ -114,7 +114,7 @@ def create_about_window():
     back_button.place(x=785.0, y=727.0, height=50, width=125)
 
     global about_entry
-    about_entry = Text(
+    about_entry = tk.Text(
         window,
         bd=0,
         bg="#FFE1C6",  # Match background color
@@ -133,6 +133,8 @@ def create_about_window():
 
     window.resizable(False, False)
     window.mainloop()
+
+dev1_image = None
 
 def display_about(about_entry):
     about_entry.config(state='normal')
@@ -154,6 +156,7 @@ def display_about(about_entry):
     x_offset = (768 - text_width) / 2  # 768 is the width of about_entry
     y_offset = (366 - text_height) / 2  # 366 is the height of about_entry
 
+    
     about_entry.insert(END, about_text)
     about_entry.insert(END, about_text + '\n\n')
 
@@ -163,14 +166,32 @@ def display_about(about_entry):
     about_entry.tag_configure('big', font=('Hanuman Regular', 20))
     about_entry.tag_add('big', '1.0', 'end')
 
-    about_entry.insert(END, "Developers:\n\n")
-    for developer in developers:
-        image = load_image(developer['image_path'])
-        if image:
-            about_entry.image_create(END, image=image)
-        about_entry.insert(END, f"\n{developer['name']}\n{developer['email']}\n\n")
+    about_entry.insert(tk.END, "Developers:\n")
+    global dev1_image
+    dev1_image_path = "assets/Login/image_1.png"
+    dev1_image = PhotoImage(file=dev1_image_path)
+    about_entry.image_create(tk.END, image=dev1_image)
+    about_entry.insert(END, "\n")
+    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
+    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
+    global dev2_image
+    dev2_image_path = "assets/Login/image_1.png"
+    dev2_image = PhotoImage(file=dev2_image_path)
+    about_entry.image_create(tk.END, image=dev2_image)
+    about_entry.insert(END, "\n")
+    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
+    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
+    global dev3_image
+    dev3_image_path = "assets/Login/image_1.png"
+    dev3_image = PhotoImage(file=dev3_image_path)
+    about_entry.image_create(tk.END, image=dev3_image)
+    about_entry.insert(END, "\n")
+    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
+    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
 
-    about_entry.config(state='disabled')
 
     if 'Logo' in shared_state.abouts:
         try:
@@ -183,6 +204,8 @@ def display_about(about_entry):
             logo_label.place(x=305, y=150)
         except Exception as e:
             print(f"Error displaying logo: {e}")
+
+    about_entry.config(state='disabled')
 
 def open_edit_about_window():
     edit_window = Toplevel(window)
