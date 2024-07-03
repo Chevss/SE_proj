@@ -380,6 +380,6 @@ def create_reports_window():
     window.resizable(False, False)
     window.mainloop()
 
-if __name__ == "__main__":
-    create_reports_window()
+# if __name__ == "__main__":
+#     create_reports_window()
     

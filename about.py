@@ -5,6 +5,8 @@ from tkinter import Tk, Canvas, Text, Button, Toplevel, END, Label, filedialog, 
 from PIL import Image, ImageTk
 from portalocker import lock, unlock, LOCK_EX
 from pathlib import Path
+import base64
+from io import BytesIO
 import shared_state
 
 
@@ -87,7 +89,7 @@ def create_about_window():
     edit_about_button = Button(text="Edit About", font=("Hanuman Regular", 16), command=open_edit_about_window, bg="#F8D48E", relief="raised")
 
     loa = shared_state.current_user_loa
-    loa = "admin"
+    # loa = "admin"
     if loa == "admin":
         edit_about_button.place(x=415.0, y=727.0, height=50, width=125)
 
@@ -115,7 +117,15 @@ def create_about_window():
     window.resizable(False, False)
     window.mainloop()
 
-dev1_image = None
+def resize_image(image_path, width, height):
+    # Load the image using Pillow
+    original_image = Image.open(image_path)
+    
+    # Resize the image using BILINEAR filter
+    resized_image = original_image.resize((width, height), Image.BILINEAR)
+    
+    # Convert the Pillow image to PhotoImage
+    return ImageTk.PhotoImage(resized_image)
 
 def display_about(about_entry):
     about_entry.config(state='normal')
@@ -137,10 +147,6 @@ def display_about(about_entry):
     x_offset = (768 - text_width) / 2  # 768 is the width of about_entry
     y_offset = (366 - text_height) / 2  # 366 is the height of about_entry
 
-    
-    about_entry.insert(END, about_text)
-    about_entry.insert(END, about_text + '\n\n')
-
     # Tag and configure to center text
     about_entry.tag_configure('center', justify='center')
     about_entry.tag_add('center', '1.0', 'end')
@@ -148,41 +154,50 @@ def display_about(about_entry):
     about_entry.tag_add('big', '1.0', 'end')
 
     about_entry.insert(tk.END, "Developers:\n")
+    # Developer 1
     global dev1_image
-    dev1_image_path = "assets/Login/image_1.png"
-    dev1_image = PhotoImage(file=dev1_image_path)
+    dev1_image_path = "assets/About/gaiti1x1.jpg"
+    dev1_image = resize_image(dev1_image_path, 150, 150)  # Adjust width and height as needed
     about_entry.image_create(tk.END, image=dev1_image)
-    about_entry.insert(END, "\n")
-    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
-    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
-    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
+    about_entry.insert(tk.END, "\n")
+    about_entry.insert(tk.END, "Gaiti, Chevy Joel B.\n")
+    about_entry.insert(tk.END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(tk.END, "Bachelor of Science in Computer Science\n")
+
+    # Developer 2
     global dev2_image
     dev2_image_path = "assets/About/r8qbozta.png"
-    dev2_image = PhotoImage(file=dev2_image_path)
+    dev2_image = resize_image(dev2_image_path, 150, 150)  # Adjust width and height as needed
     about_entry.image_create(tk.END, image=dev2_image)
-    about_entry.insert(END, "\n")
-    about_entry.insert(END, "Tan, Thady Morven T.\n")
-    about_entry.insert(END, "qtmttan@tip.edu.ph\n")
-    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
+    about_entry.insert(tk.END, "\n")
+    about_entry.insert(tk.END, "Tan, Thady Morven T.\n")
+    about_entry.insert(tk.END, "qtmttan@tip.edu.ph\n")
+    about_entry.insert(tk.END, "Bachelor of Science in Computer Science\n")
+
+    # Developer 3
     global dev3_image
     dev3_image_path = "assets/Login/image_1.png"
-    dev3_image = PhotoImage(file=dev3_image_path)
+    dev3_image = resize_image(dev3_image_path, 150, 150)  # Adjust width and height as needed
     about_entry.image_create(tk.END, image=dev3_image)
-    about_entry.insert(END, "\n")
-    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
-    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
-    about_entry.insert(END, "Bachelor of Science in Computer Science\n")
+    about_entry.insert(tk.END, "\n")
+    about_entry.insert(tk.END, "Gaiti, Chevy Joel B.\n")
+    about_entry.insert(tk.END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(tk.END, "Bachelor of Science in Computer Science\n")
 
 
     if 'Logo' in shared_state.abouts:
         try:
-            logo_path = shared_state.abouts['Logo']
-            logo_image = Image.open(logo_path)
-            logo_image = logo_image.resize((350, 150), Image.LANCZOS)  # Resize the image
+            logo_base64 = shared_state.abouts['Logo']
+            decoded_data = base64.b64decode(logo_base64)
+            logo_image = Image.open(BytesIO(decoded_data))
+            logo_image = logo_image.resize((350, 150), Image.LANCZOS)
             logo_photo = ImageTk.PhotoImage(logo_image)
+
+            # Create a Label to display the logo image
             logo_label = Label(window, image=logo_photo)
-            logo_label.image = logo_photo
-            logo_label.place(x=305, y=150)
+            logo_label.image = logo_photo  # Keep a reference to prevent garbage collection
+            logo_label.place(x=305, y=150)  # Adjust the coordinates as needed
+            
         except Exception as e:
             print(f"Error displaying logo: {e}")
 
@@ -243,5 +258,5 @@ def load_image(image_path):
         print(f"Error loading image: {e}")
         return None
 
-if __name__ == "__main__":
-    create_about_window()
+# if __name__ == "__main__":
+#     create_about_window()

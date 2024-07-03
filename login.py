@@ -7,6 +7,7 @@ import base64
 # From user made modules
 import shared_state
 from salt_and_hash import hash_password
+from shared_state import abouts
 from user_logs import log_actions
 
 # Global variables
@@ -41,12 +42,28 @@ def go_to_window(windows):
         about.create_about_window()
 
 def load_image_from_about():
-    if 'Logo' in shared_state.abouts:
+    if 'Logo' in abouts:
         try:
-            logo_data = base64.b64decode(shared_state.abouts['Logo'])
-            logo_image = Image.open(BytesIO(logo_data))
-            resized_image = logo_image.resize((350, 150), Image.LANCZOS)
-            return ImageTk.PhotoImage(resized_image)
+            logo_base64 = abouts['Logo']
+            
+            # Ensure the data is a valid string
+            if isinstance(logo_base64, str):
+                print("Base64 data length:", len(logo_base64))  # Debug: print the length of the base64 data
+                print("Base64 data sample:", logo_base64[:100])  # Print first 100 characters
+
+                try:
+                    logo_data = base64.b64decode(logo_base64)
+                    print("Decoded data length:", len(logo_data))  # Debug: print the length of the decoded data
+                    
+                    logo_image = Image.open(BytesIO(logo_data))
+                    resized_image = logo_image.resize((350, 150), Image.LANCZOS)
+                    return ImageTk.PhotoImage(resized_image)
+                except base64.binascii.Error as b64_error:
+                    print(f"Base64 decoding error: {b64_error}")
+                except Exception as img_error:
+                    print(f"Error opening image: {img_error}")
+            else:
+                print("Error: Logo data is not a string")
         except Exception as e:
             print(f"Error loading logo from abouts: {e}")
     return None
@@ -185,5 +202,5 @@ def create_login_window():
     window.resizable(False, False)
     window.mainloop()
 
-if __name__ == "__main__":
-    create_login_window()
+# if __name__ == "__main__":
+#     create_login_window()

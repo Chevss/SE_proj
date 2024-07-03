@@ -485,5 +485,5 @@ def reload_window(window):
     create_registration_window()
 
 # Run main
-if __name__ == "__main__":
-    create_registration_window()
+# if __name__ == "__main__":
+#     create_registration_window()

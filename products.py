@@ -622,7 +622,6 @@ def create_products_window():
         update_table(show_individual)
 
     loa=shared_state.current_user_loa
-    loa = "admin"
     if loa == "admin":
         register_product_button = Button(window, text="Register Product", command=lambda: register_product_window(), font=("Hanuman Regular", 16), bg="#83F881", relief="raised")
         register_product_button.place(x=41.0, y=691.0, width=237.84408569335938, height=73.0)
@@ -730,5 +729,5 @@ def create_products_window():
     window.resizable(False, False)
     window.mainloop()
 
-if __name__ == "__main__":
-    create_products_window()
+# if __name__ == "__main__":
+#     create_products_window()

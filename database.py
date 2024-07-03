@@ -46,6 +46,7 @@ def create_database():
         Name VARCHAR(255) NOT NULL,
         Price DECIMAL(10, 2) NOT NULL,
         Details TEXT,
+        Critical_lvl INTEGER,
         Status TEXT DEFAULT 'Unavailable' CHECK(Status IN ('Available', 'Unavailable')) NOT NULL
     );
     ''')

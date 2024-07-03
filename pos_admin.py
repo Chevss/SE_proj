@@ -9,6 +9,7 @@ from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simple
 import shared_state
 from maintenance import perform_action
 from user_logs import log_actions
+import login
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
@@ -173,9 +174,61 @@ def go_to_window(window_type):
     elif window_type == "manual":
         import user_manual
         user_manual.create_users_manual_window()
-    elif window_type == "return":
+    
+def go_to_return():
+    if shared_state.current_user_loa == "admin":
         import return_item
         return_item.create_return_item_window()
+    else: prompt_admin_credentials()
+
+def prompt_admin_credentials():
+    # Create a toplevel window for entering credentials
+    admin_login_window = tk.Toplevel()
+    admin_login_window.title("Admin Login")
+    
+    # Username and password entry fields
+    tk.Label(admin_login_window, text="Username:").pack()
+    global username_entry
+    username_entry = tk.Entry(admin_login_window)
+    username_entry.pack()
+    
+    tk.Label(admin_login_window, text="Password:").pack()
+    password_entry = tk.Entry(admin_login_window, show='*')
+    password_entry.pack()
+    
+    # Login button
+    login_button = tk.Button(admin_login_window, text="Login", command=lambda: check_admin_credentials(username_entry.get(), password_entry.get(), admin_login_window))
+    login_button.pack()
+
+def check_admin_credentials(username, password, admin_login_window):
+    user_status = login.get_user_status(username)
+    if user_status == "Inactive":
+        messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
+        log_actions(username, action=f"{username} tried to return items but their account is inactive")
+        return
+    
+    salt, stored_hashed_password = login.get_stored_hashed_password(username)
+
+    if salt and stored_hashed_password:
+        hashed_password = login.hash_password(password, salt)
+        if hashed_password == stored_hashed_password:
+            loa = login.get_loa(username)
+            if loa == "admin":
+                if user_status == "Active":
+                    messagebox.showinfo("Success", "Login successful!")
+                    admin_login_window.destroy()
+                    import return_item
+                    return_item.create_return_item_window()
+                else:
+                    messagebox.showerror("Error", "Invalid user status.")
+            else:
+                messagebox.showerror("Error", "You do not have sufficient access rights to login.")
+        else:
+            messagebox.showerror("Error", "Incorrect password.")
+            log_actions(username, action=f"{username} tried to log in but the entered password is incorrect")
+    else:
+        messagebox.showerror("Error", "Username not found.")
+        log_actions(username, action=f"{username} tried to log in but this username is not registered")
 
 def center_window(curr_window, win_width, win_height):
     window_width, window_height = win_width, win_height
@@ -184,6 +237,11 @@ def center_window(curr_window, win_width, win_height):
     x = (screen_width // 2) - (window_width // 2)
     y = (screen_height // 2) - (window_height // 2)
     curr_window.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
+def confirm_void_action(purchase_list, update_purchase_display, update_total_label):
+    confirm = messagebox.askyesno("Confirmation", "Are you sure you want to void the transaction?")
+    if confirm:
+        shared_state.void_items(purchase_list, update_purchase_display, update_total_label)
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
@@ -252,9 +310,8 @@ def create_pos_admin_window():
     add_quantity_button = Button(text="Quantity", font=("Hanuman Regular", 16), command=add_quantity, bg="#FFFFFF", relief="raised")
     add_quantity_button.place(x=699.0, y=260.0, width=100, height=50)
 
-    return_item_button = Button(text="Return Item", font=("Hanuman Regular", 16), command=lambda: go_to_window("return"), bg="#FFFFFF", relief="raised")
+    return_item_button = Button(text="Return Item", font=("Hanuman Regular", 16), command= go_to_return, bg="#FFFFFF", relief="raised")
     return_item_button.place(x=1029.0, y=260.0, width=130, height=50)
-    
     
     loa = shared_state.current_user_loa
     if loa == "admin":
@@ -271,7 +328,7 @@ def create_pos_admin_window():
     barcodes_button = Button(text="Barcode", font=("Hanuman Regular", 20), command=lambda: go_to_window("barcode"), bg="#81CDF8", relief="ridge")
     barcodes_button.place(x=884.0, y=623.0, width=170.28277587890625, height=112.0)
     
-    void_button = Button(text="Void", font=("Hanuman Regular", 20), command=lambda: shared_state.void_items(purchase_list, update_purchase_display, update_total_label), bg="#FF9E9E", relief="raised")
+    void_button = Button(text="Void", font=("Hanuman Regular", 20), command=lambda: confirm_void_action(purchase_list, update_purchase_display, update_total_label), bg="#FF9E9E", relief="raised")
     void_button.place(x=506.0, y=623.0, width=166.0, height=112.0)
 
     # Draw shapes and texts on canvas
@@ -604,5 +661,5 @@ def print_receipt(receipt_text):
     finally:
         win32print.ClosePrinter(hPrinter)
 
-if __name__ == "__main__":
-    create_pos_admin_window()
+# if __name__ == "__main__":
+#     create_pos_admin_window()

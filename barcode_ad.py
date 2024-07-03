@@ -1,4 +1,4 @@
-from tkinter import Tk, Canvas, Entry, Button, Label, StringVar, Scrollbar
+from tkinter import Tk, Canvas, Entry, Button, Label, StringVar, Scrollbar, messagebox
 import tkinter.ttk as ttk
 from PIL import Image, ImageTk
 from pathlib import Path
@@ -78,10 +78,15 @@ def save_barcode_image():
 
         # Save the barcode image to disk
         barcode_image.save(barcode_image_path, format="PNG")
-        user_logs.log_actions(shared_state.current_user, action= f"Save {product_name} barcode")
+        user_logs.log_actions(shared_state.current_user, action=f"Save {product_name} barcode")
+        
+        # Display a message box confirming successful save
+        messagebox.showinfo("Success", f"Barcode image for {product_name} saved in 'Barcodes' folder.")
         
         # Optionally provide feedback to the user that the image has been saved
         print(f"Barcode image for {product_name} saved in 'Barcodes' folder.")
+    else:
+        messagebox.showerror("Error", "No barcode data selected.")
 
 def search_database():
     # Placeholder for search functionality
@@ -226,6 +231,6 @@ def create_barcode_window():
     window.resizable(False, False)
     window.mainloop()
 
-if __name__ == "__main__":
-    create_barcode_window()
+# if __name__ == "__main__":
+#     create_barcode_window()
 
