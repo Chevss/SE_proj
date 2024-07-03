@@ -3,6 +3,11 @@ from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, filedialog, messagebox, Tk
 from tkinter import ttk
 
+import shared_state
+from user_logs import log_actions
+
+username = shared_state.current_user
+
 def go_to_window(windows):
     window.destroy()
     if windows == "Back":
@@ -107,6 +112,11 @@ def select_this_product(condition):
         # Insert the selected product into the Treeview
         treeview.insert("", "end", values=(timestamp, quantity, product_name, price, condition))
 
+        current_values = list(combobox["values"])
+        current_values.remove(selected_product)
+        combobox["values"] = current_values
+        combobox.set('')
+
 def add_normal_item():
     select_this_product("Normal")
 
@@ -151,25 +161,33 @@ def process_return():
 
         if condition == "Normal":
             update_inventory(barcode, int(quantity))
+            action = "Returned a product: " + quantity + " pc/s of " + product_name + "."
+            log_actions(username, action)
         elif condition == "Broken":
             add_to_broken_inventory(barcode, product_name, int(quantity), purchase_id)
-
-        update_return_history(purchase_id, product_name, int(quantity), price)
+            action = "Returned a broken product: " + quantity + " pc/s of " + product_name + "."
+            log_actions(username, action)
+        update_return_history(purchase_id, product_name, int(quantity), price, condition)
 
     clear_treeview()
+    messagebox.showinfo("Return Processed", "The return has been successfully processed.")
 
-def update_return_history(purchase_id, product_name, returned_quantity, product_price):
+    # Reload combobox values
+    purchased_products = get_purchased_products()
+    combobox["values"] = purchased_products
+
+def update_return_history(purchase_id, product_name, returned_quantity, product_price, condition):
     conn = sqlite3.connect('Trimark_construction_supply.db')
     cursor = conn.cursor()
 
     amount_given = float(returned_quantity) * float(product_price)
 
     cursor.execute('''
-        INSERT INTO return_history (Purchase_ID, First_Name, Product_Name, Product_Price, Returned_Quantity, Time_Stamp, Amount_Given)
-        SELECT Purchase_ID, First_Name, Product_Name, Product_Price, ?, CURRENT_TIMESTAMP, ?
+        INSERT INTO return_history (Purchase_ID, First_Name, Product_Name, Product_Price, Returned_Quantity, Time_Stamp, Amount_Given, Condition)
+        SELECT Purchase_ID, First_Name, Product_Name, Product_Price, ?, CURRENT_TIMESTAMP, ?, ?
         FROM purchase_history
         WHERE Purchase_ID = ? AND Product_Name = ?
-    ''', (returned_quantity, amount_given, purchase_id, product_name))
+    ''', (returned_quantity, amount_given, condition, purchase_id, product_name))
 
     conn.commit()
     conn.close()

@@ -99,7 +99,8 @@ def create_database():
         Product_Price REAL NOT NULL,
         Returned_Quantity INTEGER NOT NULL,
         Time_Stamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        Amount_Given REAL NOT NULL -- Amount given back to the customer
+        Amount_Given REAL NOT NULL, -- Amount given back to the customer
+        Condition TEXT NOT NULL
         )
     ''')
 

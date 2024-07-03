@@ -147,8 +147,8 @@ def register_product_window():
     product_details_label = Label(register_product_window, text="Product Details:", bg="#FFE1C6", font=("Hanuman Regular", 16))
     product_details_label.place(x=50, y=270)
     
-    critikal_lvl_label = Label(register_product_window, text="Critikal Level:", bg="#FFE1C6", font=("Hanuman Regular", 16))
-    critikal_lvl_label.place(x=50, y=320)
+    critical_lvl_label = Label(register_product_window, text="Critical Level:", bg="#FFE1C6", font=("Hanuman Regular", 16))
+    critical_lvl_label.place(x=50, y=320)
 
     barcode_entry = Entry(register_product_window, font=("Hanuman Regular", 16))
     barcode_entry.place(x=220, y=80, width=300)
@@ -186,7 +186,7 @@ def register_product_window():
         product_name = product_name_entry.get()
         product_price_str = product_price_entry.get()
         product_details = product_details_entry.get()
-        critikal_lvl = critical_lvl_entry.get()
+        critical_lvl = critical_lvl_entry.get()
 
         # Check if any entry field is empty
         if not barcode or not product_name or not product_price_str:
@@ -201,7 +201,7 @@ def register_product_window():
             return
 
         # Register the product and show success message
-        register_product(barcode, product_name, product_price, product_details, critikal_lvl)
+        register_product(barcode, product_name, product_price, product_details, critical_lvl)
         messagebox.showinfo("Product Saved", "The product has been saved successfully!")
         
         # Log action

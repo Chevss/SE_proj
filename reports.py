@@ -101,7 +101,8 @@ def generate_return_history():
             GROUP_CONCAT(Product_Price, '\n') as Prices,
             GROUP_CONCAT(Returned_Quantity, '\n') as Returned_Quantities,
             Time_Stamp,
-            Amount_Given
+            Amount_Given,
+            Condition
         FROM
             return_history
         WHERE date(Time_Stamp) BETWEEN ? AND ?
@@ -121,7 +122,7 @@ def generate_return_history():
         formatted_rows.append(tuple(formatted_row))
 
     current_data = formatted_rows
-    update_tree(current_data, ["Return ID", "Customer Name", "Products", "Prices", "Returned Quantities", "Timestamp", "Amount Given"])
+    update_tree(current_data, ["Return ID", "Customer Name", "Products", "Prices", "Returned Quantities", "Timestamp", "Amount Given", "Condition"])
 
 def generate_sales_report():
     global current_data, report_type
@@ -155,7 +156,7 @@ def generate_sales_report():
     formatted_rows = [(row[0], row[1], f"{row[2]:.2f}") for row in rows]
     formatted_rows.append(overall_total_row)
 
-    current_data = rows  # Use fetched data from the database
+    current_data = formatted_rows  # Use fetched data from the database
     update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
 
 def generate_void_transac():
@@ -215,6 +216,19 @@ def update_report_type_label():
     global report_type_label, report_type
     if report_type_label:
         report_type_label.config(text=f"Currently Showing: {report_type}")
+
+# FOR SELECTING DATES
+def regenerate_current_report(*args):
+    if report_type == "User Logs Report":
+        generate_user_logs()
+    elif report_type == "Purchase History Report":
+        generate_purchase_history()
+    elif report_type == "Return History Report":
+        generate_return_history()
+    elif report_type == "Sales Report":
+        generate_sales_report()
+    elif report_type == "Void Transactions Report":
+        generate_void_transac()
 
 def save_current_tree_to_pdf():
     global current_data
@@ -328,6 +342,9 @@ def create_reports_window():
     to_date_label.place(x=220, y=20)
     to_date_entry = DateEntry(window, font=("Hanuman Regular", 12), width=8, background='darkblue', foreground='white', borderwidth=2)
     to_date_entry.place(x=285, y=20)
+
+    from_date_entry.bind("<<DateEntrySelected>>", regenerate_current_report)
+    to_date_entry.bind("<<DateEntrySelected>>", regenerate_current_report)
 
     report_type_label = tk.Label(window, text=f"Currently Showing: None", font=("Hanuman Regular", 12), bg="#FFE1C6")
     report_type_label.place(x=20, y=60)
