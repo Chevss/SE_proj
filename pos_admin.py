@@ -181,6 +181,21 @@ def go_to_return():
         return_item.create_return_item_window()
     else: prompt_admin_credentials()
 
+def check_product_quantities(purchase_list):
+    conn = connect_db()
+    cursor = conn.cursor()
+    for item in purchase_list:
+        barcode = item['barcode']
+        required_quantity = item['quantity']
+        
+        cursor.execute('SELECT Quantity FROM inventory WHERE Barcode = ?', (barcode,))
+        result = cursor.fetchone()
+        if result is None or result[0] < required_quantity:
+            conn.close()
+            return False
+    conn.close()
+    return True
+
 def prompt_admin_credentials():
     # Create a toplevel window for entering credentials
     admin_login_window = tk.Toplevel()
@@ -464,6 +479,10 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
         messagebox.showerror("Unavailable Product", "One or more products in the purchase list are unavailable.")
         return
 
+    if not check_product_quantities(purchase_list):
+        messagebox.showerror("Quantity Error", "One or more products in the purchase list exceed available quantities.")
+        return
+
     if not update_inventory(purchase_list):
         messagebox.showerror("Inventory Error", "An error occurred while updating the inventory.")
         return
@@ -472,6 +491,10 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
     purchase_id = datetime.now().strftime("%Y%m%d%H%M%S")
     create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list)
     messagebox.showinfo("Purchase Complete", f"Purchase successful!\nChange: Php {change:.2f}")
+    barcode.delete(0, 'end')
+    scanned_barcode.config(state='normal')
+    scanned_barcode.delete(0, 'end')
+    scanned_barcode.config(state='disabled')
 
     # Generate a unique Purchase_ID for this transaction
 

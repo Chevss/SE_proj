@@ -199,7 +199,7 @@ def go_to_window(windows):
 def void_selected_account():
     selected_item = tree.focus()  # Get the currently selected item
     if selected_item:
-        confirm_activate = messagebox.askyesno("Confirmation", "Are you sure you want to activate this account?")
+        confirm_activate = messagebox.askyesno("Confirmation", "Are you sure you want to Deactivate this account?")
         if confirm_activate:
             item = tree.item(selected_item)
             item_values = item['values']
@@ -217,8 +217,8 @@ def void_selected_account():
                 tree.item(selected_item, values=(new_status,) + tuple(item_values[1:]))  # Update the status in the Treeview
                 print(f"Current values after update: {tree.item(selected_item)['values']}")  # Print updated values
 
-                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been activated.")
-                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Activated user {employee_id}")
+                messagebox.showinfo("Success", f"Account with Employee ID {employee_id} has been Deactivated.")
+                log_actions(shared_state.current_user, action=f"{shared_state.current_user} Deactivated user {employee_id}")
 
             except Exception as e:
                 messagebox.showerror("Error", f"Error updating account: {str(e)}")
