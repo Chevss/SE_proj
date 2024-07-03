@@ -7,25 +7,6 @@ from portalocker import lock, unlock, LOCK_EX
 from pathlib import Path
 import shared_state
 
-# Relative paths to developer images
-
-developers = [
-    {
-        'image_path': "logo_image",
-        'name': 'Developer 1',
-        'email': 'developer1@example.com'
-    },
-    {
-        'image_path': 'developer_images/developer2.jpg',
-        'name': 'Developer 2',
-        'email': 'developer2@example.com'
-    },
-    {
-        'image_path': 'developer_images/developer3.jpg',
-        'name': 'Developer 3',
-        'email': 'developer3@example.com'
-    }
-]
 
 # Load or initialize the About data
 ABOUT_FILE = 'abouts.json'
@@ -176,12 +157,12 @@ def display_about(about_entry):
     about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
     about_entry.insert(END, "Bachelor of Science in Computer Science\n")
     global dev2_image
-    dev2_image_path = "assets/Login/image_1.png"
+    dev2_image_path = "assets/About/r8qbozta.png"
     dev2_image = PhotoImage(file=dev2_image_path)
     about_entry.image_create(tk.END, image=dev2_image)
     about_entry.insert(END, "\n")
-    about_entry.insert(END, "Gaiti, Chevy Joel B.\n")
-    about_entry.insert(END, "qcjbgaiti@tip.edu.ph\n")
+    about_entry.insert(END, "Tan, Thady Morven T.\n")
+    about_entry.insert(END, "qtmttan@tip.edu.ph\n")
     about_entry.insert(END, "Bachelor of Science in Computer Science\n")
     global dev3_image
     dev3_image_path = "assets/Login/image_1.png"
