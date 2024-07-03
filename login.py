@@ -180,12 +180,10 @@ def create_login_window():
     canvas.tag_bind(about, "<Enter>", lambda event: canvas.itemconfig(about, fill="red"))
     canvas.tag_bind(about, "<Leave>", lambda event: canvas.itemconfig(about, fill="black"))
 
-    exit_image = PhotoImage(file=relative_to_assets("button_1.png"))
-    exit_ = Button(image=exit_image, borderwidth=0, highlightthickness=0, command=exit, relief="flat")
+    exit_ = Button(text="Exit",font=("Hanuman Regular", 14), command=exit, relief="raised", bg="white")
     exit_.place(x=349.0, y=325.0, width=133.0, height=37.0)
 
-    login_image = PhotoImage(file=relative_to_assets("button_2.png"))
-    login_ = Button(image=login_image, borderwidth=0, highlightthickness=0, command=lambda: check_credentials(user_entry.get(), pass_entry.get(), user_entry, pass_entry, window), relief="flat")
+    login_ = Button(text="Login", font=("Hanuman Regular", 14), command=lambda: check_credentials(user_entry.get(), pass_entry.get(), user_entry, pass_entry, window), bg="#FF7676", fg='white',relief="raised")
     login_.place(x=119.0, y=325.0, width=133.0, height=37.0)
 
     show_password_var = BooleanVar()
