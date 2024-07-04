@@ -126,10 +126,22 @@ def add_broken_item():
 def delete_selected_item():
     selected_item = treeview.selection()
     if selected_item:
+        item_values = treeview.item(selected_item, "values")
+        timestamp, quantity, product_name, price, condition = item_values
+        product_str = f"{timestamp} | {quantity} pc/s {product_name} ({price})"
+        current_values = list(combobox["values"])
+        current_values.append(product_str)
+        combobox["values"] = current_values
         treeview.delete(selected_item)
 
 def clear_treeview():
     for item in treeview.get_children():
+        item_values = treeview.item(item, "values")
+        timestamp, quantity, product_name, price, condition = item_values
+        product_str = f"{timestamp} | {quantity} pc/s {product_name} ({price})"
+        current_values = list(combobox["values"])
+        current_values.append(product_str)
+        combobox["values"] = current_values
         treeview.delete(item)
 
 def get_barcode(product_name):
