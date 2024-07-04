@@ -176,6 +176,7 @@ def go_to_window(window_type):
         user_manual.create_users_manual_window()
     
 def go_to_return():
+    window.destroy()
     if shared_state.current_user_loa == "admin":
         import return_item
         return_item.create_return_item_window()
