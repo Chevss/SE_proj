@@ -408,7 +408,7 @@ def update_products_window():
         try:
             cursor.execute("SELECT * FROM product WHERE Barcode = ?", (barcode,))
             product = cursor.fetchone()
-            print(product[5])
+            print(product)
             if not product:
                 messagebox.showerror("Error", "Product not found.")
                 return
@@ -434,13 +434,13 @@ def update_products_window():
 
             product_status_label.place(x=50, y=330)
             product_status_checkbox.place(x=220, y=330)
-            product_status_var.set(product[4] == 'Available')
+            product_status_var.set(product[5] == 'Available')
             product_status_checkbox.config(state='normal')
 
             critical_lvl_label.place(x=50, y=280)
             critical_lvl_entry.place(x=220, y=280)
             critical_lvl_entry.delete(0, END)
-            critical_lvl_entry.insert(0, product[5])
+            critical_lvl_entry.insert(0, product[4])
 
             save_button = Button(update_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
             save_button.place(x=250, y=430)
