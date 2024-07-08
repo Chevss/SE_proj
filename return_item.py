@@ -8,11 +8,8 @@ from user_logs import log_actions
 
 username = shared_state.current_user
 
-def go_to_window(windows):
+def go_back():
     window.destroy()
-    if windows == "Back":
-        import pos_admin
-        pos_admin.create_pos_admin_window()
 
 def adjust_column_widths(event):
     treeview = event.widget
@@ -71,7 +68,7 @@ def create_return_item_window():
     clear_button = Button(window, text="Clear All", font=("Hanuman Regular", 12), bg="firebrick1", fg='#FFF', command=clear_treeview)
     clear_button.place(x=475, y=295, width=75, height=32)
 
-    back_button = Button(window, text="Cancel Return", font=("Hanuman Regular", 16), bg="firebrick4", fg="#FFF", command=lambda:go_to_window("Back"))
+    back_button = Button(window, text="Cancel Return", font=("Hanuman Regular", 16), bg="firebrick4", fg="#FFF", command=go_back)
     back_button.place(x=340, y=350, width=210, height=32)
 
     window.resizable(False, False)
