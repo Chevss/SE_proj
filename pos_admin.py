@@ -176,8 +176,8 @@ def go_to_window(window_type):
         user_manual.create_users_manual_window()
     
 def go_to_return():
-    window.destroy()
     if shared_state.current_user_loa == "admin":
+        window.destroy()
         import return_item
         return_item.create_return_item_window()
     else: prompt_admin_credentials()
@@ -201,7 +201,11 @@ def prompt_admin_credentials():
     # Create a toplevel window for entering credentials
     admin_login_window = tk.Toplevel()
     admin_login_window.title("Admin Login")
+    admin_login_window.geometry('250x150')
+    admin_login_window.resizable(False, False)
     
+    center_window(admin_login_window,250,150)
+
     # Username and password entry fields
     tk.Label(admin_login_window, text="Username:").pack()
     global username_entry
@@ -266,6 +270,7 @@ def create_pos_admin_window():
     window.geometry("1280x800")
     window.configure(bg="#FFE1C6")
     window.title("POS")
+    window.resizable(False, False)
 
     center_window(window, 1280, 800)
 
@@ -278,7 +283,7 @@ def create_pos_admin_window():
     global barcode
     barcode = Entry(window)
     barcode.place(x=-100, y=-100)  # Place it outside the visible area
-    barcode.focus_set()  # Ensure the hidden entry has focus
+    barcode.focus_set()
 
     barcode.bind("<Return>", on_barcode_entry)  # Bind the Return (Enter) key to trigger the search
     
