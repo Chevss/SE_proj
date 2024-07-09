@@ -10,7 +10,6 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM accounts WHERE Username = ?", ('admin',))
-
     if not cursor.fetchone():
         registration.save_user('admin', '', '', '', '', '', '', '', '', 'admin', 'admin', 0)
     # save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password, is_void):

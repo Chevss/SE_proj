@@ -673,7 +673,7 @@ def create_products_window():
     search_button = Button(window, text="Search", command=on_search, font=("Hanuman Regular", 16), bg="#FFE1C6")
     search_button.place(x=350, y=92, width=100, height=47)
     search_entry.bind("<Return>", on_enter_pressed)
-    canvas.create_text(41.0, 50.0, anchor="nw", text="Search Product", fill="#000000", font=("Hanuman Regular", 28))
+    canvas.create_text(41.0, 50.0, anchor="nw", text="Search Product Barcode or Name", fill="#000000", font=("Hanuman Regular", 22))
 
     # Create a style for the Treeview
     style = ttk.Style()

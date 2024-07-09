@@ -224,7 +224,7 @@ def void_selected_account():
                 messagebox.showerror("Error", f"Error updating account: {str(e)}")
                 print(f"Error updating account: {str(e)}")
         else:
-            messagebox.showinfo("Canceled", "Operation canceled.")
+            pass
     else:
         messagebox.showinfo("Error", "No item selected.")
 
@@ -256,7 +256,7 @@ def activate_selected_account():
                 messagebox.showerror("Error", f"Error updating account: {str(e)}")
                 print(f"Error updating account: {str(e)}")
         else:
-            messagebox.showinfo("Canceled", "Operation canceled.")
+            pass
     else:
         messagebox.showinfo("Error", "No item selected.")
 
@@ -278,9 +278,6 @@ def create_registration_window():
 
     canvas = Canvas(window, bg="#FFE1C6", height=690, width=1280, bd=0, highlightthickness=0, relief="ridge")
     canvas.place(x=0, y=0)
-
-
-    # Background creation
 
     # Labels
     canvas.create_text(860.0, 98.0, anchor="nw", text="First Name", fill="#000000", font=("Hanuman Regular", 16 * -1))
@@ -458,9 +455,9 @@ def create_registration_window():
     rows = cursor.fetchall()
     
     for row in rows:
-        if row[0] == '0':
+        if row[0] == 0:
             is_void = "Active"
-        elif row[0] == '1':
+        elif row[0] == 1:
             is_void = "Inactive"
         employee_id = row[1]
         loa = row[2]

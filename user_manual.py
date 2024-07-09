@@ -67,13 +67,7 @@ def create_users_manual_window():
 
     # Create tabs with corresponding PDF files
     tabs = [
-        ("Login", "assets\Manual\Login_Manual.pdf"),
-        ("POS", "assets\Manual\POS_Manual _not finished_.pdf"),
-        ("Account", "assets\Manual\BackupRestore.pdf"),
-        ("Reports", "assets\Manual\Reports.pdf"),
-        ("Barcodes", "assets\Manual\Barcode.pdf"),
-        ("Inventory", "assets\Manual\Inventory.pdf"),
-        ("Backup & Restore", "assets\Manual\BackupRestore.pdf"),
+        ("User Manual", r"assets\Manual\User_Manual.pdf")
     ]
 
     for tab_name, pdf_path in tabs:

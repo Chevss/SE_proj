@@ -48,12 +48,8 @@ def load_image_from_about():
             
             # Ensure the data is a valid string
             if isinstance(logo_base64, str):
-                print("Base64 data length:", len(logo_base64))  # Debug: print the length of the base64 data
-                print("Base64 data sample:", logo_base64[:100])  # Print first 100 characters
-
                 try:
                     logo_data = base64.b64decode(logo_base64)
-                    print("Decoded data length:", len(logo_data))  # Debug: print the length of the decoded data
                     
                     logo_image = Image.open(BytesIO(logo_data))
                     resized_image = logo_image.resize((350, 150), Image.LANCZOS)
@@ -71,10 +67,11 @@ def load_image_from_about():
 def get_user_status(username):
     cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
     row = cursor.fetchone()
+
     if row:
-        if row[0] == '0':
+        if row[0] == 0:
             return "Active"
-        elif row[0] == '1':
+        elif row[0] == 1:
             return "Inactive"
     else:
         return None
@@ -88,8 +85,13 @@ def get_loa(username):
         return None
 
 # Check credentials and initiate login process.
-def check_credentials(username, password, user_entry, pass_entry, window):
+def check_credentials(username, password):
     user_status = get_user_status(username)
+    print(username)
+    print(password)
+    print(user_entry)
+    print(pass_entry)
+    print(user_status)
     if user_status == "Inactive":
         messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
         log_actions(username, action=f"{username} tried to log in but their account is inactive")
@@ -122,7 +124,7 @@ def check_credentials(username, password, user_entry, pass_entry, window):
         user_entry.delete(0, 'end')
 
 def create_login_window():
-    global window, user_entry
+    global window, user_entry, pass_entry
     window = Tk()
     window.title("Login")
     window.geometry("600x400")
@@ -183,7 +185,7 @@ def create_login_window():
     exit_ = Button(text="Exit",font=("Hanuman Regular", 14), command=exit, relief="raised", bg="white")
     exit_.place(x=349.0, y=325.0, width=133.0, height=37.0)
 
-    login_ = Button(text="Login", font=("Hanuman Regular", 14), command=lambda: check_credentials(user_entry.get(), pass_entry.get(), user_entry, pass_entry, window), bg="#FF7676", fg='white',relief="raised")
+    login_ = Button(text="Login", font=("Hanuman Regular", 14), command=lambda: check_credentials(user_entry.get(), pass_entry.get()), bg="#FF7676", fg='white',relief="raised")
     login_.place(x=119.0, y=325.0, width=133.0, height=37.0)
 
     show_password_var = BooleanVar()

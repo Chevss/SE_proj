@@ -177,7 +177,6 @@ def go_to_window(window_type):
     
 def go_to_return():
     if shared_state.current_user_loa == "admin":
-        window.destroy()
         import return_item
         return_item.create_return_item_window()
     else: prompt_admin_credentials()
@@ -262,6 +261,9 @@ def confirm_void_action(purchase_list, update_purchase_display, update_total_lab
     confirm = messagebox.askyesno("Confirmation", "Are you sure you want to void the transaction?")
     if confirm:
         shared_state.void_items(purchase_list, update_purchase_display, update_total_label)
+        scanned_barcode.config(state='normal')
+        scanned_barcode.delete(0, 'end')
+        scanned_barcode.config(state='disabled')
 
 def create_pos_admin_window():
     # Creates and configures the POS admin window.
