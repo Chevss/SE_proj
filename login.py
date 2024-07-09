@@ -72,9 +72,9 @@ def get_user_status(username):
     cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
     row = cursor.fetchone()
     if row:
-        if row[0] == '0':
+        if row[0] == 0:
             return "Active"
-        elif row[0] == '1':
+        elif row[0] == 1:
             return "Inactive"
     else:
         return None
