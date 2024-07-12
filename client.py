@@ -1,8 +1,7 @@
 # client.py
 import requests
 
-server_url = 'http://192.168.86.8:5000/query'
-# server_url = 'http://127.0.0.1:5000/query'
+server_url = 'http://127.0.0.1:5000/query'
 
 def send_query(query, params):
     try:

@@ -486,9 +486,9 @@ def create_registration_window():
 
         # Insert fetched rows into Treeview
         for row in response:
-            if row[0] == '0':
+            if row[0] == 0:
                 is_void = "Active"
-            elif row[0] == '1':
+            elif row[0] == 1:
                 is_void = "Inactive"
             else:
                 is_void = "Unknown"
@@ -507,7 +507,7 @@ def create_registration_window():
 
             tree.insert("", "end", values=(is_void, employee_id, loa, name, birthdate, contact_no, address, email))
     else:
-        showerror("Error", "Failed to fetch data from server")
+        messagebox("Error", "Failed to fetch data from server")
 
 
     window.resizable(False, False)

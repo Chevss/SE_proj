@@ -4,6 +4,7 @@ from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, filedialog, 
 import os
 import shutil
 import sqlite3
+import sys
 import time
 
 # From user made modules
@@ -27,7 +28,7 @@ def generate_key():
 
 # Load or generate a key
 def load_key():
-    key_file = "secret.key"
+    key_file = os.path.join(os.path.dirname(sys.executable), "secret.key")
     if not os.path.exists(key_file):
         key = generate_key()
         with open(key_file, "wb") as key_file:

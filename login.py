@@ -65,9 +65,9 @@ def get_user_status(username):
     query = "SELECT is_void FROM accounts WHERE username =?"
     result = send_query(query, (username,))
     if result:
-        if result[0][0] == '0':
+        if result[0][0] == 0:
             return "Active"
-        elif result[0][0] == '1':
+        elif result[0][0] == 1:
             return "Inactive"
     else:
         return None
