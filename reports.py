@@ -1,5 +1,3 @@
-import sqlite3
-import tkinter as tk
 from datetime import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, landscape
@@ -7,10 +5,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Frame, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from tkinter import Button, Canvas, filedialog, messagebox, ttk
 from tkcalendar import DateEntry
+import sqlite3
+import tkinter as tk
 
+from client import send_query
 import shared_state
 
-# From user made module
 current_data = None
 sort_order = {}
 
@@ -18,9 +18,6 @@ company = "Tri-Mark Construction Supply"
 address = "39 Scout Ybardolaza, Diliman, Quezon City, 1103 Metro Manila"
 phone = "(02) 8928 5744"
 report_type = ""
-
-conn = sqlite3.connect('Trimark_construction_supply.db')
-cursor = conn.cursor()
 
 def generate_user_logs():
     global current_data, report_type
@@ -31,16 +28,23 @@ def generate_user_logs():
     from_date = from_date_entry.get_date().strftime("%Y-%m-%d")
     to_date = to_date_entry.get_date().strftime("%Y-%m-%d")
     
-    cursor.execute("""
+    query = """
         SELECT log_id, Employee_ID, Username, action, timestamp 
         FROM user_logs 
         WHERE date(timestamp) BETWEEN ? AND ?
-    """, (from_date, to_date))
+    """
     
-    rows = cursor.fetchall()
-
-    current_data = rows
-    update_tree(current_data, ["Log ID", "Employee ID", "Username", "Action", "Timestamp"])
+    params = (from_date, to_date)
+    response = send_query(query, params)
+    
+    if response is not None:  # Check if response is not None
+        if len(response) > 0:
+            current_data = response
+            update_tree(current_data, ["Log ID", "Employee ID", "Username", "Action", "Timestamp"])
+        else:
+            messagebox.showinfo("Info", "No user logs found for the selected date range.")
+    else:
+        messagebox.showerror("Error", "Failed to fetch data from server.")
 
 def generate_purchase_history():
     global current_data, report_type
@@ -69,21 +73,27 @@ def generate_purchase_history():
             Purchase_ID, First_Name, Amount_Given, `Change`, Time_Stamp
     """
     
-    cursor.execute(query, (from_date, to_date))
-    rows = cursor.fetchall()
+    params = (from_date, to_date)
+    response = send_query(query, params)
 
-    formatted_rows = []
-    for row in rows:
-        formatted_row = list(row)
-        formatted_row[4] = "\n".join([f"{float(price):.2f}" for price in formatted_row[4].split('\n')])
-        formatted_row[5] = f"{float(formatted_row[5]):.2f}"
-        formatted_row[6] = f"{float(formatted_row[6]):.2f}"
-        formatted_row[7] = f"{float(formatted_row[7]):.2f}"
-        formatted_rows.append(tuple(formatted_row))
+    if response is not None: 
+        if len(response) > 0:
+            formatted_rows = []
+            for row in response:
+                formatted_row = list(row)
+                formatted_row[4] = "\n".join([f"{float(price):.2f}" for price in formatted_row[4].split('\n')])
+                formatted_row[5] = f"{float(formatted_row[5]):.2f}"
+                formatted_row[6] = f"{float(formatted_row[6]):.2f}"
+                formatted_row[7] = f"{float(formatted_row[7]):.2f}"
+                formatted_rows.append(tuple(formatted_row))
 
-    current_data = formatted_rows
-    update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Quantities", "Prices", "Total Amount", "Amount Paid", "Change", "Timestamp"])
-
+            current_data = formatted_rows
+            update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Quantities", "Prices", "Total Amount", "Amount Paid", "Change", "Timestamp"])
+        else:
+            messagebox.showinfo("Info", "No data found for the selected date range.")
+    else:
+        messagebox.showerror("Error", "Failed to fetch data from server.")
+    
 def generate_return_history():
     global current_data, report_type
     report_type = "Return History Report"
@@ -109,20 +119,32 @@ def generate_return_history():
         GROUP BY 
             Purchase_ID, First_Name, Time_Stamp
     """
+
+    params = (from_date, to_date)
+    response = send_query(query, params)
+    print(f"Query: {query}")
+    print(f"Params: {params}")
     
-    cursor.execute(query, (from_date, to_date))
-    rows = cursor.fetchall()
+    response = send_query(query, params)
+    print(f"Raw Response: {response}")
 
-    formatted_rows = []
-    for row in rows:
-        formatted_row = list(row)
-        formatted_row[3] = "\n".join([f"{float(price):.2f}" for price in formatted_row[3].split('\n')])
-        formatted_row[4] = "\n".join([quantity for quantity in formatted_row[4].split('\n')])
-        formatted_row[6] = f"{float(formatted_row[6]):.2f}"
-        formatted_rows.append(tuple(formatted_row))
 
-    current_data = formatted_rows
-    update_tree(current_data, ["Return ID", "Customer Name", "Products", "Prices", "Returned Quantities", "Timestamp", "Amount Given", "Condition"])
+    if response:
+        if len(response) > 0:
+            formatted_rows = []
+            for row in response:
+                formatted_row = list(row)
+                formatted_row[3] = "\n".join([f"{float(price):.2f}" for price in formatted_row[3].split('\n')])
+                formatted_row[4] = "\n".join([quantity for quantity in formatted_row[4].split('\n')])
+                formatted_row[6] = f"{float(formatted_row[6]):.2f}"
+                formatted_rows.append(tuple(formatted_row))
+
+            current_data = formatted_rows
+            update_tree(current_data, ["Purchase ID", "Customer Name", "Products", "Prices", "Returned Quantities", "Timestamp", "Amount Given", "Condition"])
+        else:
+            messagebox.showinfo("Info", "No data found for the selected date range.")
+    else:
+        messagebox.showerror("Error", "Failed to fetch data from server.")
 
 def generate_sales_report():
     global current_data, report_type
@@ -147,17 +169,24 @@ def generate_sales_report():
         GROUP BY
             p.Product_Name
     """
-    
-    cursor.execute(query, (from_date, to_date))
-    rows = cursor.fetchall()
-    overall_total_sales = sum(row[2] for row in rows)
-    
-    overall_total_row = ("Overall Total", "", f"{overall_total_sales:.2f}")
-    formatted_rows = [(row[0], row[1], f"{row[2]:.2f}") for row in rows]
-    formatted_rows.append(overall_total_row)
 
-    current_data = formatted_rows  # Use fetched data from the database
-    update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
+    params = (from_date, to_date)
+    response = send_query(query, params)
+
+    if response is not None:
+        if len(response) > 0:
+            overall_total_sales = sum(row[2] for row in response)
+
+            overall_total_row = ("Overall Total", "", f"{overall_total_sales:.2f}")
+            formatted_rows = [(row[0], row[1], f"{row[2]:.2f}") for row in response]
+            formatted_rows.append(overall_total_row)
+
+            current_data = formatted_rows
+            update_tree(current_data, ["Product Name", "Total Quantity Sold", "Total Sales"])
+        else:
+            messagebox.showinfo("Info", "No sales data found for the selected date range.")
+    else:
+        messagebox.showerror("Error", "Failed to fetch data from server.")
 
 def generate_void_transac():
     global current_data, report_type
@@ -181,7 +210,6 @@ def generate_void_transac():
 
     current_data = rows
     update_tree(current_data, ["Product Name", "Quantity", "Price", "Total_Price", "Timestamp"])
-
 
 def update_tree(data, columns):
     clear_tree()

@@ -2,16 +2,17 @@ from barcode import Code39
 from barcode.writer import ImageWriter
 from datetime import datetime
 from pathlib import Path
-import tkinter as tk
 from tkinter import  ttk, Canvas, Entry, messagebox, Button, Label, Toplevel, Scrollbar, IntVar,  END, BooleanVar, Radiobutton, Checkbutton
 from tkcalendar import DateEntry
 import io
 import random
 import sqlite3
+import tkinter as tk
 
 # From user made modules
-import shared_state
+from client import send_query
 from user_logs import log_actions
+import shared_state
 
 show_individual = False
 
@@ -20,12 +21,6 @@ ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Inventory")
 
 username = shared_state.current_user
 
-try:
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-except sqlite3.Error as e:
-    messagebox.showerror("Database Connection Error", f"Error connecting to database: {e}")
-
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
@@ -33,37 +28,36 @@ def relative_to_assets(path: str) -> Path:
 SORT_ORDER = {}
 
 def fetch_inventory_data(show_individual=False):
-    try:
-        if show_individual:
-            cursor.execute("""
-            SELECT i.Barcode, p.Name, p.Price, i.Quantity, p.Details, p.Status, i.DateDelivered, i.Supplier 
-            FROM inventory i
-            JOIN product p ON i.Barcode = p.Barcode
-            """)
-        else:
-            cursor.execute("""
-            SELECT p.Barcode, p.Name, p.Price, SUM(i.Quantity) AS TotalQuantity, p.Details, p.Status, MIN(i.DateDelivered) AS OldestDateDelivered, i.Supplier 
-            FROM inventory i
-            JOIN product p ON i.Barcode = p.Barcode
-            GROUP BY p.Barcode
-            """)
-        return cursor.fetchall()
-    except sqlite3.Error as e:
-        print(f"Error fetching data: {e}")
-        return []
+    query = """
+        SELECT i.Barcode, p.Name, p.Price, {} AS Quantity, p.Details, p.Status, {} AS DateDelivered, i.Supplier 
+        FROM inventory i
+        JOIN product p ON i.Barcode = p.Barcode
+        {}
+    """
+    
+    if show_individual:
+        query = query.format("i.Quantity", "i.DateDelivered", "")
+    else:
+        query = query.format("SUM(i.Quantity)", "MIN(i.DateDelivered)", "GROUP BY p.Barcode")
+    
+    return send_query(query, params=[])
 
 def get_inventory_data():
-    try:
-        cursor.execute("""
+    query = """
         SELECT i.Barcode, p.Name, p.Price, i.Quantity, p.Details, p.Status, i.DateDelivered, i.Supplier 
         FROM inventory i
         JOIN product p ON i.Barcode = p.Barcode
-        """)
-        rows = cursor.fetchall()
+    """
+    params = []  # No parameters needed for this query
+    result = send_query(query, params)
+
+    if result:
+        rows = result  # Assuming result is a list of tuples from JSON response
         print(f"Fetched {len(rows)} rows from inventory data.")  # Debug statement
         return rows
-    except sqlite3.Error as e:
-        messagebox.showerror("Database Error", f"Error fetching inventory data: {e}")
+    else:
+        # Handle error or empty result from send_query()
+        messagebox.showerror("Error", "Failed to fetch inventory data.")
         return []
 
 def search_inventory_linear(keyword, individual=False):
@@ -94,26 +88,37 @@ def go_to_window(windows):
 
 def is_barcode_unique(barcode):
     try:
-        cursor.execute("SELECT Barcode FROM product WHERE Barcode = ?", (barcode,))
-        return cursor.fetchone() is None
-    except sqlite3.Error as e:
-        messagebox.showerror("Database Error", f"Error checking barcode uniqueness: {e}")
+        query = "SELECT Barcode FROM product WHERE Barcode = ?"
+        params = (barcode,)
+        response = send_query(query, params)
+        if response and len(response) > 0:
+            # If response contains rows, barcode is not unique
+            return False
+        else:
+            # If response is empty, barcode is unique
+            return True
+
+    except requests.exceptions.RequestException as e:
+        # Handle connection or server errors
+        print(f"Error connecting to server: {e}")
+        messagebox.showerror("Connection Error", "Failed to check barcode uniqueness.")
+        return False
+
+    except Exception as ex:
+        # Handle other exceptions
+        print(f"Error: {ex}")
+        messagebox.showerror("Error", f"An error occurred: {ex}")
         return False
 
 def register_product(barcode, product_name, product_price, product_details, critical_lvl):
-    try:
-        # cursor.execute('''
-        #     ALTER TABLE product ADD Critical_lvl INTEGER
-        # ''')
-
-        cursor.execute('''
-            INSERT INTO product (Barcode, Name, Price, Details, Critical_lvl)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (barcode, product_name, product_price, product_details, critical_lvl))
-        conn.commit()
-        
-    except sqlite3.Error as e:
-        messagebox.showerror("Error", f"Error inserting data into product table: {e}")
+    query = """
+        INSERT INTO product (Barcode, Name, Price, Details, Critical_lvl)
+        VALUES (?, ?, ?, ?, ?)
+    """
+    params = (barcode, product_name, product_price, product_details, critical_lvl)
+    
+    # Call send_query to execute the INSERT statement
+    return send_query(query, params)
 
 def register_product_window():
     register_product_window = Toplevel(window)
@@ -260,51 +265,55 @@ def add_supply_window():
 
     def verify_barcode():
         barcode = barcode_entry.get().strip()
-        print(f"Verifying barcode: {barcode}")  # Check if the function is called
-        
-        if not barcode:
-            messagebox.showerror("Error", "Please enter a barcode.")
-            return
+        query = "SELECT Name FROM product WHERE Barcode = ?"
+        params = (barcode,)
         
         try:
-            cursor.execute("SELECT Name FROM product WHERE Barcode = ?", (barcode,))
-            product = cursor.fetchone()
-            print(product)
+            response = send_query(query, params)
             
-            if not product:
+            if response and response != "Error: no such table: product":
+                product = response[0]  # Assuming response is a list of tuples with one element each
+                print(product)
+
+                if not product:
+                    messagebox.showerror("Error", "No product with this barcode exists.")
+                    return False
+            
+                # Enable and populate product_name_entry
+                product_name_label.place(x=50, y=130)
+                product_name_entry.place(x=220, y=130, width=300)
+                product_name_entry.delete(0, END)
+                product_name_entry.insert(0, product[0])
+                product_name_entry.config(state='disabled')
+
+                product_quantity_label.place(x=50, y=180)
+                product_quantity_entry.place(x=220, y=180, width=300)
+                product_quantity_entry.config(state='normal')
+
+                date_label.place(x=50, y=230)
+                date_entry.place(x=220, y=230)
+
+                supplier_label.place(x=50, y=280)
+                supplier_entry.place(x=220, y=280, width=300)
+                supplier_entry.config(state='normal')
+
+                # Enable other entry fields
+                product_quantity_entry.config(state='normal')
+                date_entry.config(state='normal')
+                supplier_entry.config(state='normal')
+
+                save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
+                save_button.place(x=250, y=330)
+            
+            else:
                 messagebox.showerror("Error", "No product with this barcode exists.")
-                return
-            
-            # Enable and populate product_name_entry
-            product_name_label.place(x=50, y=130)
-            product_name_entry.place(x=220, y=130, width=300)
-            product_name_entry.delete(0, END)
-            product_name_entry.insert(0, product[0])
-            product_name_entry.config(state='disabled')
-
-            product_quantity_label.place(x=50, y=180)
-            product_quantity_entry.place(x=220, y=180, width=300)
-            product_quantity_entry.config(state='normal')
-
-            date_label.place(x=50, y=230)
-            date_entry.place(x=220, y=230)
-
-            supplier_label.place(x=50, y=280)
-            supplier_entry.place(x=220, y=280, width=300)
-            supplier_entry.config(state='normal')
-
-            # Enable other entry fields
-            product_quantity_entry.config(state='normal')
-            date_entry.config(state='normal')
-            supplier_entry.config(state='normal')
-
-            save_button = Button(add_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
-            save_button.place(x=250, y=330)
-            
-            
+                return False
         
-        except sqlite3.Error as e:
+        except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Error verifying barcode: {e}")
+            return False
+
+        return True
 
     verify_button = Button(add_supply_window, text="Verify", command=verify_barcode, font=("Hanuman Regular", 12))
     verify_button.place(x=470, y=78)
@@ -327,31 +336,37 @@ def add_supply_window():
             messagebox.showerror("Error", "Invalid quantity. Please enter a valid number.")
             return
 
-        try:
-            cursor.execute("SELECT Barcode FROM product WHERE Barcode = ?", (barcode,))
-            product = cursor.fetchone()
+        # Query to check if product with given barcode exists
+        query = "SELECT Barcode FROM product WHERE Barcode = ?"
+        params = (barcode,)
+        product = send_query(query, params)
 
-            if not product:
-                messagebox.showerror("Error", "No product with this barcode exists.")
-                return
+        if not product:
+            messagebox.showerror("Error", "No product with this barcode exists.")
+            return
 
-            # Insert supply into inventory table
-            cursor.execute('''
-                INSERT INTO inventory (Barcode, Quantity, DateDelivered, Supplier)
-                VALUES (?, ?, ?, ?)
-            ''', (barcode, product_quantity, date_delivered, supplier))
-            conn.commit()
+        date_delivered_str = date_delivered.strftime('%Y-%m-%d')
 
+        # Insert supply into inventory table
+        query = """
+            INSERT INTO inventory (Barcode, Quantity, DateDelivered, Supplier)
+            VALUES (?, ?, ?, ?)
+        """
+        params = (barcode, product_quantity, date_delivered_str, supplier)
+        result = send_query(query, params)
+
+        if result and result == "Insertion successful":
             messagebox.showinfo("Supply Added", "Supply added successfully!")
-
+            
             # Log action
             action = f"Added {product_quantity} to the product {barcode} from {supplier}."
-            log_actions(username, action)
+            log_actions(shared_state.current_user, action)
+            
+            # Update the table (assuming update_table() function exists)
             update_table(show_individual=False)
             add_supply_window.destroy()
-
-        except sqlite3.Error as e:
-            messagebox.showerror("Error", f"Error verifying barcode: {e}")
+        else:
+            messagebox.showerror("Error", "Failed to add supply.")
 
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
 
@@ -405,14 +420,14 @@ def update_products_window():
             messagebox.showerror("Error", "Please enter a barcode.")
             return
         
-        try:
-            cursor.execute("SELECT * FROM product WHERE Barcode = ?", (barcode,))
-            product = cursor.fetchone()
-            print(product)
-            if not product:
-                messagebox.showerror("Error", "Product not found.")
-                return
+        query = "SELECT * FROM product WHERE Barcode = ?"
+        params = (barcode,)
+        response = send_query(query, params)
 
+        if response and len(response) > 0:
+            product = response[0]  # Assuming response is a list of tuples, take the first result
+            print(product)  # Print product details for debugging
+            
             # Display product details
             product_name_label.place(x=50, y=130)
             product_name_entry.place(x=220, y=130, width=300)
@@ -444,10 +459,8 @@ def update_products_window():
 
             save_button = Button(update_supply_window, text="Save", command=save_supply, font=("Hanuman Regular", 16))
             save_button.place(x=250, y=430)
-
-        except sqlite3.Error as e:
-            messagebox.showerror("Error", f"Error fetching product details: {e}")
-
+        else:
+            messagebox.showerror("Error", "Product not found or error fetching details.")
     verify_button = Button(update_supply_window, text="Verify", command=fetch_product_details, font=("Hanuman Regular", 12))
     verify_button.place(x=470, y=77)
 
@@ -460,23 +473,25 @@ def update_products_window():
         product_status = 'Available' if product_status_var.get() else 'Unavailable'
 
         try:
-            cursor.execute('''
+            query = '''
                 UPDATE product
                 SET Name = ?, Price = ?, Details = ?, Status = ?, Critical_lvl = ?
                 WHERE Barcode = ?
-            ''', (product_name, product_price, product_details, product_status, critical_lvl, barcode))
-            conn.commit()
+            '''
+            params = (product_name, product_price, product_details, product_status, critical_lvl, barcode)
+
+            response = send_query(query, params)
 
             messagebox.showinfo("Supply Updated", "Supply updated successfully!")
 
-            # Log action
-            action = "Updated " + barcode + " to " + product_name + ", " + product_details + ". (PHP " + str(product_price) + ") Now " + product_status + "."
+            # Log action (assuming username is defined somewhere)
+            action = f"Updated {barcode} to {product_name}, {product_details}. (PHP {product_price}) Now {product_status}."
             log_actions(username, action)
             
             update_supply_window.destroy()
             update_table(show_individual=False)
-
-        except sqlite3.Error as e:
+            
+        except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Error updating supply: {e}")
     
     canvas.create_rectangle(50.0, 50.0, 550.0, 430.0, fill="#FFE1C6", outline="")
@@ -508,9 +523,11 @@ def update_table(show_individual=False):
             supplier = item[7]
 
             # Fetch critical level from the database
-            cursor.execute("SELECT Critical_lvl FROM product WHERE Barcode = ?", (barcode_updt,))
-            result = cursor.fetchone()
-            critical_level = int(result[0]) if result and result[0] is not None else 0
+            query_critical = "SELECT Critical_lvl FROM product WHERE Barcode = ?"
+            params_critical = (barcode_updt,)
+            response_critical = send_query(query_critical, params_critical)
+            result = response_critical[0][0] if response_critical else None
+            critical_level = int(result) if result is not None else 0
 
             # Format the price to two decimal points
             formatted_price = f"{price:.2f}"

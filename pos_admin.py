@@ -1,15 +1,16 @@
-import sqlite3
-import tkinter as tk
-import win32print
 from datetime import datetime
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, Label, messagebox, PhotoImage, simpledialog, ttk
+import sqlite3
+import tkinter as tk
+import win32print
 
 # From user made modules
-import shared_state
+from client import send_query
 from maintenance import perform_action
 from user_logs import log_actions
 import login
+import shared_state
 
 # Define the path to your assets folder
 OUTPUT_PATH = Path(__file__).parent
@@ -23,42 +24,23 @@ def relative_to_assets(path: str) -> Path:
     """Returns the absolute path to an asset relative to ASSETS_PATH."""
     return ASSETS_PATH / Path(path)
 
-def connect_db():
-    """Connects to the SQLite database."""
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    return conn
-
 def search_barcode(barcode):
     """Searches for a product in the inventory database by barcode."""
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    # Corrected SQL query to join product and inventory tables
-    cursor.execute("""
-        SELECT p.Name, i.Quantity, p.Price, p.Barcode
-        FROM product p
-        INNER JOIN inventory i ON p.Barcode = i.Barcode
-        WHERE p.Barcode = ?
-    """, (barcode,))
-
-    result = cursor.fetchone()
-
-    conn.close()
+    query = "SELECT p.Name, i.Quantity, p.Price, p.Barcode FROM product p INNER JOIN inventory i ON p.Barcode = i.Barcode WHERE p.Barcode = ?"
+    result = send_query(query, (barcode,))
+    print(f"Search Result for barcode {barcode}: {result}")  # DEBUG
     return result
 
 def process_barcode(barcode_value):
     """Handles the logic for processing a barcode."""
     result = search_barcode(barcode_value)
+    print(f"Result from search_barcode: {result}")  # DEBUG
 
-    if result:
-        if len(result) == 3:
-            product_name, product_quantity, product_price = result
-            product_barcode = None  # Or fetch from database if available
-        elif len(result) == 4:
-            product_name, product_quantity, product_price, product_barcode = result
+    try:
+        if result and isinstance(result, list) and len(result) == 1:
+            product_name, product_quantity, product_price, product_barcode = result[0]
         else:
-            messagebox.showerror("Search Result Error", "Invalid result returned by search function")
-            return
+            raise ValueError("Invalid result returned by search function")
 
         # Ensure product_quantity is not zero
         if product_quantity <= 0:
@@ -97,8 +79,9 @@ def process_barcode(barcode_value):
         scanned_barcode.delete(0, 'end')  # Clear any previous value
         scanned_barcode.insert(0, barcode_value)
         scanned_barcode.config(state='disabled')
-    else:
-        messagebox.showwarning("Search Result", "Product Not Found")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Error processing barcode: {e}")
 
 def on_barcode_entry(event):
     """Handles the event when a barcode is entered."""
@@ -182,18 +165,14 @@ def go_to_return():
     else: prompt_admin_credentials()
 
 def check_product_quantities(purchase_list):
-    conn = connect_db()
-    cursor = conn.cursor()
     for item in purchase_list:
         barcode = item['barcode']
         required_quantity = item['quantity']
         
-        cursor.execute('SELECT Quantity FROM inventory WHERE Barcode = ?', (barcode,))
-        result = cursor.fetchone()
-        if result is None or result[0] < required_quantity:
-            conn.close()
+        query = "SELECT Quantity FROM inventory WHERE Barcode = ?"
+        result = send_query(query, (barcode,))
+        if result is None or result[0][0] < required_quantity:
             return False
-    conn.close()
     return True
 
 def prompt_admin_credentials():
@@ -409,35 +388,26 @@ def create_pos_admin_window():
     window.mainloop()
 
 def insert_purchase_history(purchase_list, total_amount, customer_money, change, cashier_name, customer_name, purchase_id):
-    conn = connect_db()
-    cursor = conn.cursor()
-
     try:
-        # Insert each item in the purchase list into the purchase_history table
         for item in purchase_list:
-            cursor.execute('''
+            query = '''
                 INSERT INTO purchase_history (
                     Purchase_ID, First_Name, Product_Name, Product_Price, Purchase_Quantity, 
                     Total_Price, Amount_Given, Change
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                purchase_id, customer_name, item['name'], item['price'], item['quantity'],
-                item['total_price'], customer_money, change
-            ))
-
-        conn.commit()
+            '''
+            result = send_query(
+                query, (
+                    purchase_id, customer_name, item['name'], item['price'], item['quantity'],
+                    item['total_price'], customer_money, change
+                )
+            )
         print("Purchase history inserted successfully.")
 
-    except sqlite3.Error as e:
-        conn.rollback()
+    except Exception as e:
         print(f"Error inserting purchase history: {e}")
 
-    finally:
-        conn.close()
-
 def open_purchase_window():
-    conn = connect_db()
-    cursor = conn.cursor()
     purchase_window = tk.Toplevel(window)
     purchase_window.title("Purchase")
     purchase_window.geometry("400x300")
@@ -458,15 +428,12 @@ def open_purchase_window():
     customer_money_entry = tk.Entry(purchase_window)
     customer_money_entry.pack(pady=5)
 
-    cursor.execute("""
+    query = """
         SELECT First_Name, Last_Name
         FROM accounts
         WHERE Username = ?
-    """, (shared_state.current_user,))
-
-    cashier_name = cursor.fetchone()
-
-    conn.close()
+    """
+    cashier_name = send_query(query, (shared_state.current_user,))
     cashier_name = f"{cashier_name[0]} {cashier_name[1]}" if cashier_name and len(cashier_name) >= 2 else "Unknown Cashier"
     tk.Button(purchase_window, text="Process Purchase", command=lambda: process_purchase(cashier_name, customer_name_entry.get(), customer_contact_entry.get(), customer_money_entry.get(), purchase_window)).pack(pady=20)
 
@@ -504,9 +471,6 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
     scanned_barcode.delete(0, 'end')
     scanned_barcode.config(state='disabled')
 
-    # Generate a unique Purchase_ID for this transaction
-
-
     insert_purchase_history(purchase_list, total_amount, customer_money, change, cashier_name, customer_name, purchase_id)
 
     action = "Checked out and generated PDF file for the receipt."
@@ -518,37 +482,28 @@ def process_purchase(cashier_name, customer_name, customer_contact, customer_mon
     purchase_window.destroy()
 
 def check_product_availability(purchase_list):
-    conn = connect_db()
-    cursor = conn.cursor()
-
     try:
         for item in purchase_list:
             if 'barcode' not in item:
                 print(f"Error: 'barcode' key missing in item: {item}")
-                continue  # Skip items without barcode
+                return False  # Stop checking if barcode is missing
 
-            cursor.execute("SELECT Status FROM product WHERE Barcode = ?", (item['barcode'],))
-            status = cursor.fetchone()
+            query = "SELECT Status FROM product WHERE Barcode = ?"
+            response = send_query(query, (item['barcode'],))
 
-            if not status or status[0] != 'Available':
-                return False
-        return True
+            if response and len(response) > 0 and response[0][0] == 'Available':
+                continue  # Product is available, proceed to next item
+            else:
+                return False  # Product not available or query failed
 
-    except sqlite3.Error as e:
+        return True  # All products are available
+
+    except Exception as e:
         print(f"Error checking product availability: {e}")
         return False
 
-    finally:
-        conn.close()
-
 def update_inventory(purchase_list):
-    conn = connect_db()
-    cursor = conn.cursor()
-
     try:
-        # Start a transaction
-        conn.execute("BEGIN TRANSACTION;")
-
         for item in purchase_list:
             if 'barcode' not in item:
                 print(f"Error: 'barcode' key missing in item: {item}")
@@ -558,40 +513,41 @@ def update_inventory(purchase_list):
             remaining_quantity = item['quantity']
 
             # Retrieve the current available quantities for the product in inventory
-            cursor.execute("""
+            query = """
                 SELECT InventoryID, Quantity
                 FROM inventory
                 WHERE Barcode = ? AND Quantity > 0
                 ORDER BY DateDelivered ASC
-            """, (barcode,))
-            quantities = cursor.fetchall()
+            """
+            params = (barcode,)
+            response = send_query(query, params)
+            if response is None:
+                continue  # Handle the error
 
-            for inventory_id, quantity in quantities:
+            for row in response:  # Iterate over each row in the response list
+                inventory_id, quantity = row
+
                 if remaining_quantity <= 0:
                     break
 
                 if quantity >= remaining_quantity:
                     new_quantity = quantity - remaining_quantity
-                    cursor.execute("UPDATE inventory SET Quantity = ? WHERE InventoryID = ?", (new_quantity, inventory_id))
+                    update_query = "UPDATE inventory SET Quantity = ? WHERE InventoryID = ?"
+                    update_params = (new_quantity, inventory_id)
+                    send_query(update_query, update_params)
                     remaining_quantity = 0
                 else:
                     remaining_quantity -= quantity
-                    cursor.execute("UPDATE inventory SET Quantity = 0 WHERE InventoryID = ?", (inventory_id,))
+                    update_query = "UPDATE inventory SET Quantity = 0 WHERE InventoryID = ?"
+                    update_params = (inventory_id,)
+                    send_query(update_query, update_params)
 
-        # Commit the transaction
-        conn.commit()
         print("Inventory updated successfully.")
         return True
 
-    except sqlite3.Error as e:
-        # Rollback the transaction in case of an error
-        conn.rollback()
+    except Exception as e:
         print(f"Error updating inventory: {e}")
         return False
-
-    finally:
-        # Close the database connection
-        conn.close()
 
 def create_receipt(cashier_name, customer_name, customer_contact, customer_money, change, purchase_list):
     # Adjusting the width for 58mm receipt paper

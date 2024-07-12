@@ -1,10 +1,11 @@
-import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, filedialog, messagebox, Tk
 from tkinter import ttk
+import sqlite3
 
-import shared_state
+from client import send_query
 from user_logs import log_actions
+import shared_state
 
 username = shared_state.current_user
 
@@ -75,10 +76,7 @@ def create_return_item_window():
     window.mainloop()
 
 def get_purchased_products():
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-
-    cursor.execute('''
+    query = '''
         SELECT Purchase_ID, Time_Stamp, Purchase_Quantity, Product_Name, Product_Price 
         FROM purchase_history 
         WHERE NOT EXISTS (
@@ -88,14 +86,16 @@ def get_purchased_products():
                 AND
                 return_history.Product_Name = purchase_history.Product_Name
         )
-    ''')
-    
-    data = cursor.fetchall()
+    '''
+    response = send_query(query, params=[])
 
-    conn.close()
-
-    purchased_products = [f"{item[1]} | {item[2]} pc/s {item[3]} ({item[4]})" for item in data]
-    return purchased_products
+    if response:
+        data = response
+        purchased_products = [f"{item[1]} | {item[2]} pc/s {item[3]} ({item[4]})" for item in data]
+        return purchased_products
+    else:
+        print("Failed to fetch purchased products data.")
+        return []
 
 def select_this_product(condition):
     selected_product = combobox.get()
@@ -142,24 +142,20 @@ def clear_treeview():
         treeview.delete(item)
 
 def get_barcode(product_name):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT Barcode FROM product WHERE Name = ?", (product_name,))
-    result = cursor.fetchone()
-    conn.close()
-    return result[0] if result else None
+    query = "SELECT Barcode FROM product WHERE Name = ?"
+    params = (product_name,)
+    result = send_query(query, params)
+    return result[0][0] if result else None
 
 def get_purchase_id(timestamp, product_name, quantity, price):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute('''
+    query = '''
         SELECT Purchase_ID
         FROM purchase_history
         WHERE Time_Stamp = ? AND Product_Name = ? AND Purchase_Quantity = ? AND Product_Price = ?
-    ''', (timestamp, product_name, quantity, price))
-    result = cursor.fetchone()
-    conn.close()
-    return result[0] if result else None
+    '''
+    params = (timestamp, product_name, quantity, price)
+    result = send_query(query, params)
+    return result[0][0] if result else None
 
 def process_return():
     for item in treeview.get_children():
@@ -167,6 +163,8 @@ def process_return():
         timestamp, quantity, product_name, price, condition = values
         barcode = get_barcode(product_name)
         purchase_id = get_purchase_id(timestamp, product_name, quantity, price)
+
+        print("Processing return for:", values) # DEBUG
 
         if condition == "Normal":
             update_inventory(barcode, int(quantity))
@@ -186,37 +184,36 @@ def process_return():
     combobox["values"] = purchased_products
 
 def update_return_history(purchase_id, product_name, returned_quantity, product_price, condition):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-
-    amount_given = float(returned_quantity) * float(product_price)
-
-    cursor.execute('''
+    query = '''
         INSERT INTO return_history (Purchase_ID, First_Name, Product_Name, Product_Price, Returned_Quantity, Time_Stamp, Amount_Given, Condition)
         SELECT Purchase_ID, First_Name, Product_Name, Product_Price, ?, CURRENT_TIMESTAMP, ?, ?
         FROM purchase_history
         WHERE Purchase_ID = ? AND Product_Name = ?
-    ''', (returned_quantity, amount_given, condition, purchase_id, product_name))
-
-    conn.commit()
-    conn.close()
+    '''
+    
+    amount_given = float(returned_quantity) * float(product_price)
+    params = (returned_quantity, amount_given, condition, purchase_id, product_name)
+    
+    result = send_query(query, params)
+    
+    # Debugging: Check the result
+    if result:
+        print("Return history updated successfully.")
+    else:
+        print("Failed to update return history.")
 
 def update_inventory(barcode, quantity):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute("UPDATE inventory SET Quantity = Quantity + ? WHERE Barcode = ?", (quantity, barcode))
-    conn.commit()
-    conn.close()
+    query = "UPDATE inventory SET Quantity = Quantity + ? WHERE Barcode = ?"
+    params = (quantity, barcode)
+    return send_query(query, params)
 
 def add_to_broken_inventory(barcode, product_name, quantity, purchase_id):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-    cursor.execute('''
+    query = """
         INSERT INTO broken_inventory (Barcode, Product_Name, Quantity, DateBroken, Original_Purchase_ID)
         VALUES (?, ?, ?, DATE('now'), ?)
-    ''', (barcode, product_name, quantity, purchase_id))
-    conn.commit()
-    conn.close()
+    """
+    params = (barcode, product_name, quantity, purchase_id)
+    return send_query(query, params)
 
 if __name__ == "__main__":
     create_return_item_window()

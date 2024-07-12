@@ -1,18 +1,16 @@
-import sqlite3
 from pathlib import Path
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, PhotoImage, Tk
 from PIL import Image, ImageTk
 from io import BytesIO
 import base64
+import sqlite3
+
 # From user made modules
-import shared_state
+from client import send_query
 from salt_and_hash import hash_password
 from shared_state import abouts
 from user_logs import log_actions
-
-# Global variables
-conn = sqlite3.connect("Trimark_construction_supply.db")
-cursor = conn.cursor()
+import shared_state
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Login")
@@ -21,10 +19,10 @@ def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
 def get_stored_hashed_password(username):
-    cursor.execute("SELECT salt, password FROM accounts WHERE username =? AND is_void = 0", (username,))
-    row = cursor.fetchone()
-    if row:
-        return row[0], row[1]
+    query = "SELECT salt, password FROM accounts WHERE username =? AND is_void = 0"
+    result = send_query(query, (username,))
+    if result:
+        return result[0][0], result[0][1]
     else:
         return None, None
 
@@ -50,7 +48,6 @@ def load_image_from_about():
             if isinstance(logo_base64, str):
                 try:
                     logo_data = base64.b64decode(logo_base64)
-                    
                     logo_image = Image.open(BytesIO(logo_data))
                     resized_image = logo_image.resize((350, 150), Image.LANCZOS)
                     return ImageTk.PhotoImage(resized_image)
@@ -65,22 +62,21 @@ def load_image_from_about():
     return None
 
 def get_user_status(username):
-    cursor.execute("SELECT is_void FROM accounts WHERE username =?", (username,))
-    row = cursor.fetchone()
-
-    if row:
-        if row[0] == 0:
+    query = "SELECT is_void FROM accounts WHERE username =?"
+    result = send_query(query, (username,))
+    if result:
+        if result[0][0] == '0':
             return "Active"
-        elif row[0] == 1:
+        elif result[0][0] == '1':
             return "Inactive"
     else:
         return None
 
 def get_loa(username):
-    cursor.execute("SELECT LOA FROM accounts WHERE username =?", (username,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    query = "SELECT LOA FROM accounts WHERE username =?"
+    result = send_query(query, (username,))
+    if result:
+        return result[0][0]
     else:
         return None
 
@@ -92,6 +88,7 @@ def check_credentials(username, password):
     print(user_entry)
     print(pass_entry)
     print(user_status)
+    print("User Status: ", user_status) # DEBUG
     if user_status == "Inactive":
         messagebox.showerror("Error", "User is currently Inactive.\nContact your immediate Supervisor to Reactivate your account")
         log_actions(username, action=f"{username} tried to log in but their account is inactive")
@@ -103,6 +100,7 @@ def check_credentials(username, password):
         hashed_password = hash_password(password, salt)
         if hashed_password == stored_hashed_password:
             loa = get_loa(username)
+            print("LOA: ", loa) # DEBUG
             if loa is not None:
                 if user_status == "Active":
                     messagebox.showinfo("Success", "Login successful!")
@@ -131,7 +129,6 @@ def create_login_window():
     window.configure(bg="#FFE1C6")
     
     def exit():
-        conn.close()
         window.destroy()
 
     window_width, window_height = 600, 400

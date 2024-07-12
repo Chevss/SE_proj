@@ -1,22 +1,21 @@
 # Libraries
-import re
-import smtplib
-import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 from email.mime.text import MIMEText
 from pathlib import Path
 from tkinter import Button, Canvas, Scrollbar, Entry, messagebox, OptionMenu, PhotoImage, Radiobutton, StringVar, Tk
 from tkcalendar import DateEntry
 from tkinter.ttk import Treeview
+import re
 import secrets
+import smtplib
+import sqlite3
+
 # From user made modules
-import shared_state
+from client import send_query
 from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions
+import shared_state
 
-# Database connection
-conn = sqlite3.connect('Trimark_construction_supply.db')
-cursor = conn.cursor()
 
 # Paths
 OUTPUT_PATH = Path(__file__).parent
@@ -42,23 +41,28 @@ def send_email(email, employee_id, username, password):
         print(f"Failed to send email: {str(e)}")
 
 # Store the registered employee or admin to the database.
-def save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password, is_void):
+def save_user(loa, first_name, last_name, mi, suffix, birthdate_date, contact_number, home_address, email, username, password, is_void):
     salt = generate_salt()
     hashed_password = hash_password(password, salt)
-    date_registered = datetime.now()
-
+    date_registered = datetime.now().isoformat()
+    birthdate_str = birthdate_date.isoformat()
 
     try:
         employee_id = generate_employee_id(loa)
 
-        cursor.execute('''
-        INSERT INTO accounts ( Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, is_void, Date_Registered)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ( employee_id, loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, hashed_password, salt, is_void, date_registered))
-        conn.commit()
+        query = '''
+            INSERT INTO accounts (Employee_ID, LOA, First_Name, Last_Name, MI, Suffix, Birthdate, Contact_No, Address, Email, Username, Password, Salt, is_void, Date_Registered)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        params = (employee_id, loa, first_name, last_name, mi, suffix, birthdate_str, contact_number, home_address, email, username, hashed_password, salt, is_void, date_registered)
+
+        result = send_query(query, params)
+
+        if result and result != "Insertion successful":
+            messagebox.showerror("Error", f"Failed to save user: {result}")
+
     except sqlite3.Error as e:
         messagebox.showerror("Error", f"Failed to save user: {str(e)}")
-        conn.rollback()
 
 # def update_table():
 #     try:
@@ -88,24 +92,33 @@ def generate_employee_id(loa):
     initial_char = 'A' if loa == 'admin' else 'E'
     
     try:
-        # Fetch the last used counter for this year and level of access
-        cursor.execute("SELECT MAX(Employee_ID) FROM accounts WHERE Employee_ID LIKE ?", (f"{current_year}{initial_char}%",))
-        last_used_id = cursor.fetchone()[0]
+        # Construct the query using placeholders and parameters
+        query = "SELECT MAX(Employee_ID) FROM accounts WHERE Employee_ID LIKE ?"
+        params = (f"{current_year}{initial_char}%",)
         
-        if last_used_id:
-            # Extract the counter part and increment
-            counter = int(last_used_id[-2:]) + 1
+        # Send the query to the server
+        response = send_query(query, params)
+        
+        if response and response[0]:
+            last_used_id = response[0][0]
+            
+            if last_used_id:
+                # Extract the counter part and increment
+                counter = int(last_used_id[-2:]) + 1
+            else:
+                # If no previous IDs exist for this year and level of access, start with 01
+                counter = 1
+            
+            # Format the employee ID
+            employee_id = f"{current_year}{initial_char}{counter:02}"
+            
+            return employee_id
         else:
-            # If no previous IDs exist for this year and level of access, start with 01
-            counter = 1
+            # If no result returned, start with 01
+            return f"{current_year}{initial_char}01"
         
-        # Format the employee ID
-        employee_id = f"{current_year}{initial_char}{counter:02}"
-        
-        return employee_id
     except Exception as e:
         messagebox.showerror("Error", f"Failed to generate Employee ID: {str(e)}")
-        conn.rollback()
 
 # Generate username like how TIP does but not exactly.
 def generate_username(first_name, mi, last_name, suffix, loa):
@@ -149,20 +162,30 @@ def register_user(first_name, mi, last_name, suffix, birthdate, contact_number, 
 
     username = generate_username(first_name, mi, last_name, suffix, loa)
 
-    cursor.execute("SELECT * FROM accounts WHERE Username = ?", (username,))
-    if cursor.fetchone():
+    # Check if username already exists
+    query_username = "SELECT * FROM accounts WHERE Username = ?"
+    result_username = send_query(query_username, (username,))
+    if result_username:
         messagebox.showerror("Error", "Username already exists")
         return False
 
-    cursor.execute("SELECT * FROM accounts WHERE Email = ?", (email,))
-    if cursor.fetchone():
+    # Check if email already exists
+    query_email = "SELECT * FROM accounts WHERE Email = ?"
+    result_email = send_query(query_email, (email,))
+    if result_email:
         messagebox.showerror("Error", "Email already exists")
+        return False
+
+    try:
+        birthdate_date = datetime.strptime(birthdate, '%Y-%m-%d').date()
+    except ValueError:
+        messagebox.showerror("Error", "Invalid birthdate format. Please use YYYY-MM-DD.")
         return False
 
     password = secrets.token_urlsafe(10)
     is_void = 0
 
-    save_user(loa, first_name, last_name, mi, suffix, birthdate, contact_number, home_address, email, username, password, is_void)
+    save_user(loa, first_name, last_name, mi, suffix, birthdate_date, contact_number, home_address, email, username, password, is_void)
     employee_id = generate_employee_id(loa)
     send_email(email, employee_id, username, password)
 
@@ -208,8 +231,9 @@ def void_selected_account():
 
             try:
                 # Update the database
-                cursor.execute("UPDATE accounts SET is_void = 1 WHERE Employee_ID = ?", (employee_id,))
-                conn.commit()  # Commit changes to the database
+                query = "UPDATE accounts SET is_void = ? WHERE Employee_ID = ?"
+                params = (1, employee_id)
+                result = send_query(query, params)
                 print(f"Database updated successfully for Employee ID {employee_id}")
 
                 # Update the treeview display
@@ -240,8 +264,9 @@ def activate_selected_account():
 
             try:
                 # Update the database
-                cursor.execute("UPDATE accounts SET is_void = 0 WHERE Employee_ID = ?", (employee_id,))
-                conn.commit()  # Commit changes to the database
+                query = "UPDATE accounts SET is_void = ? WHERE Employee_ID = ?"
+                params = (0, employee_id)
+                result = send_query(query, params)
                 print(f"Database updated successfully for Employee ID {employee_id}")
 
                 # Update the treeview display
@@ -319,7 +344,7 @@ def create_registration_window():
     suffix_menu.place(x=1176.0, y=190.0, width=47.0, height=36.0)
 
     # Birthdate  
-    birthdate_entry = DateEntry(window, width=12, background='darkblue', foreground='white', borderwidth=1, font=("Hanuman Regular", 15))
+    birthdate_entry = DateEntry(window, date_pattern='yyyy-mm-dd', width=12, background='darkblue', foreground='white', borderwidth=1, font=("Hanuman Regular", 15))
     birthdate_entry.place(x=860, y=256)
 
     # Contact number    
@@ -358,7 +383,7 @@ def create_registration_window():
             mi_entry.get(), 
             last_name_entry.get(), 
             suffix_entry.get(), 
-            birthdate_entry.get(),
+            birthdate_entry.get_date().strftime('%Y-%m-%d'),
             contact_no_entry.get(), 
             address_entry.get(), 
             email_entry.get(), 
@@ -451,28 +476,39 @@ def create_registration_window():
     tree.place(x=83, y=21, width=697, height=525)   
 
     # Fetch data from database and insert into Treeview
-    cursor.execute("SELECT is_void, Employee_ID, LOA, First_Name, MI, Last_Name, Suffix, Birthdate, Contact_No, Address, Email FROM accounts")
-    rows = cursor.fetchall()
+    query = "SELECT is_void, Employee_ID, LOA, First_Name, MI, Last_Name, Suffix, Birthdate, Contact_No, Address, Email FROM accounts"
+    response = send_query(query, ())
     
-    for row in rows:
-        if row[0] == 0:
-            is_void = "Active"
-        elif row[0] == 1:
-            is_void = "Inactive"
-        employee_id = row[1]
-        loa = row[2]
-        first_name = row[3]
-        mi = row[4] if row[4] else ""
-        last_name = row[5]
-        suffix = row[6] if row[6] else ""
-        name = f"{first_name} {mi} {last_name} {suffix}".strip()
-        birthdate = row[7]
-        contact_no = row[8]
-        address = row[9]
-        email = row[10]
-        tree.insert("", "end", values=(is_void, employee_id, loa, name, birthdate, contact_no, address, email))
+    if response:
+        # Clear existing rows in the Treeview
+        for row in tree.get_children():
+            tree.delete(row)
 
-      # Update the status in Treeview
+        # Insert fetched rows into Treeview
+        for row in response:
+            if row[0] == '0':
+                is_void = "Active"
+            elif row[0] == '1':
+                is_void = "Inactive"
+            else:
+                is_void = "Unknown"
+
+            employee_id = row[1]
+            loa = row[2]
+            first_name = row[3]
+            mi = row[4] if row[4] else ""
+            last_name = row[5]
+            suffix = row[6] if row[6] else ""
+            name = f"{first_name} {mi} {last_name} {suffix}".strip()
+            birthdate = row[7]
+            contact_no = row[8]
+            address = row[9]
+            email = row[10]
+
+            tree.insert("", "end", values=(is_void, employee_id, loa, name, birthdate, contact_no, address, email))
+    else:
+        showerror("Error", "Failed to fetch data from server")
+
 
     window.resizable(False, False)
     window.mainloop()

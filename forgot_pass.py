@@ -1,17 +1,17 @@
-import random
-import smtplib
-import sqlite3
-import string
 from pathlib import Path
 from tkinter import Button, Canvas, Entry, messagebox, Tk
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import random
+import smtplib
+import sqlite3
+import string
 
 # From user made modules
+from client import send_query
+from user_logs import log_actions
 import new_pass
 import shared_state
-from user_logs import log_actions
-
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\Forgot_pass")
@@ -84,14 +84,15 @@ def create_forgot_pass_window():
 
     # Get username of the input email address, because no user is not logged in (current_user = None)
     def get_username_by_email(email):
-        conn = sqlite3.connect('Trimark_construction_supply.db')  # Replace with your database file
-        cursor = conn.cursor()
-        cursor.execute("SELECT Username FROM accounts WHERE Email = ?", (email,))
-        result = cursor.fetchone()
-        conn.close()
-        log_actions(email, action= f"{email} sends a verification code")
-        if result:
-            return result[0]
+        query = "SELECT Username FROM accounts WHERE Email = ?"
+        params = (email,)
+        response = send_query(query, params)
+        
+        if response and len(response) > 0:
+            # Assuming response is a list of tuples, extract the username
+            username = response[0][0]
+            log_actions(email, action=f"{email} sends a verification code")
+            return username
         else:
             return None
         

@@ -1,13 +1,14 @@
-import re
-import sqlite3
 from pathlib import Path
 from salt_and_hash import generate_salt, hash_password
 from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, messagebox, Tk
+import re
+import sqlite3
 
 # From user made modules
-import shared_state
+from client import send_query
 from salt_and_hash import generate_salt, hash_password
 from user_logs import log_actions
+import shared_state
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"assets\New_pass")
@@ -32,17 +33,18 @@ def is_valid_password(password):
 def update_password(email, new_password):
     salt = generate_salt()
     hashed_password = hash_password(new_password, salt)
-    try:
-        conn = sqlite3.connect('Trimark_construction_supply.db')
-        cursor = conn.cursor()
-        cursor.execute('UPDATE accounts SET Password = ?, Salt = ? WHERE Email = ?', (hashed_password, salt, email))
-        conn.commit()
+    query = 'UPDATE accounts SET Password = ?, Salt = ? WHERE Email = ?'
+    params = (hashed_password, salt, email)
+    
+    response = send_query(query, params)
+    
+    if response == []:
         messagebox.showinfo("Success", "Password updated successfully.")
-    except sqlite3.Error as e:
-        messagebox.showerror("Error", f"Error updating password: {e}")
-    finally:
-        cursor.close()
-        conn.close()
+    elif isinstance(response, str):
+        messagebox.showerror("Error", f"Error updating password: {response}")
+    else:
+        messagebox.showerror("Error", "Unknown error occurred.")
+
 
 def go_to_window(windows):
     window.destroy()

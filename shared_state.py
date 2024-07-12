@@ -1,8 +1,8 @@
+from datetime import datetime
+from portalocker import lock, unlock, LOCK_EX
 import json
 import os
-from portalocker import lock, unlock, LOCK_EX
 import user_logs
-from datetime import datetime
 
 void_list = []
 

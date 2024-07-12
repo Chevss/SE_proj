@@ -1,20 +1,19 @@
+from cryptography.fernet import Fernet
+from pathlib import Path
+from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, filedialog, messagebox, Tk
 import os
 import shutil
 import sqlite3
 import time
-from cryptography.fernet import Fernet
-from pathlib import Path
-from tkinter import BooleanVar, Button, Canvas, Checkbutton, Entry, filedialog, messagebox, Tk
 
 # From user made modules
-import shared_state
+from client import send_query
 from new_pass import is_valid_password
 from registration import is_valid_contact_number, is_valid_email, is_valid_name
 from salt_and_hash import generate_salt, hash_password
+from server.server import DATABASE
 from user_logs import log_actions
-
-OUTPUT_PATH = Path(__file__).parent
-DATABASE_PATH = OUTPUT_PATH / Path(r"Trimark_construction_supply.db")
+import shared_state
 
 employee_id = None
 
@@ -62,7 +61,7 @@ def decrypt_file(file_path, key):
 
 # Backup the database
 def backup_database(local=True):
-    db_path = DATABASE_PATH
+    db_path = DATABASE
     key = load_key()
     timestamp = time.strftime("%Y%m%d%H%M%S")
 
@@ -88,7 +87,7 @@ def restore_database(local=True):
         return  # User cancelled the operation
 
     decrypted_file = decrypt_file(backup_file, key)
-    db_path = DATABASE_PATH
+    db_path = DATABASE
     shutil.copy2(decrypted_file, db_path)
     os.remove(decrypted_file)  # Remove the decrypted file after restoration
 
@@ -102,81 +101,64 @@ def restore_database(local=True):
 '''
 
 def update_first_name(employee_id, new_first_name):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE accounts SET First_Name = ? WHERE Employee_ID = ?", (new_first_name, employee_id))
-        conn.commit()
+        query = "UPDATE accounts SET First_Name = ? WHERE Employee_ID = ?"
+        params = (new_first_name, employee_id)
+        response = send_query(query, params)
+
         messagebox.showinfo("Success", "First Name updated successfully")
         action = "Updated first name to " + new_first_name + "."
         log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating First Name: {e}")
-    finally:
-        conn.close()
+        messagebox.showerror("Error", f"Error updating First Name: {response}")
 
 def update_last_name(employee_id, new_last_name):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE accounts SET Last_Name = ? WHERE Employee_ID = ?", (new_last_name, employee_id))
-        conn.commit()
+        query = "UPDATE accounts SET Last_Name = ? WHERE Employee_ID = ?"
+        params = (new_last_name, employee_id)
+        response = send_query(query, params)
+        
         messagebox.showinfo("Success", "Last Name updated successfully")
         action = "Updated last name to " + new_last_name + "."
         log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Last Name: {e}")
-    finally:
-        conn.close()
-
+        messagebox.showerror("Error", f"Error updating Last Name: {response}")
+    
 def update_password(employee_id, new_password, salt):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE accounts SET Password = ?, Salt = ? WHERE Employee_ID = ?", (new_password, salt, employee_id))
-        conn.commit()
+        query = "UPDATE accounts SET Password = ?, Salt = ? WHERE Employee_ID = ?"
+        params = (new_password, salt, employee_id)
+        response = send_query(query, params)
+
         messagebox.showinfo("Success", "Password updated successfully")
         action = "Changed password."
         log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
-        conn.rollback()
         messagebox.showerror("Error", f"Error updating Password: {e}")
-    finally:
-        conn.close()
 
 def update_email(employee_id, new_email):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-
     try:
-        cursor.execute("UPDATE accounts SET Email = ? WHERE Employee_ID = ?", (new_email, employee_id))
-        conn.commit()
+        query = "UPDATE accounts SET Email = ? WHERE Employee_ID = ?"
+        params = (new_email, employee_id)
+        response = send_query(query, params)
+
         messagebox.showinfo("Success", "Email updated successfully")
         action = "Updated email to " + new_email + "."
         log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Email: {e}")
-    finally:
-        conn.close()
+        messagebox.showerror("Error", f"Error updating Email: {response}")
 
 def update_phone_number(employee_id, new_phone_number):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE accounts SET Contact_No = ? WHERE Employee_ID = ?", (new_phone_number, employee_id))
-        conn.commit()
+        query = "UPDATE accounts SET Contact_No = ? WHERE Employee_ID = ?"
+        params = (new_phone_number, employee_id)
+        response = send_query(query, params)
+
         messagebox.showinfo("Success", "Phone Number updated successfully")
         action = "Updated phone number to " + new_phone_number + "."
         log_actions(shared_state.current_user, action)
     except sqlite3.Error as e:
-        conn.rollback()
-        messagebox.showerror("Error", f"Error updating Phone Number: {e}")
-    finally:
-        conn.close()
-
+        messagebox.showerror("Error", f"Error updating Phone Number: {response}")
 
 def perform_action(command_name):
     from pos_admin import window
@@ -207,15 +189,14 @@ def perform_action(command_name):
 # Handling changes
 def get_employee_id(username):
     global employee_id
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT Employee_ID FROM accounts WHERE Username = ?", (username,))
-        row = cursor.fetchone()
+        query = "SELECT Employee_ID FROM accounts WHERE Username = ?"
+        params = (username,)
+        response = send_query(query, params)
 
-        if row:
-            employee_id = row[0]  # Assign fetched Employee_ID to global variable
+        if response:
+            employee_id = response[0][0]  # Assign fetched Employee_ID to global variable
             return employee_id
         else:
             return None
@@ -223,9 +204,6 @@ def get_employee_id(username):
     except sqlite3.Error as e:
         print(f"Error fetching employee ID: {e}")
         return None
-
-    finally:
-        conn.close()
 
 def handle_first_name_update():
     new_first_name = new_first_name_entry.get()
@@ -270,13 +248,13 @@ def handle_password_update():
         messagebox.showerror("Error", "Please enter both passwords")
 
 def check_email_uniqueness(email, current_email=None):
-    conn = sqlite3.connect('Trimark_construction_supply.db')
-    cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT Email FROM accounts")
-        existing_emails = [row[0] for row in cursor.fetchall()]
+        query = "SELECT Email FROM accounts"
+        params = ()
+        response = send_query(query, params)
 
+        existing_emails = [row[0] for row in response]
+        
         if email in existing_emails and email != current_email:
             return False, "Email already in use"
         return True, ""
@@ -284,9 +262,6 @@ def check_email_uniqueness(email, current_email=None):
     except sqlite3.Error as e:
         print(f"Error checking email uniqueness: {e}")
         return False, "Error checking email uniqueness"
-
-    finally:
-        conn.close()
 
 def handle_email_update(username):
     new_email = new_email_entry.get()

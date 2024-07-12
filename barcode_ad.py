@@ -1,12 +1,13 @@
-from tkinter import Tk, Canvas, Entry, Button, Label, StringVar, Scrollbar, messagebox
-import tkinter.ttk as ttk
-from PIL import Image, ImageTk
-from pathlib import Path
-import sqlite3
 from barcode import Code39
 from barcode.writer import ImageWriter
+from pathlib import Path
+from PIL import Image, ImageTk
+from tkinter import Tk, Canvas, Entry, Button, Label, StringVar, Scrollbar, messagebox
+import sqlite3
+import tkinter.ttk as ttk
 
 # From user made modules
+from client import send_query
 import shared_state
 import user_logs
 
@@ -16,9 +17,6 @@ BARCODES_PATH = OUTPUT_PATH / Path("Barcodes")
 
 # Ensure the "Barcodes" folder exists, create if not
 BARCODES_PATH.mkdir(parents=True, exist_ok=True)
-
-conn = sqlite3.connect('Trimark_construction_supply.db')
-cursor = conn.cursor()
 
 def generate_code39_barcode(barcode_data, product_name):
     # Generate Code 39 barcode
@@ -102,15 +100,16 @@ def search_database():
         tree.insert('', 'end', values=(name, barcode))  # Inserting into treeview
 
 def linear_search(query):
-    # Placeholder for search functionality in SQLite
-    cursor.execute("SELECT Name, Barcode FROM product WHERE LOWER(Name) LIKE ?", ('%' + query.lower() + '%',))
-    results = cursor.fetchall()
+    search_query = '%' + query.lower() + '%'  # Adjust the query for LIKE matching
+    query = "SELECT Name, Barcode FROM product WHERE LOWER(Name) LIKE ?"
+    params = (search_query,)
+    results = send_query(query, params)
     return results
 
 def fetch_all_products():
-    # Fetch all products from the database
-    cursor.execute("SELECT Name, Barcode FROM product")
-    return cursor.fetchall()
+    query = "SELECT Name, Barcode FROM product"
+    results = send_query(query, params=[])
+    return results
 
 def update_table():
     # Clear existing items in tree view
